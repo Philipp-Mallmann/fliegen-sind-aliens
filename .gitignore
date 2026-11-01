@@ -1,0 +1,18 @@
+# Godot 4+
+.godot/
+.import/
+export.cfg
+export_credentials.cfg
+*.translation
+
+# Video
+*.mp4
+*.MP4
+*.mov
+*.MOV
+
+# Builds
+build/
+
+__pycache__/
+*.pyc
