@@ -1,6 +1,14 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://skripte/kanone.gd" id="1_kanone"]
+
+[sub_resource type="Gradient" id="Gradient_taste"]
+colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_taste"]
+gradient = SubResource("Gradient_taste")
+width = 200
+height = 200
 
 [node name="Spiel" type="Node2D"]
 
@@ -77,3 +85,33 @@ color = Color(0.75, 0.75, 0.75, 1)
 
 [node name="Kamera" type="Camera2D" parent="Kanone"]
 offset = Vector2(0, -380)
+
+[node name="Bedienung" type="CanvasLayer" parent="."]
+
+[node name="TasteLinks" type="TouchScreenButton" parent="Bedienung"]
+position = Vector2(40, 700)
+texture_normal = SubResource("GradientTexture2D_taste")
+action = "links"
+visibility_mode = 1
+
+[node name="Pfeil" type="Label" parent="Bedienung/TasteLinks"]
+offset_right = 200.0
+offset_bottom = 200.0
+theme_override_font_sizes/font_size = 120
+text = "<"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TasteRechts" type="TouchScreenButton" parent="Bedienung"]
+position = Vector2(1200, 700)
+texture_normal = SubResource("GradientTexture2D_taste")
+action = "rechts"
+visibility_mode = 1
+
+[node name="Pfeil" type="Label" parent="Bedienung/TasteRechts"]
+offset_right = 200.0
+offset_bottom = 200.0
+theme_override_font_sizes/font_size = 120
+text = ">"
+horizontal_alignment = 1
+vertical_alignment = 1
