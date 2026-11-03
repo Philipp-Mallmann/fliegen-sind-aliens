@@ -67,6 +67,86 @@ offset_top = -60.0
 offset_right = 1412.0
 color = Color(0.2, 0.2, 0.2, 1)
 
+[node name="Nummer0" type="Label" parent="Boden"]
+offset_left = -40.0
+offset_top = -130.0
+offset_right = 52.0
+offset_bottom = -64.0
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 48
+text = "0"
+horizontal_alignment = 1
+
+[node name="Nummer1" type="Label" parent="Boden"]
+offset_left = 160.0
+offset_top = -130.0
+offset_right = 252.0
+offset_bottom = -64.0
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 48
+text = "1"
+horizontal_alignment = 1
+
+[node name="Nummer2" type="Label" parent="Boden"]
+offset_left = 360.0
+offset_top = -130.0
+offset_right = 452.0
+offset_bottom = -64.0
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 48
+text = "2"
+horizontal_alignment = 1
+
+[node name="Nummer3" type="Label" parent="Boden"]
+offset_left = 560.0
+offset_top = -130.0
+offset_right = 652.0
+offset_bottom = -64.0
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 48
+text = "3"
+horizontal_alignment = 1
+
+[node name="Nummer4" type="Label" parent="Boden"]
+offset_left = 760.0
+offset_top = -130.0
+offset_right = 852.0
+offset_bottom = -64.0
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 48
+text = "4"
+horizontal_alignment = 1
+
+[node name="Nummer5" type="Label" parent="Boden"]
+offset_left = 960.0
+offset_top = -130.0
+offset_right = 1052.0
+offset_bottom = -64.0
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 48
+text = "5"
+horizontal_alignment = 1
+
+[node name="Nummer6" type="Label" parent="Boden"]
+offset_left = 1160.0
+offset_top = -130.0
+offset_right = 1252.0
+offset_bottom = -64.0
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 48
+text = "6"
+horizontal_alignment = 1
+
+[node name="Nummer7" type="Label" parent="Boden"]
+offset_left = 1360.0
+offset_top = -130.0
+offset_right = 1452.0
+offset_bottom = -64.0
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 48
+text = "7"
+horizontal_alignment = 1
+
 [node name="Kanone" type="Node2D" parent="."]
 script = ExtResource("1_kanone")
 
