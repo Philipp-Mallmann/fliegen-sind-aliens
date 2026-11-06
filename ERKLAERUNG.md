@@ -201,3 +201,189 @@ Eine Zeile wie `uid://...`. Godot legt diese Datei automatisch neben jedes Skrip
 3. `delta` ist die Zeit seit dem letzten Bild. Ohne es waere die Kanone auf einem Rechner mit mehr Bildern pro Sekunde schneller.
 
 </details>
+
+---
+
+## Abschnitt 2 - Nadel
+
+**Was der Abschnitt kann:** Mit Leertaste, W oder linker Maustaste schiesst die Kanone eine Nadel senkrecht nach oben. Am Handy gibt es dafuer die Taste "Schuss". Es fliegt immer nur eine Nadel. Erst wenn sie oben aus dem Bild ist, laedt die Kanone 0,5 Sekunden nach, dann kann man wieder schiessen.
+
+**Neue Dateien:** `skripte/nadel.gd`, `szenen/nadel.tscn`. **Geaendert:** `skripte/kanone.gd` (aus Abschnitt 1), `szenen/spiel.tscn`, `project.godot`.
+
+### Wer macht was
+
+- Die **Nadel** kann nur eins: nach oben fliegen. Sie weiss nichts von Tasten oder vom Nachladen.
+- Die **Kanone** entscheidet, wann geschossen wird, und zaehlt das Nachladen. Sie hat damit zwei Aufgaben, fahren und schiessen. Das ist so gewollt (Entscheidung Z32): lieber ein Skript mehr lesen als eine Datei mehr.
+- Dass die Nadel oben aus dem Bild ist, merkt ein fertiger Godot-Knoten, der **Waechter**. Dafuer braucht es keine Rechnung.
+
+### `skripte/nadel.gd` (die ganze Datei)
+
+```gdscript
+extends Node2D
+```
+Wie bei der Kanone: Die Nadel ist ein Ding mit einer Position in der 2D-Welt.
+
+```gdscript
+# Wie schnell die Nadel nach oben fliegt, in Pixeln pro Sekunde.
+@export var tempo: float = 1600.0
+```
+Eine Zahl im Inspector. Von der Rohrspitze bis zum oberen Bildrand sind es etwa 800 Pixel, die Nadel braucht dafuer also rund eine halbe Sekunde. Wer sie schneller oder langsamer haben will, aendert nur diese Zahl.
+
+```gdscript
+func _process(delta: float) -> void:
+	position.y -= tempo * delta
+```
+Jedes Bild ruft Godot `_process` auf. `-=` heisst "ziehe ab": Die y-Position wird kleiner. In Godot zeigt y nach unten, kleiner heisst also **nach oben**. Die Nadel aendert nur `position.y`, nie `position.x`, deshalb fliegt sie nur senkrecht. `tempo * delta` ist wieder Tempo mal vergangene Zeit, so fliegt sie auf jedem Rechner gleich schnell.
+
+Mehr steht in der Datei nicht. Wann die Nadel verschwindet, regelt die Szene.
+
+### `szenen/nadel.tscn`
+
+```
+Nadel (Node2D, traegt nadel.gd)
+├── Strich (ColorRect)
+└── Waechter (VisibleOnScreenNotifier2D)
+```
+
+- **Strich:** ein fast weisses Rechteck (Farbe 0.9), 6 Pixel breit und 50 hoch (x -3 bis 3, y -50 bis 0). Das ist die Nadel, solange es noch keine Fotos gibt.
+- **Waechter (VisibleOnScreenNotifier2D):** ein unsichtbarer Godot-Knoten, der meldet, wenn sein Rechteck ins Bild kommt oder es verlaesst. `rect` ist genau so gross wie der Strich.
+- **Die Verbindung** am Ende der Datei: `[connection signal="screen_exited" from="Waechter" to="." method="queue_free"]`. Uebersetzt: "Wenn der Waechter meldet *ich bin aus dem Bild* (`screen_exited`), dann rufe bei der Nadel selbst (`.`) die Funktion `queue_free` auf." `queue_free` loescht einen Knoten am Ende des Bildes, mit allen Kindern. Die Nadel loescht sich also selbst, sobald sie oben raus ist.
+
+Warum so und nicht mit einer Rechnung wie "ab y kleiner als -920 loeschen"? Der Waechter fragt die Kamera. Wenn die Kamera in Abschnitt 4 mit der Kanone nach oben steigt, stimmt eine feste Zahl nicht mehr, der Waechter schon.
+
+### `skripte/kanone.gd` - geaendert in Abschnitt 2
+
+Die Zeilen fuers Fahren sind **unveraendert**, sie stehen jetzt nur in einer eigenen Funktion `fahren`. Neu ist alles fuers Schiessen.
+
+```gdscript
+# Die Szene der Nadel. Bei jedem Schuss entsteht daraus eine neue Nadel.
+@export var nadel_szene: PackedScene
+```
+Eine `PackedScene` ist eine gespeicherte Szene, hier `nadel.tscn`, wie ein Bauplan. Weil es ein `@export` ist, steht der Bauplan im Inspector der Kanone (in `spiel.tscn` eingetragen) und nicht als Pfad im Code.
+
+```gdscript
+# Wie lange die Kanone nachlaedt, nachdem die Nadel weg ist, in Sekunden.
+@export var nachladezeit: float = 0.5
+```
+Die Nachladezeit im Inspector, Startwert 0,5 Sekunden aus dem Feinkonzept.
+
+```gdscript
+# Die Nadel, die gerade fliegt. null heisst: Es ist keine Nadel unterwegs.
+var nadel: Node2D = null
+```
+Hier merkt sich die Kanone ihre fliegende Nadel. `null` heisst "nichts". Am Anfang fliegt keine.
+
+```gdscript
+# Wie viele Sekunden das Nachladen noch dauert. 0 oder weniger heisst: bereit.
+var nachladen_noch: float = 0.0
+```
+Ein Countdown. Steht er auf 0, ist die Kanone sofort bereit.
+
+```gdscript
+func _process(delta: float) -> void:
+	fahren(delta)
+	schiessen(delta)
+```
+Jedes Bild macht die Kanone zwei Dinge nacheinander: erst fahren, dann schiessen. Beides sind eigene Funktionen, damit man sie getrennt lesen kann. `delta` wird an beide weitergereicht.
+
+```gdscript
+func fahren(delta: float) -> void:
+	var richtung: float = Input.get_axis("links", "rechts")
+	var ziel_tempo: float = richtung * tempo
+	aktuelles_tempo = move_toward(aktuelles_tempo, ziel_tempo, beschleunigung * delta)
+	position.x += aktuelles_tempo * delta
+```
+Genau die vier Zeilen aus Abschnitt 1, nur unter einem eigenen Namen. Erklaert sind sie oben bei Abschnitt 1.
+
+```gdscript
+func schiessen(delta: float) -> void:
+	nachladen_noch -= delta
+```
+Der Countdown laeuft jedes Bild um die vergangene Zeit herunter. Er darf ruhig unter 0 fallen, alles unter 0 heisst einfach "bereit".
+
+```gdscript
+	if nadel != null or nachladen_noch > 0.0:
+		return
+```
+`!=` heisst "ist nicht". Wenn noch eine Nadel fliegt **oder** (`or`) noch nachgeladen wird, bricht die Funktion hier ab (`return`). Ein Druck auf die Taste bewirkt dann nichts. Das ist die ganze Sperre gegen Dauerfeuer.
+
+```gdscript
+	if Input.is_action_just_pressed("schiessen"):
+```
+`is_action_just_pressed` ist nur in dem einen Bild wahr, in dem die Taste **neu** gedrueckt wird. Wer sie festhaelt, schiesst also nur einmal, danach muss man loslassen und neu druecken. Die Aktion `schiessen` steht in `project.godot` (siehe unten).
+
+```gdscript
+		nadel = nadel_szene.instantiate()
+```
+`instantiate` baut aus dem Bauplan eine echte, neue Nadel. Sie ist jetzt da, aber noch nirgends in der Welt. Die Kanone merkt sie sich in `nadel`.
+
+```gdscript
+		nadel.position = $Muendung.global_position
+```
+Die Nadel startet an der Rohrspitze. `$Muendung` ist der Kind-Knoten `Muendung` der Kanone (siehe Szene). `global_position` ist seine Position in der ganzen Welt, nicht nur relativ zur Kanone.
+
+```gdscript
+		get_parent().add_child(nadel)
+```
+Erst hier kommt die Nadel in die Welt. `get_parent()` ist der Knoten ueber der Kanone, also `Spiel`. Die Nadel wird ein Kind von `Spiel` und **nicht** von der Kanone. Das ist wichtig: Kinder fahren mit ihren Eltern mit. Hinge die Nadel an der Kanone, wuerde sie beim Fahren seitlich mitwandern und nicht mehr senkrecht fliegen.
+
+```gdscript
+		nadel.tree_exited.connect(nadel_ist_weg)
+```
+Jeder Knoten sendet das Signal `tree_exited`, wenn er aus der Welt verschwindet. `connect` sagt: "Wenn diese Nadel verschwindet, rufe meine Funktion `nadel_ist_weg` auf." So erfaehrt die Kanone, dass die Nadel oben raus ist, ohne selbst nachzusehen. Ab Abschnitt 3 verschwindet die Nadel auch bei einem Treffer, und dieselbe Zeile startet dann das Nachladen.
+
+```gdscript
+func nadel_ist_weg() -> void:
+	nadel = null
+	nachladen_noch = nachladezeit
+```
+Die Nadel ist weg: Die Kanone vergisst sie (`null`) und stellt den Countdown auf 0,5 Sekunden. Erst wenn der abgelaufen ist, kommt `schiessen` wieder an der Sperre vorbei.
+
+### `szenen/spiel.tscn` - geaendert
+
+```
+Spiel
+├── Kanone
+│   ├── ...
+│   └── Muendung (Marker2D)      neu
+└── Bedienung (CanvasLayer)
+    ├── ...
+    └── TasteSchuss (TouchScreenButton)   neu
+        └── Wort (Label)
+```
+
+- **Kanone:** Im Inspector steht jetzt `nadel_szene = nadel.tscn`. Ohne diesen Eintrag waere `nadel_szene` leer, und der erste Schuss wuerde mit einem Fehler abbrechen.
+- **Muendung (Marker2D):** ein unsichtbarer Punkt, nur eine Position. Er sitzt bei y = -140, das ist die obere Kante des Rohrs. So steht die Rohrspitze in der Szene und nicht als Zahl im Code.
+- **TasteSchuss:** gebaut wie die Pfeiltasten aus Abschnitt 1, ohne Code. `action = "schiessen"` heisst: Solange der Finger auf der Taste liegt, gilt `schiessen` als gedrueckt, wie die Leertaste. Sie sitzt rechts ueber der rechten Pfeiltaste (`position = Vector2(1200, 460)`), damit der rechte Daumen zwischen Fahren und Schiessen wechseln kann. `visibility_mode = 1`: nur auf Touchscreens zu sehen.
+- **Wort (Label):** der Text "Schuss" in Groesse 48 auf der Taste.
+
+### `project.godot` - geaendert
+
+```
+schiessen={ ... }
+```
+Eine dritte Aktion neben `links` und `rechts`, mit drei Ausloesern: Leertaste (`physical_keycode` 32), W (87) und linke Maustaste (`InputEventMouseButton` mit `button_index` 1). Der Rest jeder Zeile sind Standardwerte, die Godot immer mitschreibt.
+
+```
+[input_devices]
+pointing/emulate_mouse_from_touch=false
+```
+Normalerweise tut Godot bei jedem Fingertipp so, als waere zusaetzlich die Maus geklickt worden. Weil die linke Maustaste schiesst, haette dann **jeder** Tipp geschossen, auch der auf eine Pfeiltaste. Diese Zeile schaltet das ab. Die Touch-Tasten funktionieren trotzdem, weil sie Fingertipps direkt verstehen.
+
+### `skripte/nadel.gd.uid` (von Godot selbst angelegt)
+
+Wie bei der Kanone: eine Kennnummer, mit der Godot die Datei wiederfindet, auch wenn sie umbenannt wird. Nicht von Hand aendern.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum wird die Nadel ein Kind von `Spiel` und nicht von der Kanone?
+2. Du haeltst die Leertaste fest. Warum kommt nach dem Nachladen kein zweiter Schuss?
+3. Woher weiss die Kanone, dass die Nadel oben aus dem Bild ist?
+
+<details><summary>Antworten</summary>
+
+1. Kinder bewegen sich mit ihren Eltern. Als Kind der Kanone wuerde die Nadel beim Fahren seitlich mitwandern und nicht mehr senkrecht fliegen.
+2. `is_action_just_pressed` ist nur in dem Bild wahr, in dem die Taste neu gedrueckt wird. Festhalten zaehlt nicht als neuer Druck.
+3. Der Waechter in `nadel.tscn` meldet `screen_exited`, die Nadel loescht sich mit `queue_free`. Dabei sendet sie `tree_exited`, und das hat die Kanone beim Schuss mit `nadel_ist_weg` verbunden.
+
+</details>

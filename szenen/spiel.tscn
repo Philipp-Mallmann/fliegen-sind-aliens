@@ -1,6 +1,7 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://skripte/kanone.gd" id="1_kanone"]
+[ext_resource type="PackedScene" path="res://szenen/nadel.tscn" id="2_nadel"]
 
 [sub_resource type="Gradient" id="Gradient_taste"]
 colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
@@ -149,6 +150,7 @@ horizontal_alignment = 1
 
 [node name="Kanone" type="Node2D" parent="."]
 script = ExtResource("1_kanone")
+nadel_szene = ExtResource("2_nadel")
 
 [node name="Koerper" type="ColorRect" parent="Kanone"]
 offset_left = -40.0
@@ -165,6 +167,9 @@ color = Color(0.75, 0.75, 0.75, 1)
 
 [node name="Kamera" type="Camera2D" parent="Kanone"]
 offset = Vector2(0, -380)
+
+[node name="Muendung" type="Marker2D" parent="Kanone"]
+position = Vector2(0, -140)
 
 [node name="Bedienung" type="CanvasLayer" parent="."]
 
@@ -193,5 +198,19 @@ offset_right = 200.0
 offset_bottom = 200.0
 theme_override_font_sizes/font_size = 120
 text = ">"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TasteSchuss" type="TouchScreenButton" parent="Bedienung"]
+position = Vector2(1200, 460)
+texture_normal = SubResource("GradientTexture2D_taste")
+action = "schiessen"
+visibility_mode = 1
+
+[node name="Wort" type="Label" parent="Bedienung/TasteSchuss"]
+offset_right = 200.0
+offset_bottom = 200.0
+theme_override_font_sizes/font_size = 48
+text = "Schuss"
 horizontal_alignment = 1
 vertical_alignment = 1
