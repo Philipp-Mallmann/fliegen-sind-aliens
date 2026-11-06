@@ -36,6 +36,7 @@ func schiessen(delta: float) -> void:
 	if Input.is_action_just_pressed("schiessen"):
 		nadel = nadel_szene.instantiate()
 		nadel.position = $Muendung.global_position
+		nadel.muendung = $Muendung
 		get_parent().add_child(nadel)
 		nadel.tree_exited.connect(nadel_ist_weg)
 
