@@ -755,10 +755,10 @@ extends Node
 Ein `Node` ist der einfachste Knoten von Godot: ohne Position, ohne Bild. Die Uebergabe muss nirgends stehen, sie steuert nur andere Knoten.
 
 ```gdscript
-# Wie schnell Arm und Nadel bei der Uebergabe fahren, in Pixeln pro Sekunde.
-@export var tempo: float = 1000.0
+# Wie lange die Fahrt hinueber dauert, in Sekunden. Arm und Nadel brauchen gleich lang, der Rueckweg auch.
+@export var dauer: float = 0.48
 ```
-Eine Zahl im Inspector. Damit fahren der Arm (hin und zurueck) und die Nadel (zum Haken). Der Arm braucht fuer seine 480 Pixel also 0,48 Sekunden pro Richtung. Wie sich das anfuehlt, entscheidest du am Spiel (Annahme N25).
+Eine Zahl im Inspector, die die ganze Bewegung steuert (Entscheidung Z91). In 0,48 Sekunden faehrt der Arm hinueber, in derselben Zeit fliegt die Nadel zum Haken, und in noch einmal 0,48 Sekunden faehrt der Arm zurueck. Groesser heisst langsamer und gemuetlicher, kleiner heisst schneller. Warum Sekunden und nicht Pixel pro Sekunde? Weil man eine Dauer leichter einschaetzen kann: "eine halbe Sekunde" stellt man sich vor, "1000 Pixel pro Sekunde" nicht. Wie es sich anfuehlt, entscheidest du am Spiel (Annahme N25).
 
 ```gdscript
 # Wie weit der Arm von der Mitte nach rechts faehrt, in Pixeln. Dort sitzt die rechte Hand.
@@ -807,16 +807,22 @@ Ab jetzt ist die Kanone gesperrt.
 `while` heisst: Die eingerueckten Zeilen wiederholen sich, **solange** die Bedingung stimmt, also solange noch eine Nadel in der Schlange steht (`size()` ist die Laenge der Liste). `pop_front` nimmt die vorderste Nadel heraus. Sie steht danach nicht mehr in der Liste.
 
 ```gdscript
-		await fahren(arm, "position", Vector2(ziel_x, 0.0))
+		var hin: Tween = create_tween()
+		hin.tween_property(arm, "position", Vector2(ziel_x, 0.0), dauer)
 ```
-Der Arm faehrt nach rechts an die rechte Hand. `fahren` ist die Funktion ganz unten. `await` heisst: Hier warten, bis `fahren` fertig ist, erst dann geht es mit der naechsten Zeile weiter. Das restliche Spiel laeuft waehrenddessen normal weiter, die Fliegen fliegen.
-
-Der Arm faehrt in `position`, also **relativ zur Kanone**: 480 Pixel rechts von ihr, 0 Pixel hoch.
+Ein Tween wie beim Blutfleck. Er schiebt den Arm in `dauer` Sekunden (0,48) nach rechts an die rechte Hand. Der Arm faehrt in `position`, also **relativ zur Kanone**: 480 Pixel rechts von ihr, 0 Pixel hoch.
 
 ```gdscript
-		await fahren(nadel, "global_position", haken.global_position)
+		hin.parallel().tween_property(nadel, "global_position", haken.global_position, dauer)
 ```
-Jetzt fliegt die Nadel (mit der Fliege als Kind) von der Trefferstelle zum Haken. Hier mit `global_position`, also in Weltkoordinaten, weil Nadel und Haken verschiedene Eltern haben. Der Haken ist ein Kind der Kanone, die Nadel ein Kind von `Spiel`.
+`parallel()` heisst wie beim Blutfleck: **gleichzeitig** mit der Zeile davor. Die Nadel (mit der Fliege als Kind) fliegt also im selben Moment los wie der Arm und braucht genauso lange, `dauer`. Arm und Nadel kommen gleichzeitig an, nichts haengt hinterher (Philipps Wunsch vom 08.11.). Die Nadel hat dabei einen anderen, meist laengeren Weg als der Arm, sie fliegt also schneller. Das ist gewollt: gleiche Zeit, nicht gleiches Tempo.
+
+Hier steht `global_position`, also Weltkoordinaten, weil Nadel und Haken verschiedene Eltern haben. Der Haken ist ein Kind der Kanone, die Nadel ein Kind von `Spiel`.
+
+```gdscript
+		await hin.finished
+```
+`finished` ist ein Signal, das der Tween ruft, wenn er fertig ist. `await` heisst: Hier warten, bis es kommt, erst dann geht es mit der naechsten Zeile weiter. Das restliche Spiel laeuft waehrenddessen normal weiter, die Fliegen fliegen.
 
 ```gdscript
 		nadel.reparent(haken)
@@ -824,9 +830,11 @@ Jetzt fliegt die Nadel (mit der Fliege als Kind) von der Trefferstelle zum Haken
 Am Haken angekommen, wird die Nadel ein Kind des Hakens. Ab jetzt faehrt sie mit der Kanone mit (der Haken ist ein Kind der Kanone) und bleibt immer oben rechts im Bild haengen, auch wenn man weiterfaehrt.
 
 ```gdscript
-		await fahren(arm, "position", Vector2.ZERO)
+		var zurueck: Tween = create_tween()
+		zurueck.tween_property(arm, "position", Vector2.ZERO, dauer)
+		await zurueck.finished
 ```
-Der Arm faehrt zurueck. `Vector2.ZERO` ist der Punkt 0, 0, also genau auf der Kanone, wie am Anfang.
+Ein zweiter Tween faehrt den Arm in derselben Zeit zurueck. `Vector2.ZERO` ist der Punkt 0, 0, also genau auf der Kanone, wie am Anfang. Wieder wartet `await`, bis er da ist.
 
 Danach springt `while` wieder nach oben. Hat in der Zwischenzeit eine zweite Nadel getroffen, steht sie jetzt in der Schlange, und alles beginnt fuer sie noch einmal: hin, abgeben, zurueck.
 
@@ -835,26 +843,7 @@ Danach springt `while` wieder nach oben. Hat in der Zwischenzeit eine zweite Nad
 ```
 Die Schlange ist leer, die Kanone ist wieder frei.
 
-```gdscript
-func fahren(ding: Node2D, eigenschaft: String, ziel: Vector2) -> void:
-```
-Eine Hilfsfunktion, damit dieselben vier Zeilen nicht dreimal dastehen. `ding` ist, was fahren soll (Arm oder Nadel), `eigenschaft` ist der Name des Werts als Text (`"position"` oder `"global_position"`), `ziel` ist, wohin.
-
-```gdscript
-	var weg: float = ding.get(eigenschaft).distance_to(ziel)
-```
-`ding.get("position")` ist dasselbe wie `ding.position`, nur dass der Name als Text hereinkommt. `distance_to` misst die gerade Strecke von dort bis zum Ziel, in Pixeln.
-
-```gdscript
-	var ablauf: Tween = create_tween()
-	ablauf.tween_property(ding, eigenschaft, ziel, weg / tempo)
-```
-Ein Tween wie beim Blutfleck. Die Dauer ist Weg durch Tempo. 480 Pixel bei 1000 Pixeln pro Sekunde sind 0,48 Sekunden. So faehrt alles gleich schnell, egal wie weit der Weg ist. Ist der Weg 0, ist auch die Dauer 0, und der Tween ist sofort fertig.
-
-```gdscript
-	await ablauf.finished
-```
-`finished` ist ein Signal, das der Tween ruft, wenn er fertig ist. `await` wartet darauf. Erst dann ist auch `fahren` fertig, und das `await fahren(...)` oben geht weiter.
+**Geaendert am 08.11.:** Vorher fuhr erst der Arm hinueber und danach die Nadel, beide mit einem Tempo in Pixeln pro Sekunde (`tempo`, 1000), und dafuer gab es eine Hilfsfunktion `fahren`. Jetzt fahren beide gleichzeitig, und die Bewegung wird ueber eine Dauer in Sekunden gesteuert (`dauer`). `fahren` wurde nicht mehr gebraucht und ist weg.
 
 ### `skripte/kanone.gd` - geaendert in Abschnitt 3
 
@@ -955,6 +944,6 @@ Spiel
 
 1. Die Nadel merkt sich vor jedem Schritt `alte_y` und prueft danach das ganze Stueck dazwischen (`unterwegs`). Eine Fliege, an der sie vorbeigesprungen ist, liegt genau auf diesem Stueck.
 2. Die Kamera ist ein Kind der Kanone. Fuehre die ganze Kanone, fuehre die Kamera mit, und man saehe im Bild keine Fahrt. Der Arm ist ein eigener Knoten in der Kanone. Faehrt nur er, bleibt die Kamera stehen.
-3. Beide Nadeln rufen `getroffen`, beide landen ueber `starten` in der `warteschlange`. Die erste startet `uebergeben`. Die zweite wartet, weil `laeuft` schon `true` ist. Die `while`-Schleife holt sie nach der ersten mit `pop_front` heraus: Der Arm faehrt ein zweites Mal hin, gibt ab und faehrt zurueck. Erst dann ist `laeuft` wieder `false`, und die Kanone darf fahren und schiessen.
+3. Beide Nadeln rufen `getroffen`, beide landen ueber `starten` in der `warteschlange`. Die erste startet `uebergeben`. Die zweite wartet, weil `laeuft` schon `true` ist. Die `while`-Schleife holt sie nach der ersten mit `pop_front` heraus: Der Arm faehrt ein zweites Mal hin (die zweite Nadel gleichzeitig mit ihm), gibt ab und faehrt zurueck. Erst dann ist `laeuft` wieder `false`, und die Kanone darf fahren und schiessen.
 
 </details>

@@ -1,7 +1,7 @@
 extends Node
 
-# Wie schnell Arm und Nadel bei der Uebergabe fahren, in Pixeln pro Sekunde.
-@export var tempo: float = 1000.0
+# Wie lange die Fahrt hinueber dauert, in Sekunden. Arm und Nadel brauchen gleich lang, der Rueckweg auch.
+@export var dauer: float = 0.48
 # Wie weit der Arm von der Mitte nach rechts faehrt, in Pixeln. Dort sitzt die rechte Hand.
 @export var ziel_x: float = 480.0
 # Der Arm: linke Hand, Kanone und Muendung. Nur er faehrt, die Kamera bleibt stehen.
@@ -25,15 +25,12 @@ func uebergeben() -> void:
 	laeuft = true
 	while warteschlange.size() > 0:
 		var nadel: Node2D = warteschlange.pop_front()
-		await fahren(arm, "position", Vector2(ziel_x, 0.0))
-		await fahren(nadel, "global_position", haken.global_position)
+		var hin: Tween = create_tween()
+		hin.tween_property(arm, "position", Vector2(ziel_x, 0.0), dauer)
+		hin.parallel().tween_property(nadel, "global_position", haken.global_position, dauer)
+		await hin.finished
 		nadel.reparent(haken)
-		await fahren(arm, "position", Vector2.ZERO)
+		var zurueck: Tween = create_tween()
+		zurueck.tween_property(arm, "position", Vector2.ZERO, dauer)
+		await zurueck.finished
 	laeuft = false
-
-
-func fahren(ding: Node2D, eigenschaft: String, ziel: Vector2) -> void:
-	var weg: float = ding.get(eigenschaft).distance_to(ziel)
-	var ablauf: Tween = create_tween()
-	ablauf.tween_property(ding, eigenschaft, ziel, weg / tempo)
-	await ablauf.finished
