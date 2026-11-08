@@ -434,3 +434,527 @@ Wie bei der Kanone: eine Kennnummer, mit der Godot die Datei wiederfindet, auch 
 3. Der Waechter in `nadel.tscn` meldet `screen_exited` und ruft damit `einholen` auf. Der Schalter `kehrt_zurueck` steht dann auf `true`, und die Nadel fliegt mit `move_toward` zur Muendung, dorthin, wo die Kanone gerade steht. Ist sie angekommen, loescht sie sich mit `queue_free`. Dabei sendet sie `tree_exited`, das hat die Kanone beim Schuss mit `nadel_ist_weg` verbunden. Dort startet das Nachladen, nach 0,5 Sekunden ist die Kanone bereit.
 
 </details>
+
+
+---
+
+## Abschnitt 3 - Fliegen, Treffer und Uebergabe
+
+**Was der Abschnitt kann:** Fuenf graue Fliegen fliegen seitlich hin und her. Die Nadel fliegt geradeaus, zweimal so weit, wie das Bild hoch ist, und verschwindet erst dann. Sie kehrt **nicht** mehr zurueck, die Harpune aus Abschnitt 2 ist wieder ausgebaut. Spaeter kommt dafuer ein Seil an die Nadel. Nach jedem Schuss laedt die Kanone 0,5 Sekunden nach, egal wo die Nadel gerade ist. Deshalb koennen kurz zwei Nadeln gleichzeitig fliegen (Entscheidung Z81).
+
+Trifft die Nadel eine Fliege, bleibt sie mit der Fliege an der Stelle stecken, und dort erscheint ein roter Fleck, der kurz waechst und verblasst. Dann faehrt der **Arm** (linke Hand mit Kanone) an den rechten Bildrand zur rechten Hand. Nadel und Fliege fliegen zum Haken oben ueber der rechten Hand und bleiben dort haengen (Z52). Danach faehrt der Arm zurueck in die Mitte. Waehrenddessen steht die Kamera still, man kann weder fahren noch schiessen, die anderen Fliegen fliegen weiter.
+
+**Platzhalter:** Der rote Fleck ist ein Platzhalter, der richtige Effekt kommt in Abschnitt 12. Bis Abschnitt 5 haengen alle gefangenen Fliegen am selben Punkt uebereinander. Das Auffaechern baut Abschnitt 5.
+
+**Neue Dateien:** `skripte/fliege.gd`, `szenen/fliege.tscn`, `skripte/blutfleck.gd`, `szenen/blutfleck.tscn`, `skripte/uebergabe.gd`. **Geaendert:** `skripte/nadel.gd` (komplett neu geschrieben), `szenen/nadel.tscn`, `skripte/kanone.gd`, `szenen/spiel.tscn`.
+
+### Wer macht was
+
+- Die **Fliege** fliegt nur hin und her. Wird sie gefangen, haelt sie still. Sie weiss nichts von der Nadel.
+- Die **Nadel** fliegt nach oben und schaut in jedem Bild nach, ob sie eine Fliege erwischt hat. Bei einem Treffer ruft sie laut "getroffen" (ein Signal). Wer zuhoert, entscheidet sie nicht.
+- Der **Blutfleck** spielt nur seine kurze Animation ab und loescht sich danach selbst.
+- Die **Uebergabe** hoert auf das "getroffen" und faehrt den Arm hin und zurueck. Das ist ein eigenes Skript, damit `kanone.gd` nicht noch eine dritte Aufgabe bekommt (§2: ein Skript, eine Sache).
+- Die **Kanone** faehrt und schiesst wie bisher. Neu: Waehrend die Uebergabe laeuft, macht sie nichts.
+
+### Der Trick 1: Wie die Nadel eine Fliege trifft
+
+Die Nadel ist sehr schnell: 3200 Pixel pro Sekunde, das sind bei 60 Bildern pro Sekunde etwa 53 Pixel **pro Bild**. Die Fliege ist nur 24 Pixel hoch. Wuerde man nur fragen "beruehrt die Nadel gerade eine Fliege?", koennte die Nadel in einem Bild unter der Fliege sein und im naechsten schon darueber. Sie wuerde einfach durch die Fliege springen.
+
+Deshalb fragt die Nadel anders: "Liegt eine Fliege **auf dem Stueck, das ich seit dem letzten Bild geflogen bin**?" Dafuer merkt sie sich, wo sie vor dem Schritt war (`alte_y`), und vergleicht danach. So geht keine Fliege dazwischen verloren, egal wie schnell die Nadel ist. Das ist eine einfache Rechnung, keine Physik-Engine (Entscheidung Z31).
+
+### Der Trick 2: Warum die Kamera bei der Uebergabe stehen bleibt
+
+Die Kamera ist ein Kind der Kanone (seit Abschnitt 1). Wuerde die ganze Kanone nach rechts fahren, fuehre die Kamera mit, und im Bild saehe man gar keine Bewegung, nur die Welt, die nach links rutscht. Deshalb gibt es jetzt den Knoten **Arm** in der Kanone. Darin stecken linke Hand, Koerper, Rohr und Muendung. Bei der Uebergabe faehrt nur der Arm. Der Knoten `Kanone` selbst, und mit ihm die Kamera, bleibt stehen.
+
+Die rechte Hand und der Haken sind ebenfalls Kinder der Kanone, aber **nicht** des Arms. Sie fahren also mit der Kamera mit und stehen immer an derselben Stelle im Bild, egal wohin man faehrt.
+
+### `skripte/fliege.gd` (die ganze Datei)
+
+```gdscript
+extends Node2D
+```
+Wie Kanone und Nadel: ein Ding mit einer Position in der 2D-Welt.
+
+```gdscript
+# Wie schnell die Fliege seitlich fliegt, in Pixeln pro Sekunde.
+@export var tempo: float = 150.0
+```
+Eine Zahl im Inspector. 150 ist langsamer als die Kanone (250), man kann eine Fliege also einholen. In `spiel.tscn` hat jede der fuenf Fliegen ein eigenes Tempo zwischen 100 und 180, damit sie nicht alle gleich fliegen.
+
+```gdscript
+# Wie weit die Fliege von ihrem Startpunkt nach links und nach rechts fliegt, in Pixeln.
+@export var strecke: float = 300.0
+```
+Die Fliege fliegt von ihrem Startpunkt aus hoechstens 300 Pixel nach rechts und 300 nach links. Ihre ganze Bahn ist also 600 Pixel breit.
+
+```gdscript
+# Wo die Fliege angefangen hat. Um diese Stelle fliegt sie hin und her.
+var start_x: float = 0.0
+```
+Hier merkt sich die Fliege die Mitte ihrer Bahn. Am Anfang steht 0, der richtige Wert kommt in `_ready` (unten).
+
+```gdscript
+# 1 heisst nach rechts, -1 heisst nach links.
+var richtung: float = 1.0
+```
+Die Richtung als Zahl. Der Vorteil: Man kann damit rechnen. Mal 1 bleibt das Tempo positiv (nach rechts), mal -1 wird es negativ (nach links). Am Anfang fliegt jede Fliege nach rechts.
+
+```gdscript
+# true heisst: Die Fliege haengt an der Nadel und fliegt nicht mehr.
+var gefangen: bool = false
+```
+Ein Schalter wie `kehrt_zurueck` in Abschnitt 2. Die Fliege selbst legt ihn nie um, das macht die Nadel beim Treffer (siehe unten).
+
+```gdscript
+func _ready() -> void:
+	start_x = position.x
+```
+`_ready` ruft Godot **einmal** auf, sobald die Fliege in der Welt ist. In diesem Moment steht sie noch da, wo sie in `spiel.tscn` hingesetzt wurde. Diese Stelle merkt sie sich als Mitte ihrer Bahn.
+
+```gdscript
+func _process(delta: float) -> void:
+	if gefangen:
+		return
+```
+Jedes Bild: Ist die Fliege gefangen, hoert die Funktion hier auf (`return`). Die Zeilen darunter laufen dann nicht mehr, die Fliege bewegt sich nicht mehr von selbst.
+
+```gdscript
+	position.x += richtung * tempo * delta
+```
+Die Fliege rueckt seitlich weiter. `richtung * tempo` ist +150 oder -150, mal `delta` (vergangene Zeit) ergibt das das Stueck fuer dieses eine Bild. Nur `position.x` aendert sich, nie `position.y`. Deshalb fliegt die Fliege **nur seitlich**.
+
+```gdscript
+	if position.x > start_x + strecke:
+		richtung = -1.0
+	if position.x < start_x - strecke:
+		richtung = 1.0
+```
+Die zwei Wendepunkte. Ist die Fliege weiter rechts als Mitte plus 300, fliegt sie ab jetzt nach links. Ist sie weiter links als Mitte minus 300, fliegt sie ab jetzt nach rechts. Sie kann dabei hoechstens ein winziges Stueck ueber den Wendepunkt hinausfliegen, so weit, wie sie in einem Bild kommt (etwa 3 Pixel). Weil sie immer gleich schnell fliegt und immer an denselben Stellen wendet, kann man vorausschaetzen, wo sie gleich ist. Das ist das "berechenbar" aus der Abschnittsdatei. Die zufaellig wendende Fliege und die Teleport-Fliege kommen in Abschnitt 9 (Z61).
+
+### `szenen/fliege.tscn`
+
+```
+Fliege (Node2D, traegt fliege.gd, Gruppe "fliegen")
+├── Fluegel (ColorRect)
+└── Koerper (ColorRect)
+```
+
+- **Gruppe "fliegen":** In der Kopfzeile des Knotens steht `groups=["fliegen"]`. Eine Gruppe ist wie ein Etikett. Jede Fliege traegt es, und die Nadel kann damit fragen: "Gib mir alle Knoten mit dem Etikett fliegen." So muss niemand eine Liste der Fliegen pflegen. Auch Fliegen, die ab Abschnitt 4 der Erzeuger baut, haben das Etikett automatisch.
+- **Fluegel:** ein hellgraues Rechteck (0.6), 30 breit, 10 hoch, ueber dem Koerper.
+- **Koerper:** ein fast schwarzes Rechteck (0.1), 40 breit (x -20 bis 20), 24 hoch (y -12 bis 12). Der Hintergrund ist Godots Standardgrau (0.3). Ein mittelgrauer Koerper waere darauf unsichtbar gewesen. Der Punkt der Fliege liegt genau in der Mitte des Koerpers.
+
+### `skripte/nadel.gd` (die ganze Datei, neu geschrieben)
+
+Von der Harpune aus Abschnitt 2 bleiben nur `extends` und die Zeile `@export var tempo`. `muendung`, `kehrt_zurueck`, `einholen` und `zurueckfliegen` sind weg.
+
+```gdscript
+extends Node2D
+
+# Wird gesendet, sobald die Nadel eine Fliege getroffen hat. Mit dabei: die Nadel selbst.
+signal getroffen(nadel: Node2D)
+```
+Ein **Signal** ist eine Nachricht, die ein Knoten in die Runde ruft. `tree_exited` aus Abschnitt 2 war ein Signal, das Godot selbst mitbringt. `getroffen` ist ein eigenes. Die Nadel weiss nicht, wer zuhoert. Sie ruft nur. Mitgeschickt wird die Nadel selbst, damit der Zuhoerer weiss, **welche** Nadel getroffen hat (es koennen ja zwei fliegen). Wer zuhoert, wird in `kanone.gd` festgelegt.
+
+```gdscript
+# Wie schnell die Nadel fliegt, in Pixeln pro Sekunde.
+@export var tempo: float = 3200.0
+```
+Wie bisher. Im Kommentar steht nicht mehr "hin und zurueck", weil es kein Zurueck mehr gibt.
+
+```gdscript
+# Wie weit die Nadel fliegt, bevor sie verschwindet, in Pixeln. 2160 ist zweimal die Bildhoehe.
+@export var reichweite: float = 2160.0
+```
+Das Bild ist 1080 Pixel hoch, die Nadel fliegt also zweimal so weit. Bei 3200 Pixeln pro Sekunde braucht sie dafuer 0,675 Sekunden. Fuer das Nachladen spielt das keine Rolle mehr, das zaehlt ab dem Schuss (siehe `kanone.gd`).
+
+Warum zaehlt die Nadel die Strecke selbst und fragt nicht mehr den Waechter, ob sie aus dem Bild ist? Weil sie absichtlich **ueber** den Bildrand hinaus fliegen soll, damit spaeter das Seil daran haengen kann. Der Waechter haette nur "aus dem Bild" melden koennen, nicht "doppelt so weit".
+
+```gdscript
+# Wie weit eine Fliege seitlich neben der Nadel sein darf und trotzdem getroffen wird, in Pixeln.
+@export var trefferbreite: float = 25.0
+```
+Die Fliege ist 40 Pixel breit, also 20 nach jeder Seite, die Nadel 3 nach jeder Seite. 20 + 3 = 23, mit 2 Pixeln Spielraum ergibt das 25. Ist die Mitte der Fliege hoechstens 25 Pixel neben der Nadel, ist es ein Treffer. Wird das Fangen zu schwer oder zu leicht, aendert man nur diese Zahl.
+
+```gdscript
+# Die Szene des Blutflecks. Bei jedem Treffer entsteht daraus ein neuer Fleck.
+@export var blutfleck_szene: PackedScene
+```
+Genau wie `nadel_szene` in der Kanone: ein Bauplan, eingetragen im Inspector (in `nadel.tscn`).
+
+```gdscript
+# Wie viele Pixel die Nadel schon geflogen ist.
+var geflogen: float = 0.0
+```
+Ein Zaehler, der mit jedem Bild waechst. Hat er die Reichweite erreicht, verschwindet die Nadel.
+
+```gdscript
+# true heisst: Die Nadel hat eine Fliege getroffen und steckt fest.
+var steckt: bool = false
+```
+Wieder ein Schalter.
+
+```gdscript
+func _process(delta: float) -> void:
+	if steckt:
+		return
+```
+Steckt die Nadel, macht sie selbst nichts mehr: kein Fliegen, kein Pruefen. Bewegt wird sie ab dann nur noch von der Uebergabe.
+
+```gdscript
+	var alte_y: float = global_position.y
+	position.y -= tempo * delta
+	geflogen += tempo * delta
+```
+Erst merkt sich die Nadel, wo sie gerade ist (`alte_y`). Dann fliegt sie ein Stueck nach oben (wie in Abschnitt 2: kleineres y heisst weiter oben). Dann zaehlt sie dasselbe Stueck zu `geflogen` dazu. `position` und `global_position` sind bei der fliegenden Nadel dasselbe, weil sie direkt unter `Spiel` haengt und `Spiel` bei 0, 0 steht. `global_position` steht hier, weil die Fliegen auch so verglichen werden (unten).
+
+```gdscript
+	var fliege: Node2D = getroffene_fliege(alte_y)
+```
+Die Nadel fragt ihre eigene Funktion `getroffene_fliege` (unten): "Habe ich auf dem Stueck von `alte_y` bis hierher eine Fliege erwischt?" Die Antwort ist entweder eine Fliege oder `null` (keine).
+
+```gdscript
+	if fliege != null:
+		treffen(fliege)
+	elif geflogen >= reichweite:
+		queue_free()
+```
+`!=` heisst "ist nicht gleich". Gab es eine Fliege, kommt der Treffer (Funktion `treffen`, unten). Sonst (`elif` = "sonst, wenn") prueft die Nadel, ob sie schon weit genug geflogen ist. Dann loescht sie sich. Das ist ein Fehlschuss.
+
+```gdscript
+func getroffene_fliege(alte_y: float) -> Node2D:
+	var kandidat: Node2D = null
+```
+`-> Node2D` heisst: Diese Funktion gibt am Ende einen Knoten zurueck (oder `null`). `kandidat` ist die bisher beste Fliege. Am Anfang gibt es noch keine.
+
+```gdscript
+	for fliege in get_tree().get_nodes_in_group("fliegen"):
+```
+`get_nodes_in_group("fliegen")` liefert alle Knoten mit dem Etikett "fliegen" (siehe `fliege.tscn`). `for ... in` heisst: Die eingerueckten Zeilen darunter laufen einmal **fuer jede Fliege**. Die Fliege, die gerade dran ist, heisst in jedem Durchgang `fliege`.
+
+```gdscript
+		if fliege.gefangen:
+			continue
+```
+Eine Fliege, die schon an einer Nadel haengt, zaehlt nicht. `continue` heisst: diese Fliege ueberspringen, weiter mit der naechsten.
+
+```gdscript
+		var seitlich: float = absf(fliege.global_position.x - global_position.x)
+```
+Wie weit ist die Fliege seitlich von der Nadel weg? "Fliege x minus Nadel x" ist positiv, wenn die Fliege rechts ist, und negativ, wenn sie links ist. `absf` macht daraus immer eine positive Zahl (aus -10 wird 10). So zaehlt nur der Abstand, nicht die Seite.
+
+```gdscript
+		var unterwegs: bool = fliege.global_position.y <= alte_y and fliege.global_position.y >= global_position.y
+```
+Liegt die Fliege auf dem Stueck, das die Nadel gerade geflogen ist? Das Stueck geht von `alte_y` (unten, groessere Zahl) bis `global_position.y` (oben, kleinere Zahl). Die Fliege muss dazwischen sein: nicht tiefer als `alte_y` (`<=` heisst "kleiner oder gleich") **und** (`and`) nicht hoeher als die Nadel jetzt (`>=` heisst "groesser oder gleich"). Das Ergebnis ist `true` oder `false`. Das ist Trick 1 von oben: So springt die Nadel nie ueber eine Fliege hinweg.
+
+```gdscript
+		if seitlich <= trefferbreite and unterwegs:
+```
+Ein Treffer braucht beides: seitlich nah genug **und** auf dem Stueck.
+
+```gdscript
+			if kandidat == null or fliege.global_position.y > kandidat.global_position.y:
+				kandidat = fliege
+```
+Es koennten zwei Fliegen auf dem Stueck sein, eine ueber der anderen. Getroffen wird **die erste in der Linie**, also die unterste. Unten heisst in Godot: die groessere y-Zahl. Die Fliege wird zum neuen Kandidaten, wenn es noch keinen gibt (`kandidat == null`) **oder** (`or`) wenn sie tiefer haengt als der bisherige Kandidat.
+
+```gdscript
+	return kandidat
+```
+Nach allen Fliegen gibt die Funktion den Kandidaten zurueck. Gab es keinen, ist das `null`.
+
+Warum heisst die Variable `kandidat` und nicht `getroffen`? Weil `getroffen` schon der Name des Signals ist. Zwei Dinge mit demselben Namen in einem Skript verwechselt man leicht, und Godot warnt davor.
+
+```gdscript
+func treffen(fliege: Node2D) -> void:
+	steckt = true
+	global_position.y = fliege.global_position.y
+```
+Erst den Schalter umlegen, damit die Nadel ab dem naechsten Bild nicht mehr fliegt. Dann setzt sich die Nadel genau auf die Hoehe der Fliege zurueck, denn im letzten Schritt war sie schon ein Stueck an ihr vorbeigeflogen. Die Spitze der Nadel ist ihr Punkt (siehe `nadel.tscn`). Sie sitzt jetzt also genau in der Fliege.
+
+```gdscript
+	fliege.gefangen = true
+	fliege.global_position.x = global_position.x
+```
+Die Nadel legt den Schalter der Fliege um, die Fliege fliegt ab jetzt nicht mehr. Dann wird die Fliege seitlich genau auf die Nadel geschoben (um hoechstens 25 Pixel), damit sie sichtbar **an** der Nadel haengt und nicht daneben.
+
+```gdscript
+	fliege.reparent(self)
+```
+`reparent` haengt einen Knoten an einen neuen Eltern-Knoten, hier an die Nadel (`self`). Die Fliege bleibt dabei genau da, wo sie im Bild ist. Ab jetzt gilt aber: Kinder bewegen sich mit ihren Eltern (wie die Kamera mit der Kanone). Wenn die Uebergabe die Nadel zum Haken fliegen laesst, kommt die Fliege also von selbst mit.
+
+```gdscript
+	var fleck: Node2D = blutfleck_szene.instantiate()
+	get_parent().add_child(fleck)
+	fleck.global_position = global_position
+```
+So wie die Kanone die Nadel baut: aus dem Bauplan einen neuen Blutfleck machen, ihn in die Welt haengen (beim Eltern-Knoten der Nadel, also bei `Spiel`) und an die Trefferstelle setzen. Der Fleck haengt **nicht** an der Nadel, er bleibt also an der Stelle, auch wenn die Nadel weggeholt wird.
+
+```gdscript
+	getroffen.emit(self)
+```
+`emit` heisst: Das Signal jetzt rufen. Mitgeschickt wird die Nadel selbst. Ab hier uebernimmt die Uebergabe.
+
+### `szenen/nadel.tscn` - geaendert
+
+```
+Nadel (Node2D, traegt nadel.gd)
+└── Strich (ColorRect)
+```
+
+- **Waechter weg:** Den `VisibleOnScreenNotifier2D` und seine Verbindung zu `einholen` gibt es nicht mehr. Die Nadel zaehlt ihre Strecke jetzt selbst.
+- **Strich umgedreht:** Vorher ging der Strich von y -50 bis 0, jetzt von 0 bis 50. Der Punkt der Nadel ist damit ihre **Spitze** (oben), der Strich haengt darunter. Wenn die Nadel "bei der Fliege steht", steckt also wirklich die Spitze in der Fliege. Beim Schuss sitzt die Nadel dadurch zuerst im Rohr und kommt dann oben heraus.
+- **`blutfleck_szene = blutfleck.tscn`:** der Eintrag im Inspector fuer den Bauplan des Flecks.
+
+### `skripte/blutfleck.gd` (die ganze Datei)
+
+```gdscript
+extends Node2D
+
+# Wie lange der Fleck waechst und verblasst, in Sekunden.
+@export var dauer: float = 0.6
+```
+Eine Zahl im Inspector: 0,6 Sekunden.
+
+```gdscript
+func _ready() -> void:
+	var ablauf: Tween = create_tween()
+```
+Sobald der Fleck in der Welt ist, baut er sich einen **Tween**. Ein Tween ist ein Helfer von Godot, der einen Wert in einer bestimmten Zeit gleichmaessig von A nach B schiebt. Man nennt ihm nur Ziel und Dauer, die Rechnung fuer jedes Bild macht er selbst.
+
+```gdscript
+	ablauf.tween_property(self, "scale", Vector2(2.0, 2.0), dauer)
+```
+"Schiebe bei mir selbst (`self`) die Groesse (`scale`) in 0,6 Sekunden auf das Doppelte." Der Fleck startet bei halber Groesse (siehe `blutfleck.tscn`), waechst also auf das Vierfache seiner Startgroesse.
+
+```gdscript
+	ablauf.parallel().tween_property(self, "modulate:a", 0.0, dauer)
+```
+`modulate:a` ist die Deckkraft: 1 heisst voll sichtbar, 0 unsichtbar. `parallel()` heisst: **gleichzeitig** mit der Zeile davor, nicht danach. Der Fleck waechst also und verblasst dabei.
+
+```gdscript
+	ablauf.tween_callback(queue_free)
+```
+Ohne `parallel()` kommt dieser Schritt **danach**: Sind Wachsen und Verblassen fertig, ruft der Tween `queue_free` auf, und der Fleck loescht sich selbst.
+
+### `szenen/blutfleck.tscn`
+
+```
+Blutfleck (Node2D, traegt blutfleck.gd, scale 0.5)
+└── Fleck (Polygon2D)
+```
+
+- **scale = 0.5:** Der Fleck beginnt bei halber Groesse.
+- **Fleck (Polygon2D):** eine gefuellte Flaeche aus Eckpunkten. Hier sind es acht Punkte im Abstand von etwa 30 Pixeln um die Mitte, das sieht fast aus wie ein Kreis. Farbe dunkelrot (0.75, 0.05, 0.05). Das ist die erste Farbe ausser Grau im Spiel, als Platzhalter (Annahme N19).
+
+### `skripte/uebergabe.gd` (die ganze Datei)
+
+```gdscript
+extends Node
+```
+Ein `Node` ist der einfachste Knoten von Godot: ohne Position, ohne Bild. Die Uebergabe muss nirgends stehen, sie steuert nur andere Knoten.
+
+```gdscript
+# Wie schnell Arm und Nadel bei der Uebergabe fahren, in Pixeln pro Sekunde.
+@export var tempo: float = 1000.0
+```
+Eine Zahl im Inspector. Damit fahren der Arm (hin und zurueck) und die Nadel (zum Haken). Der Arm braucht fuer seine 480 Pixel also 0,48 Sekunden pro Richtung. Wie sich das anfuehlt, entscheidest du am Spiel (Annahme N25).
+
+```gdscript
+# Wie weit der Arm von der Mitte nach rechts faehrt, in Pixeln. Dort sitzt die rechte Hand.
+@export var ziel_x: float = 480.0
+```
+Die Bildmitte ist 0, der rechte Bildrand liegt bei 720 (das Bild ist 1440 breit). Die rechte Hand beginnt bei 560. Bei 480 steht die Kanone also direkt neben ihr.
+
+```gdscript
+# Der Arm: linke Hand, Kanone und Muendung. Nur er faehrt, die Kamera bleibt stehen.
+@export var arm: Node2D
+# Die Stelle ueber der rechten Hand, an der die gefangenen Fliegen haengen.
+@export var haken: Node2D
+```
+Zwei Knoten, die im Inspector eingetragen werden (in `spiel.tscn` steht `arm = NodePath("../Arm")`). So steht im Code kein Pfad, und wer den Arm umbenennt, aendert nur den Eintrag im Inspector.
+
+```gdscript
+# true heisst: Gerade laeuft eine Uebergabe. Die Kanone faehrt und schiesst dann nicht.
+var laeuft: bool = false
+```
+Diesen Schalter fragt die Kanone in jedem Bild ab (siehe `kanone.gd`).
+
+```gdscript
+# Nadeln mit Fliege, die noch uebergeben werden muessen, der Reihe nach.
+var warteschlange: Array[Node2D] = []
+```
+Ein `Array` ist eine Liste, `[]` heisst: am Anfang leer. `Array[Node2D]` heisst: In dieser Liste stehen nur Knoten. Warum eine Liste? Weil zwei Nadeln gleichzeitig fliegen koennen (Z81). Trifft die zweite, waehrend die erste noch uebergeben wird, muss sie warten, bis sie dran ist, wie an der Kasse.
+
+```gdscript
+func starten(nadel: Node2D) -> void:
+	warteschlange.append(nadel)
+	if not laeuft:
+		uebergeben()
+```
+Diese Funktion hoert auf das Signal `getroffen` jeder Nadel (verbunden in `kanone.gd`). `append` stellt die Nadel hinten in die Schlange. Laeuft noch keine Uebergabe (`not laeuft`), wird eine gestartet. Laeuft schon eine, passiert hier nichts weiter: Die laufende Uebergabe holt sich die neue Nadel selbst aus der Schlange (siehe unten).
+
+```gdscript
+func uebergeben() -> void:
+	laeuft = true
+```
+Ab jetzt ist die Kanone gesperrt.
+
+```gdscript
+	while warteschlange.size() > 0:
+		var nadel: Node2D = warteschlange.pop_front()
+```
+`while` heisst: Die eingerueckten Zeilen wiederholen sich, **solange** die Bedingung stimmt, also solange noch eine Nadel in der Schlange steht (`size()` ist die Laenge der Liste). `pop_front` nimmt die vorderste Nadel heraus. Sie steht danach nicht mehr in der Liste.
+
+```gdscript
+		await fahren(arm, "position", Vector2(ziel_x, 0.0))
+```
+Der Arm faehrt nach rechts an die rechte Hand. `fahren` ist die Funktion ganz unten. `await` heisst: Hier warten, bis `fahren` fertig ist, erst dann geht es mit der naechsten Zeile weiter. Das restliche Spiel laeuft waehrenddessen normal weiter, die Fliegen fliegen.
+
+Der Arm faehrt in `position`, also **relativ zur Kanone**: 480 Pixel rechts von ihr, 0 Pixel hoch.
+
+```gdscript
+		await fahren(nadel, "global_position", haken.global_position)
+```
+Jetzt fliegt die Nadel (mit der Fliege als Kind) von der Trefferstelle zum Haken. Hier mit `global_position`, also in Weltkoordinaten, weil Nadel und Haken verschiedene Eltern haben. Der Haken ist ein Kind der Kanone, die Nadel ein Kind von `Spiel`.
+
+```gdscript
+		nadel.reparent(haken)
+```
+Am Haken angekommen, wird die Nadel ein Kind des Hakens. Ab jetzt faehrt sie mit der Kanone mit (der Haken ist ein Kind der Kanone) und bleibt immer oben rechts im Bild haengen, auch wenn man weiterfaehrt.
+
+```gdscript
+		await fahren(arm, "position", Vector2.ZERO)
+```
+Der Arm faehrt zurueck. `Vector2.ZERO` ist der Punkt 0, 0, also genau auf der Kanone, wie am Anfang.
+
+Danach springt `while` wieder nach oben. Hat in der Zwischenzeit eine zweite Nadel getroffen, steht sie jetzt in der Schlange, und alles beginnt fuer sie noch einmal: hin, abgeben, zurueck.
+
+```gdscript
+	laeuft = false
+```
+Die Schlange ist leer, die Kanone ist wieder frei.
+
+```gdscript
+func fahren(ding: Node2D, eigenschaft: String, ziel: Vector2) -> void:
+```
+Eine Hilfsfunktion, damit dieselben vier Zeilen nicht dreimal dastehen. `ding` ist, was fahren soll (Arm oder Nadel), `eigenschaft` ist der Name des Werts als Text (`"position"` oder `"global_position"`), `ziel` ist, wohin.
+
+```gdscript
+	var weg: float = ding.get(eigenschaft).distance_to(ziel)
+```
+`ding.get("position")` ist dasselbe wie `ding.position`, nur dass der Name als Text hereinkommt. `distance_to` misst die gerade Strecke von dort bis zum Ziel, in Pixeln.
+
+```gdscript
+	var ablauf: Tween = create_tween()
+	ablauf.tween_property(ding, eigenschaft, ziel, weg / tempo)
+```
+Ein Tween wie beim Blutfleck. Die Dauer ist Weg durch Tempo. 480 Pixel bei 1000 Pixeln pro Sekunde sind 0,48 Sekunden. So faehrt alles gleich schnell, egal wie weit der Weg ist. Ist der Weg 0, ist auch die Dauer 0, und der Tween ist sofort fertig.
+
+```gdscript
+	await ablauf.finished
+```
+`finished` ist ein Signal, das der Tween ruft, wenn er fertig ist. `await` wartet darauf. Erst dann ist auch `fahren` fertig, und das `await fahren(...)` oben geht weiter.
+
+### `skripte/kanone.gd` - geaendert in Abschnitt 3
+
+Neu oder geaendert sind diese Stellen, der Rest ist wie in Abschnitt 1 und 2:
+
+```gdscript
+# Wie lange die Kanone nach einem Schuss nachlaedt, in Sekunden.
+@export var nachladezeit: float = 0.5
+```
+Nur der Kommentar ist neu: "nach einem Schuss" statt "nachdem die Nadel weg ist".
+
+**Weg** sind die Variable `var nadel` und die Funktion `nadel_ist_weg`. Die Kanone muss sich keine Nadel mehr merken, weil das Nachladen nicht mehr auf die Nadel wartet (Z81). Damit kippt Z21 aus Abschnitt 2 ("hoechstens eine Nadel"). Auch `nadel.muendung = $Muendung` ist weg, die Nadel kehrt ja nicht mehr zurueck.
+
+```gdscript
+func _process(delta: float) -> void:
+	if $Uebergabe.laeuft:
+		aktuelles_tempo = 0.0
+		return
+	fahren(delta)
+	schiessen(delta)
+```
+Laeuft die Uebergabe, macht die Kanone nichts: kein Fahren, kein Schiessen. `aktuelles_tempo = 0.0` sorgt dafuer, dass sie danach aus dem Stand anfaehrt und nicht mit dem alten Schwung von vor der Uebergabe weiterrollt. `$Uebergabe` ist der Knoten `Uebergabe`, ein Kind der Kanone.
+
+```gdscript
+func schiessen(delta: float) -> void:
+	nachladen_noch -= delta
+	if nachladen_noch > 0.0:
+		return
+```
+Die Sperre fragt nur noch das Nachladen ab. Vorher stand hier zusaetzlich `nadel != null or`, also "solange eine Nadel fliegt". Das ist weg.
+
+```gdscript
+	if Input.is_action_just_pressed("schiessen"):
+		var nadel: Node2D = nadel_szene.instantiate()
+		nadel.position = $Arm/Muendung.global_position
+		get_parent().add_child(nadel)
+```
+Wie bisher, mit zwei Unterschieden. `var nadel` steht jetzt hier: Die Nadel ist nur noch eine Variable fuer diese paar Zeilen, nicht mehr fuer die ganze Kanone. Und die Muendung heisst `$Arm/Muendung`, weil sie jetzt im Arm steckt (siehe `spiel.tscn`).
+
+```gdscript
+		nadel.getroffen.connect($Uebergabe.starten)
+```
+"Wenn diese Nadel `getroffen` ruft, rufe `starten` in der Uebergabe auf." So wie vorher `tree_exited.connect(nadel_ist_weg)`, nur mit dem neuen Signal und einem anderen Zuhoerer.
+
+```gdscript
+		nachladen_noch = nachladezeit
+```
+Das Nachladen beginnt **jetzt, beim Schuss**, nicht erst, wenn die Nadel weg ist. Ein Fehlschuss kostet also genau 0,5 Sekunden (Z81).
+
+### `szenen/spiel.tscn` - geaendert
+
+```
+Spiel
+├── Boden ...                     (unveraendert)
+├── Fliege1 bis Fliege5           neu
+├── Kanone (Node2D, traegt kanone.gd)
+│   ├── Arm (Node2D)              neu
+│   │   ├── LinkeHand (ColorRect)     neu
+│   │   ├── Koerper (ColorRect)       verschoben in den Arm
+│   │   ├── Rohr (ColorRect)          verschoben in den Arm
+│   │   └── Muendung (Marker2D)       verschoben in den Arm
+│   ├── RechteHand (ColorRect)    neu
+│   ├── Haken (Marker2D)          neu
+│   ├── Kamera (Camera2D)         unveraendert
+│   └── Uebergabe (Node, traegt uebergabe.gd)   neu
+└── Bedienung ...                 (unveraendert)
+```
+
+- **Fliege1 bis Fliege5:** aus `fliege.tscn` gebaut (`instance=`), direkt unter `Spiel`:
+
+| Fliege | Position (x, y) | tempo |
+|--------|-----------------|-------|
+| Fliege1 | -500, -500 | 150 |
+| Fliege2 | -200, -750 | 120 |
+| Fliege3 | 100, -450 | 180 |
+| Fliege4 | 350, -650 | 150 |
+| Fliege5 | 550, -850 | 100 |
+
+  Die Kanone steht bei y 0, das Bild reicht von y -920 (oben) bis 160 (unten). Am Anfang sind also alle Fliegen zu sehen, auf verschiedenen Hoehen. Faehrt man weit weg, sind sie nicht mehr im Bild. Fliegen, die mitkommen, baut erst der Erzeuger in Abschnitt 4.
+- **Arm:** ein leerer `Node2D` ohne eigenes Bild, nur ein Behaelter. Koerper, Rohr und Muendung haben ihre alten Zahlen behalten, sie sitzen nur eine Ebene tiefer. Siehe Trick 2.
+- **LinkeHand:** ein graues Rechteck (0.6), 120 breit, unter dem Koerper (y -35 bis 5). Sie steht in der Liste **vor** dem Koerper, deshalb malt Godot sie zuerst, und der Koerper liegt darueber. Es sieht so aus, als halte die Hand die Kanone.
+- **RechteHand:** ein graues Rechteck (0.6), x 560 bis 680, y -100 bis -20, also unten im rechten Fuenftel des Bildes (Annahme N23). Am Handy liegt sie halb unter der Pfeiltaste rechts. Das klaert sich mit den Fotos und den Handy-Streifen.
+- **Haken (Marker2D):** ein unsichtbarer Punkt bei x 620, y -860, also oben ueber der rechten Hand, 60 Pixel unter dem oberen Bildrand. Dort haengen die gefangenen Fliegen (Annahme N24).
+- **Uebergabe:** traegt `uebergabe.gd`. Im Inspector stehen `arm = ../Arm` und `haken = ../Haken` (`..` heisst: eine Ebene hoeher, also bei der Kanone nachsehen). Die Zeile `node_paths=...` in der Kopfzeile schreibt Godot selbst dazu, sobald ein `@export` auf einen Knoten zeigt.
+- Oben in der Datei stehen zwei neue `ext_resource`-Zeilen, fuer `fliege.tscn` und `uebergabe.gd`. `load_steps` ist entsprechend gestiegen.
+
+### `.uid`-Dateien (von Godot selbst angelegt)
+
+`fliege.gd.uid`, `blutfleck.gd.uid` und `uebergabe.gd.uid`: Wie bei den anderen Skripten sind das Kennnummern. Nicht von Hand aendern.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Die Nadel fliegt 53 Pixel pro Bild, die Fliege ist nur 24 Pixel hoch. Warum fliegt die Nadel trotzdem nie durch eine Fliege hindurch?
+2. Warum faehrt bei der Uebergabe der `Arm` und nicht die ganze `Kanone`?
+3. Du schiesst zweimal kurz hintereinander, und beide Nadeln treffen. Was passiert, und welche Zeilen sorgen dafuer?
+
+<details><summary>Antworten</summary>
+
+1. Die Nadel merkt sich vor jedem Schritt `alte_y` und prueft danach das ganze Stueck dazwischen (`unterwegs`). Eine Fliege, an der sie vorbeigesprungen ist, liegt genau auf diesem Stueck.
+2. Die Kamera ist ein Kind der Kanone. Fuehre die ganze Kanone, fuehre die Kamera mit, und man saehe im Bild keine Fahrt. Der Arm ist ein eigener Knoten in der Kanone. Faehrt nur er, bleibt die Kamera stehen.
+3. Beide Nadeln rufen `getroffen`, beide landen ueber `starten` in der `warteschlange`. Die erste startet `uebergeben`. Die zweite wartet, weil `laeuft` schon `true` ist. Die `while`-Schleife holt sie nach der ersten mit `pop_front` heraus: Der Arm faehrt ein zweites Mal hin, gibt ab und faehrt zurueck. Erst dann ist `laeuft` wieder `false`, und die Kanone darf fahren und schiessen.
+
+</details>

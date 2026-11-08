@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://skripte/blutfleck.gd" id="1_blutfleck"]
+
+[node name="Blutfleck" type="Node2D"]
+scale = Vector2(0.5, 0.5)
+script = ExtResource("1_blutfleck")
+
+[node name="Fleck" type="Polygon2D" parent="."]
+color = Color(0.75, 0.05, 0.05, 1)
+polygon = PackedVector2Array(0, -30, 21, -21, 30, 0, 21, 21, 0, 30, -21, 21, -30, 0, -21, -21)

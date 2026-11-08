@@ -6,18 +6,19 @@ extends Node2D
 @export var beschleunigung: float = 600.0
 # Die Szene der Nadel. Bei jedem Schuss entsteht daraus eine neue Nadel.
 @export var nadel_szene: PackedScene
-# Wie lange die Kanone nachlaedt, nachdem die Nadel weg ist, in Sekunden.
+# Wie lange die Kanone nach einem Schuss nachlaedt, in Sekunden.
 @export var nachladezeit: float = 0.5
 
 # Das Tempo, mit dem die Kanone gerade faehrt. Negativ heisst nach links.
 var aktuelles_tempo: float = 0.0
-# Die Nadel, die gerade fliegt. null heisst: Es ist keine Nadel unterwegs.
-var nadel: Node2D = null
 # Wie viele Sekunden das Nachladen noch dauert. 0 oder weniger heisst: bereit.
 var nachladen_noch: float = 0.0
 
 
 func _process(delta: float) -> void:
+	if $Uebergabe.laeuft:
+		aktuelles_tempo = 0.0
+		return
 	fahren(delta)
 	schiessen(delta)
 
@@ -31,16 +32,11 @@ func fahren(delta: float) -> void:
 
 func schiessen(delta: float) -> void:
 	nachladen_noch -= delta
-	if nadel != null or nachladen_noch > 0.0:
+	if nachladen_noch > 0.0:
 		return
 	if Input.is_action_just_pressed("schiessen"):
-		nadel = nadel_szene.instantiate()
-		nadel.position = $Muendung.global_position
-		nadel.muendung = $Muendung
+		var nadel: Node2D = nadel_szene.instantiate()
+		nadel.position = $Arm/Muendung.global_position
 		get_parent().add_child(nadel)
-		nadel.tree_exited.connect(nadel_ist_weg)
-
-
-func nadel_ist_weg() -> void:
-	nadel = null
-	nachladen_noch = nachladezeit
+		nadel.getroffen.connect($Uebergabe.starten)
+		nachladen_noch = nachladezeit
