@@ -7,8 +7,6 @@ signal getroffen(nadel: Node2D)
 @export var tempo: float = 3200.0
 # Wie weit die Nadel fliegt, bevor sie verschwindet, in Pixeln. 2160 ist zweimal die Bildhoehe.
 @export var reichweite: float = 2160.0
-# Wie weit eine Fliege seitlich neben der Nadel sein darf und trotzdem getroffen wird, in Pixeln.
-@export var trefferbreite: float = 25.0
 # Die Szene des Blutflecks. Bei jedem Treffer entsteht daraus ein neuer Fleck.
 @export var blutfleck_szene: PackedScene
 
@@ -16,39 +14,37 @@ signal getroffen(nadel: Node2D)
 var geflogen: float = 0.0
 # true heisst: Die Nadel hat eine Fliege getroffen und steckt fest.
 var steckt: bool = false
+# Die Fliege, die an der Nadel steckt. null heisst: noch keine.
+var fliege: Node2D = null
 
 
 func _process(delta: float) -> void:
 	if steckt:
 		return
-	var alte_y: float = global_position.y
 	position.y -= tempo * delta
 	geflogen += tempo * delta
-	var fliege: Node2D = getroffene_fliege(alte_y)
-	if fliege != null:
-		treffen(fliege)
+	var getroffene: Node2D = fliege_an_der_spitze()
+	if getroffene != null:
+		treffen(getroffene)
 	elif geflogen >= reichweite:
 		queue_free()
 
 
-func getroffene_fliege(alte_y: float) -> Node2D:
-	var kandidat: Node2D = null
-	for fliege in get_tree().get_nodes_in_group("fliegen"):
-		if fliege.gefangen:
+func fliege_an_der_spitze() -> Node2D:
+	for kandidat in get_tree().get_nodes_in_group("fliegen"):
+		if kandidat.gefangen:
 			continue
-		var seitlich: float = absf(fliege.global_position.x - global_position.x)
-		var unterwegs: bool = fliege.global_position.y <= alte_y and fliege.global_position.y >= global_position.y
-		if seitlich <= trefferbreite and unterwegs:
-			if kandidat == null or fliege.global_position.y > kandidat.global_position.y:
-				kandidat = fliege
-	return kandidat
+		var seitlich: float = absf(kandidat.global_position.x - global_position.x)
+		var senkrecht: float = absf(kandidat.global_position.y - global_position.y)
+		if seitlich <= kandidat.halbe_groesse and senkrecht <= kandidat.halbe_groesse:
+			return kandidat
+	return null
 
 
-func treffen(fliege: Node2D) -> void:
+func treffen(getroffene: Node2D) -> void:
 	steckt = true
-	global_position.y = fliege.global_position.y
+	fliege = getroffene
 	fliege.gefangen = true
-	fliege.global_position.x = global_position.x
 	fliege.reparent(self)
 	var fleck: Node2D = blutfleck_szene.instantiate()
 	get_parent().add_child(fleck)

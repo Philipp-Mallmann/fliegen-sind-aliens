@@ -4,6 +4,10 @@ extends Node2D
 @export var tempo: float = 150.0
 # Wie weit die Fliege von ihrem Startpunkt nach links und nach rechts fliegt, in Pixeln.
 @export var strecke: float = 300.0
+# Wie viel Flugkraft die Fliege gibt, wenn sie gefangen ist.
+@export var flugkraft: int = 2
+# Die halbe Breite und die halbe Hoehe der Fliege, in Pixeln. 50 heisst: Die Fliege ist 100 mal 100 gross.
+@export var halbe_groesse: float = 50.0
 
 # Wo die Fliege angefangen hat. Um diese Stelle fliegt sie hin und her.
 var start_x: float = 0.0

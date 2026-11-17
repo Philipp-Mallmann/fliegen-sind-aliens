@@ -440,6 +440,8 @@ Wie bei der Kanone: eine Kennnummer, mit der Godot die Datei wiederfindet, auch 
 
 ## Abschnitt 3 - Fliegen, Treffer und Uebergabe
 
+> **Stand 17.11.:** "Der Trick 1", `nadel.gd`, `uebergabe.gd`, die Zeile zum Haken, die fuenf Fliegen von Hand und Frage 1 sind ueberholt. Die neue Fassung steht weiter unten in "Abschnitt 3 - geaendert am 17.11." und in Abschnitt 4.
+
 **Was der Abschnitt kann:** Fuenf graue Fliegen fliegen seitlich hin und her. Die Nadel fliegt geradeaus, zweimal so weit, wie das Bild hoch ist, und verschwindet erst dann. Sie kehrt **nicht** mehr zurueck, die Harpune aus Abschnitt 2 ist wieder ausgebaut. Spaeter kommt dafuer ein Seil an die Nadel. Nach jedem Schuss laedt die Kanone 0,5 Sekunden nach, egal wo die Nadel gerade ist. Deshalb koennen kurz zwei Nadeln gleichzeitig fliegen (Entscheidung Z81).
 
 Trifft die Nadel eine Fliege, bleibt sie mit der Fliege an der Stelle stecken, und dort erscheint ein roter Fleck, der kurz waechst und verblasst. Dann faehrt der **Arm** (linke Hand mit Kanone) an den rechten Bildrand zur rechten Hand. Nadel und Fliege fliegen zum Haken oben ueber der rechten Hand und bleiben dort haengen (Z52). Danach faehrt der Arm zurueck in die Mitte. Waehrenddessen steht die Kamera still, man kann weder fahren noch schiessen, die anderen Fliegen fliegen weiter.
@@ -945,5 +947,438 @@ Spiel
 1. Die Nadel merkt sich vor jedem Schritt `alte_y` und prueft danach das ganze Stueck dazwischen (`unterwegs`). Eine Fliege, an der sie vorbeigesprungen ist, liegt genau auf diesem Stueck.
 2. Die Kamera ist ein Kind der Kanone. Fuehre die ganze Kanone, fuehre die Kamera mit, und man saehe im Bild keine Fahrt. Der Arm ist ein eigener Knoten in der Kanone. Faehrt nur er, bleibt die Kamera stehen.
 3. Beide Nadeln rufen `getroffen`, beide landen ueber `starten` in der `warteschlange`. Die erste startet `uebergeben`. Die zweite wartet, weil `laeuft` schon `true` ist. Die `while`-Schleife holt sie nach der ersten mit `pop_front` heraus: Der Arm faehrt ein zweites Mal hin (die zweite Nadel gleichzeitig mit ihm), gibt ab und faehrt zurueck. Erst dann ist `laeuft` wieder `false`, und die Kanone darf fahren und schiessen.
+
+</details>
+
+## Abschnitt 3 - geaendert am 17.11. (Treffer und Uebergabe)
+
+**Was sich aendert:** Drei Dinge, alle auf Philipps Ansage vom 17.11.
+
+1. **Treffer:** Die Nadel fragt nicht mehr "lag auf meinem letzten Stueck eine Fliege?", sondern "steckt meine Spitze gerade **in** einer Fliege?". Dafuer ist die Fliege jetzt 100 mal 100 Pixel gross. Die Nadel bleibt genau dort stecken, wo sie die Fliege erwischt hat. Nichts rastet mehr ein.
+2. **Uebergabe:** Die Fliege fliegt nicht mehr nach rechts zur Hand. Sie steigt nach oben in eine **Reihe in der Bildmitte**. Dort haengen die Fliegen nebeneinander. Seitlich bewegt sie sich nur das kleine Stueck bis zu ihrem Platz. Sie faehrt kurz **nach** dem Arm los und kommt **gleichzeitig** mit ihm an.
+3. Die Uebergabe ruft jetzt ein Signal, sobald die Fliege oben haengt. Darauf hoert Abschnitt 4.
+
+**Geaendert:** `skripte/nadel.gd`, `skripte/uebergabe.gd`, `skripte/fliege.gd`, `szenen/fliege.tscn`, `szenen/spiel.tscn` (Haken).
+
+**Ueberholt in der Erklaerung von Abschnitt 3 oben:** "Der Trick 1", `nadel.gd`, `uebergabe.gd`, die Zeile zum Haken und Frage 1. Es gilt, was hier steht.
+
+### Der neue Trick 1: Die Fliege ist groesser als ein Schritt der Nadel
+
+Die Nadel fliegt 3200 Pixel pro Sekunde. Bei 60 Bildern pro Sekunde sind das etwa 53 Pixel pro Bild. Die Fliege ist jetzt 100 Pixel hoch. Ein Schritt (53) ist kleiner als die Fliege (100). Die Nadelspitze **muss** also in mindestens einem Bild in der Fliege stehen, sie kann nicht darueber hinwegspringen.
+
+Vorher war die Fliege nur 24 Pixel hoch. Deshalb musste die Nadel das ganze geflogene Stueck pruefen, und bei einem Treffer stand sie oft schon **hinter** der Fliege und wurde zurueckgesetzt. Das sah falsch aus. Jetzt steckt die Spitze wirklich in der Fliege, wenn der Treffer gemeldet wird.
+
+**Die Grenze dieser Loesung:** Sie stimmt nur, solange ein Schritt kleiner ist als die Fliege. Laeuft das Spiel mit weniger als 32 Bildern pro Sekunde (3200 / 100 = 32), wird ein Schritt groesser als 100 Pixel, und die Nadel kann durch eine Fliege springen. Dasselbe gilt, wenn man `tempo` der Nadel erhoeht oder die Fliege kleiner macht.
+
+**Spaeter (Abschnitt 10, mit den Fotos):** Statt des Quadrats bekommt die Fliege einen Umriss aus Punkten, den Philipp von Hand nachfaehrt. In Godot heisst das `CollisionPolygon2D` (ein Umriss fuer Treffer) oder `Polygon2D` (ein Umriss zum Malen). Dann zaehlt nur ein Treffer **in der Form** der Fliege.
+
+### `skripte/fliege.gd` - geaendert
+
+Neu sind zwei Werte fuer den Inspector, der Rest ist unveraendert:
+
+```gdscript
+# Wie viel Flugkraft die Fliege gibt, wenn sie gefangen ist.
+@export var flugkraft: int = 2
+```
+Eine normale Fliege gibt 2 Flugkraft (Feinkonzept). `int` heisst ganze Zahl. Diesen Wert liest spaeter die Uebergabe ab (Abschnitt 4).
+
+```gdscript
+# Die halbe Breite und die halbe Hoehe der Fliege, in Pixeln. 50 heisst: Die Fliege ist 100 mal 100 gross.
+@export var halbe_groesse: float = 50.0
+```
+Die Position der Fliege ist ihre **Mitte**. Von der Mitte aus reicht sie 50 Pixel nach links, rechts, oben und unten. Darum steht hier die halbe Groesse: Die Nadel kann den Abstand zur Mitte direkt damit vergleichen. Die Fliege bewegt sich damit nicht anders, die Zahl ist nur fuer den Treffer da.
+
+### `szenen/fliege.tscn` - geaendert
+
+Die zwei grauen Rechtecke sind groesser, zusammen genau 100 mal 100 Pixel um die Mitte:
+
+- **Fluegel:** x -40 bis 40, y -50 bis -25 (vorher 30 breit, 10 hoch).
+- **Koerper:** x -50 bis 50, y -25 bis 50 (vorher 40 breit, 24 hoch).
+
+Die Zahl `halbe_groesse` und die Rechtecke gehoeren zusammen. Wer das Bild groesser macht, muss auch die Zahl aendern, sonst trifft man Luft oder verfehlt die Fliege.
+
+### `skripte/nadel.gd` (die ganze Datei, Stand 17.11.)
+
+```gdscript
+extends Node2D
+
+# Wird gesendet, sobald die Nadel eine Fliege getroffen hat. Mit dabei: die Nadel selbst.
+signal getroffen(nadel: Node2D)
+
+# Wie schnell die Nadel fliegt, in Pixeln pro Sekunde.
+@export var tempo: float = 3200.0
+# Wie weit die Nadel fliegt, bevor sie verschwindet, in Pixeln. 2160 ist zweimal die Bildhoehe.
+@export var reichweite: float = 2160.0
+# Die Szene des Blutflecks. Bei jedem Treffer entsteht daraus ein neuer Fleck.
+@export var blutfleck_szene: PackedScene
+```
+Wie bisher. **Weg** ist `trefferbreite`: Wie breit man treffen darf, sagt jetzt die Fliege selbst (`halbe_groesse`).
+
+```gdscript
+# Wie viele Pixel die Nadel schon geflogen ist.
+var geflogen: float = 0.0
+# true heisst: Die Nadel hat eine Fliege getroffen und steckt fest.
+var steckt: bool = false
+# Die Fliege, die an der Nadel steckt. null heisst: noch keine.
+var fliege: Node2D = null
+```
+Neu ist `fliege`. Die Nadel merkt sich, welche Fliege an ihr steckt. `null` heisst "nichts". Die Uebergabe fragt spaeter ueber diese Variable nach der Flugkraft.
+
+```gdscript
+func _process(delta: float) -> void:
+	if steckt:
+		return
+	position.y -= tempo * delta
+	geflogen += tempo * delta
+```
+Wie bisher: Steckt die Nadel, passiert nichts. Sonst fliegt sie ein Stueck nach oben und zaehlt die Strecke mit. **Weg** ist `alte_y`, die Nadel muss sich die Stelle vor dem Schritt nicht mehr merken.
+
+```gdscript
+	var getroffene: Node2D = fliege_an_der_spitze()
+	if getroffene != null:
+		treffen(getroffene)
+	elif geflogen >= reichweite:
+		queue_free()
+```
+Nach dem Schritt fragt die Nadel: Steckt meine Spitze in einer Fliege? Kommt eine Fliege zurueck (`!= null`), wird getroffen. Sonst (`elif`): Ist die Nadel weit genug geflogen, loescht sie sich.
+
+```gdscript
+func fliege_an_der_spitze() -> Node2D:
+	for kandidat in get_tree().get_nodes_in_group("fliegen"):
+		if kandidat.gefangen:
+			continue
+```
+Die Schleife geht alle Fliegen durch (alle Knoten der Gruppe `fliegen`). `continue` heisst: diese ueberspringen und mit der naechsten weitermachen. Gefangene Fliegen kann man nicht noch einmal treffen.
+
+```gdscript
+		var seitlich: float = absf(kandidat.global_position.x - global_position.x)
+		var senkrecht: float = absf(kandidat.global_position.y - global_position.y)
+```
+Zwei Abstaende zwischen der Mitte der Fliege und der Nadelspitze: einmal seitlich, einmal in der Hoehe. `absf` macht aus einer negativen Zahl eine positive. Es ist egal, ob die Fliege links oder rechts, drueber oder drunter ist, es zaehlt nur, **wie weit**.
+
+```gdscript
+		if seitlich <= kandidat.halbe_groesse and senkrecht <= kandidat.halbe_groesse:
+			return kandidat
+	return null
+```
+Sind beide Abstaende hoechstens 50 Pixel, steht die Spitze im Quadrat der Fliege. `return kandidat` gibt diese Fliege zurueck und beendet die Funktion sofort. Laeuft die Schleife ohne Treffer durch, kommt `null` zurueck: keine Fliege an der Spitze.
+
+```gdscript
+func treffen(getroffene: Node2D) -> void:
+	steckt = true
+	fliege = getroffene
+	fliege.gefangen = true
+	fliege.reparent(self)
+```
+Die Nadel steckt, merkt sich die Fliege, die Fliege haelt still und wird ein Kind der Nadel. `reparent` haengt sie um, ohne dass sie im Bild springt. **Weg** sind die zwei Zeilen, die Nadel und Fliege aufeinander gesetzt haben. Beide bleiben, wo sie beim Treffer waren.
+
+```gdscript
+	var fleck: Node2D = blutfleck_szene.instantiate()
+	get_parent().add_child(fleck)
+	fleck.global_position = global_position
+	getroffen.emit(self)
+```
+Wie bisher: Blutfleck an der Nadelspitze, dann das Signal `getroffen`.
+
+### `skripte/uebergabe.gd` (die ganze Datei, Stand 17.11.)
+
+```gdscript
+extends Node
+
+# Wird gesendet, sobald eine Fliege in der Reihe oben haengt. Mit dabei: ihre Flugkraft.
+signal angekommen(flugkraft: int)
+```
+Ein neues Signal. Die Uebergabe ruft es, wenn eine Fliege an ihrem Platz ist, und sagt dazu, wie viel Flugkraft sie bringt. Wer zuhoert, weiss die Uebergabe nicht. In Abschnitt 4 hoert `spiel.gd` zu.
+
+```gdscript
+# Wie lange die Fahrt hinueber dauert, in Sekunden. Der Rueckweg dauert genauso lang.
+@export var dauer: float = 0.48
+# Wie lange die Fliege wartet, bevor sie losfaehrt, in Sekunden. Sie kommt trotzdem gleichzeitig mit dem Arm an.
+@export var verzoegerung: float = 0.1
+# Wie weit der Arm von der Mitte nach rechts faehrt, in Pixeln. Dort sitzt die rechte Hand.
+@export var ziel_x: float = 480.0
+# Wie weit zwei haengende Fliegen nebeneinander auseinander sind, in Pixeln.
+@export var abstand: float = 110.0
+```
+Neu sind `verzoegerung` und `abstand`. Die Fliege ist 100 breit, mit 110 Abstand bleibt zwischen zwei Fliegen eine Luecke von 10 Pixeln.
+
+```gdscript
+# Der Arm: linke Hand, Kanone und Muendung. Nur er faehrt, die Kamera bleibt stehen.
+@export var arm: Node2D
+# Die Mitte der Reihe am oberen Bildrand, in der die gefangenen Fliegen haengen.
+@export var haken: Node2D
+```
+Wie bisher. Der Haken sitzt aber nicht mehr rechts, sondern oben in der **Mitte** (siehe `spiel.tscn`).
+
+```gdscript
+# true heisst: Gerade laeuft eine Uebergabe. Die Kanone faehrt und schiesst dann nicht.
+var laeuft: bool = false
+# Nadeln mit Fliege, die noch uebergeben werden muessen, der Reihe nach.
+var warteschlange: Array[Node2D] = []
+# Wie viele Fliegen schon in der Reihe haengen.
+var anzahl: int = 0
+```
+Neu ist `anzahl`. Daraus rechnet die Uebergabe aus, welcher Platz als naechster frei ist.
+
+```gdscript
+func starten(nadel: Node2D) -> void:
+	nadel.reparent(haken)
+	warteschlange.append(nadel)
+	if not laeuft:
+		uebergeben()
+```
+Neu ist die erste Zeile. Die Nadel wird **sofort beim Treffer** ein Kind des Hakens, nicht erst bei der Ankunft. `reparent` laesst sie dabei an ihrer Stelle im Bild. Warum so frueh? Der Haken ist ein Kind der Kanone. Seit Abschnitt 4 steigt die Kanone. Eine Nadel, die noch in der Welt haengt, wuerde dabei nach unten aus dem Bild rutschen. Als Kind des Hakens steigt sie mit.
+
+```gdscript
+func uebergeben() -> void:
+	laeuft = true
+	while warteschlange.size() > 0:
+		var nadel: Node2D = warteschlange.pop_front()
+		var hin: Tween = create_tween()
+		hin.tween_property(arm, "position", Vector2(ziel_x, 0.0), dauer)
+```
+Wie bisher: Der Arm faehrt in `dauer` Sekunden nach rechts zur rechten Hand.
+
+```gdscript
+		hin.parallel().tween_property(nadel, "position", platz(anzahl), dauer - verzoegerung).set_delay(verzoegerung)
+```
+Die wichtigste Zeile der Aenderung, von links nach rechts:
+
+- `parallel()`: gleichzeitig mit dem Arm, nicht danach.
+- `nadel, "position"`: Die Nadel (mit der Fliege als Kind) faehrt in `position`, also **relativ zum Haken**. Vorher stand hier `global_position`. Das geht jetzt einfacher, weil die Nadel schon ein Kind des Hakens ist.
+- `platz(anzahl)`: das Ziel, der naechste freie Platz in der Reihe (Funktion unten).
+- `set_delay(verzoegerung)`: Die Nadel wartet erst 0,1 Sekunden.
+- `dauer - verzoegerung`: Ihre Fahrt dauert dafuer nur 0,48 - 0,1 = 0,38 Sekunden. Warten plus Fahren ergibt wieder 0,48. Darum **hoeren** Arm und Fliege im selben Moment auf, obwohl die Fliege spaeter anfaengt.
+
+Die Fliege wird in der Mitte gefangen, und die Reihe haengt in der Mitte. Seitlich hat sie also nur einen kurzen Weg und ist dabei langsam. Der lange Weg ist der nach oben.
+
+```gdscript
+		await hin.finished
+		anzahl += 1
+		angekommen.emit(nadel.fliege.flugkraft)
+```
+Warten, bis Arm und Fliege angekommen sind. Dann haengt eine Fliege mehr in der Reihe, und das Signal `angekommen` geht hinaus. `nadel.fliege.flugkraft` liest man von rechts: die Flugkraft der Fliege, die an dieser Nadel steckt. **Weg** ist hier `nadel.reparent(haken)`, das passiert jetzt schon in `starten`.
+
+```gdscript
+		var zurueck: Tween = create_tween()
+		zurueck.tween_property(arm, "position", Vector2.ZERO, dauer)
+		await zurueck.finished
+	laeuft = false
+```
+Wie bisher: Arm zurueck, dann die naechste Nadel aus der Schlange oder Ende.
+
+```gdscript
+func platz(nummer: int) -> Vector2:
+	var schritte: float = ceilf(nummer / 2.0)
+	var seite: float = 1.0
+	if nummer % 2 == 0:
+		seite = -1.0
+	return Vector2(seite * schritte * abstand, 0.0)
+```
+Diese Funktion rechnet aus, wo die Fliege mit der Nummer 0, 1, 2, 3 ... haengt. Die Reihe waechst von der Mitte abwechselnd nach rechts und links, damit sie in der Mitte bleibt und keine haengende Fliege verschoben werden muss:
+
+| nummer | nummer / 2.0 | schritte (aufgerundet) | seite | x |
+|--------|--------------|------------------------|-------|-----|
+| 0 | 0,0 | 0 | -1 | 0 |
+| 1 | 0,5 | 1 | 1 | 110 |
+| 2 | 1,0 | 1 | -1 | -110 |
+| 3 | 1,5 | 2 | 1 | 220 |
+| 4 | 2,0 | 2 | -1 | -220 |
+
+- `ceilf` rundet auf: aus 0,5 wird 1, aus 1,5 wird 2. `2.0` mit Punkt, damit Godot mit Kommazahlen teilt.
+- `%` ist der Rest beim Teilen. `nummer % 2 == 0` heisst: Die Nummer ist gerade. Gerade Nummern haengen links (`seite = -1`), ungerade rechts.
+- Das Ergebnis ist ein Punkt relativ zum Haken: x nach der Tabelle, y 0, also genau auf der Hoehe des Hakens.
+
+**Platzhalter:** Bei 100 Pixel grossen Fliegen passen etwa 13 nebeneinander ins Bild. Fuer 100 Flugkraft braucht man 50. Das Zusammenruecken und Schrumpfen baut Abschnitt 5 (Faecher).
+
+### `szenen/spiel.tscn` - geaendert (Haken)
+
+- **Haken:** sitzt jetzt bei x 0, y -800 (vorher x 620, y -860), also oben in der Bildmitte. 60 Pixel tiefer als vorher, weil die Fliege bis zu 50 Pixel ueber der Nadelspitze haengen kann und sonst oben aus dem Bild ragt.
+
+## Abschnitt 4 - Flugkraft und Hoehe
+
+**Was der Abschnitt kann:** Oben links steht die Flugkraft, zum Beispiel `34 / 100`. Jede gefangene Fliege gibt 2 Flugkraft, sobald sie oben in der Reihe haengt. Dann gleitet die Kanone mit der Kamera nach oben, 300 Pixel je Punkt Flugkraft, also 600 Pixel je Fliege. Das ist mehr als ein halbes Bild. Der Boden verschwindet nach unten. Verpasste Fliegen ziehen nach unten aus dem Bild. Von oben kommen neue Fliegen nach, eine alle 250 Pixel Hoehe. Bei 100 erscheint "Im All!", und die Kanone steht still.
+
+**Platzhalter:** Die Siegmeldung ist nur ein Wort. Neu anfangen kann man erst ab Abschnitt 7. Alle Fliegen sind gleich (2 Flugkraft), der Mix je Hoehe kommt in Abschnitt 9.
+
+**Neue Dateien:** `skripte/spiel.gd`, `skripte/erzeuger.gd`. **Geaendert:** `szenen/spiel.tscn`.
+
+### Wer macht was
+
+- **`spiel.gd`** zaehlt die Flugkraft, schreibt die Anzeige, laesst die Kanone steigen und meldet den Sieg.
+- **`erzeuger.gd`** setzt neue Fliegen ueber das Bild und loescht die, die unten weg sind.
+- Die **Uebergabe** sagt nur "eine Fliege ist angekommen, sie bringt so viel Flugkraft". Was daraus wird, entscheidet `spiel.gd`.
+
+### Der Trick: Steigen heisst, die Kanone geht in der Welt nach oben
+
+Wie beim Fahren in Abschnitt 1: Nicht die Welt bewegt sich, sondern die Kanone. Die Kamera, die rechte Hand und der Haken sind Kinder der Kanone und kommen mit. Der Boden und die freien Fliegen bleiben, wo sie sind, und rutschen deshalb im Bild nach unten. In Godot zeigt y nach **unten**. Hoeher heisst also: y wird kleiner, und ueber dem Boden ist y negativ.
+
+### `skripte/spiel.gd` (die ganze Datei)
+
+```gdscript
+extends Node2D
+```
+Das Skript haengt am obersten Knoten `Spiel`.
+
+```gdscript
+# Bei so viel Flugkraft ist man im All.
+@export var ziel: int = 100
+# Wie viele Pixel man fuer einen Punkt Flugkraft steigt.
+@export var hoehe_je_flugkraft: float = 300.0
+# Wie lange das Gleiten nach oben dauert, in Sekunden.
+@export var steigdauer: float = 0.8
+```
+Drei Werte fuer den Inspector. Mit `hoehe_je_flugkraft` stellt man ein, wie viel Hintergrund an einem vorbeizieht: 100 Flugkraft mal 300 Pixel sind 30000 Pixel, etwa 28 Bilder uebereinander. Die Punkte bis 100 aendern sich dadurch nicht, nur der Weg.
+
+```gdscript
+# Die Flugkraft aller Fliegen, die oben in der Reihe haengen.
+var flugkraft: int = 0
+# Das Gleiten nach oben, das gerade laeuft. null heisst: Es gab noch keins.
+var steigen: Tween = null
+```
+`flugkraft` ist der Spielstand. `steigen` merkt sich den Tween, der die Kanone gerade hebt, damit man ihn anhalten kann (siehe unten).
+
+```gdscript
+func _ready() -> void:
+	$Kanone/Uebergabe.angekommen.connect(fliege_zaehlen)
+	anzeige_schreiben()
+```
+`_ready` laeuft einmal am Anfang. Die erste Zeile heisst: "Wenn die Uebergabe `angekommen` ruft, rufe hier `fliege_zaehlen` auf." `$Kanone/Uebergabe` ist der Weg zum Knoten: erst `Kanone`, darin `Uebergabe`. Die zweite Zeile schreibt die Anzeige zum ersten Mal, damit dort von Anfang an `0 / 100` steht.
+
+```gdscript
+func fliege_zaehlen(dazu: int) -> void:
+	flugkraft += dazu
+	anzeige_schreiben()
+```
+`dazu` ist die Zahl, die das Signal mitbringt, also die Flugkraft der Fliege. Sie wird dazugezaehlt, dann wird die Anzeige neu geschrieben.
+
+```gdscript
+	if steigen != null:
+		steigen.kill()
+```
+Kommt eine zweite Fliege an, waehrend die Kanone noch von der ersten steigt, laeuft noch ein alter Tween. `kill` haelt ihn an. Sonst wuerden zwei Tweens gleichzeitig an derselben Zahl ziehen, einer zum alten Ziel und einer zum neuen. Beim allerersten Mal ist `steigen` noch `null`, dann gibt es nichts anzuhalten.
+
+```gdscript
+	steigen = create_tween()
+	steigen.tween_property($Kanone, "position:y", -flugkraft * hoehe_je_flugkraft, steigdauer)
+```
+Ein neuer Tween schiebt die Kanone in 0,8 Sekunden auf ihre neue Hoehe. `"position:y"` heisst: nur der y-Teil der Position, x bleibt, wie es ist. Das Ziel ist `-flugkraft * hoehe_je_flugkraft`: Bei 2 Flugkraft ist das -600, bei 4 ist es -1200. Das Minus steht da, weil oben in Godot negativ ist. Die Hoehe wird jedes Mal **aus dem ganzen Stand** ausgerechnet, nicht "600 dazu". So stimmt sie auch dann, wenn der alte Tween mittendrin angehalten wurde.
+
+```gdscript
+	if flugkraft >= ziel:
+		$Bedienung/Sieg.visible = true
+		$Kanone.set_process(false)
+```
+Ist das Ziel erreicht (`>=` heisst: gleich oder mehr), wird das Wort "Im All!" sichtbar. `set_process(false)` schaltet `_process` der Kanone ab: Sie faehrt und schiesst nicht mehr. Das Steigen laeuft trotzdem zu Ende, weil der Tween in `spiel.gd` laeuft und nicht in der Kanone.
+
+```gdscript
+func anzeige_schreiben() -> void:
+	$Bedienung/Anzeige.text = str(flugkraft) + " / " + str(ziel)
+```
+`str` macht aus einer Zahl einen Text. Mit `+` werden Texte aneinandergehaengt: `"34"` und `" / "` und `"100"` ergibt `34 / 100`.
+
+### `skripte/erzeuger.gd` (die ganze Datei)
+
+```gdscript
+extends Node2D
+
+# Die Szene der Fliege. Daraus entsteht jede neue Fliege.
+@export var fliege_szene: PackedScene
+# Die Kanone. An ihr liest der Erzeuger ab, wie hoch man gerade ist.
+@export var kanone: Node2D
+```
+Der Erzeuger braucht zwei Dinge aus dem Inspector: die Vorlage fuer Fliegen und die Kanone.
+
+```gdscript
+# Wie viele Pixel Hoehe zwischen zwei Fliegen liegen.
+@export var abstand: float = 250.0
+# Wie weit links oder rechts von der Kanone eine Fliege hoechstens entsteht, in Pixeln.
+@export var breite: float = 400.0
+```
+Alle 250 Pixel Hoehe gibt es eine Fliege. Ein Bild ist 1080 hoch, es sind also etwa vier Fliegen zu sehen. Jede entsteht irgendwo zwischen 400 Pixel links und 400 Pixel rechts von der Kanone. Dazu kommt ihre eigene Strecke von 300 hin und her.
+
+```gdscript
+# Wie weit ueber der Kanone die oberste Fliege schon bereitsteht, in Pixeln. Der Bildrand liegt bei 920.
+@export var vorlauf: float = 1200.0
+# Wie weit unter der Kanone eine Fliege geloescht wird, in Pixeln. Der Bildrand liegt bei 160.
+@export var loeschen_unter: float = 300.0
+```
+Das Bild reicht von 920 Pixel ueber der Kanone bis 160 Pixel unter ihr. `vorlauf` ist groesser als 920: Neue Fliegen entstehen ueber dem Bild, man sieht sie nie aufploppen. `loeschen_unter` ist groesser als 160: Geloescht wird erst, was sicher unten aus dem Bild ist.
+
+```gdscript
+# Das langsamste und das schnellste Tempo einer neuen Fliege, in Pixeln pro Sekunde.
+@export var tempo_langsam: float = 100.0
+@export var tempo_schnell: float = 180.0
+```
+Jede Fliege bekommt ein zufaelliges Tempo zwischen diesen beiden.
+
+```gdscript
+# Auf dieser Hoehe entsteht die naechste Fliege. Nach oben wird y kleiner.
+var naechste_hoehe: float = -400.0
+```
+Die erste Fliege entsteht bei y -400, also 400 Pixel ueber dem Boden. Danach wandert diese Zahl immer weiter nach oben.
+
+```gdscript
+func _process(_delta: float) -> void:
+	while naechste_hoehe > kanone.position.y - vorlauf:
+```
+In jedem Bild schaut der Erzeuger nach. `kanone.position.y - vorlauf` ist die Linie 1200 Pixel ueber der Kanone. Solange die naechste Fliege **unter** dieser Linie laege (groesseres y heisst weiter unten), wird sie jetzt gebaut. `while` wiederholt das, bis alles bis zur Linie gefuellt ist. Am Anfang baut die Schleife so gleich vier Fliegen, nach jedem Steigen zwei oder drei. Der Unterstrich in `_delta` sagt Godot: Diese Zahl wird hier nicht gebraucht.
+
+```gdscript
+		var fliege: Node2D = fliege_szene.instantiate()
+		fliege.position.x = kanone.position.x + randf_range(-breite, breite)
+		fliege.position.y = naechste_hoehe
+		fliege.tempo = randf_range(tempo_langsam, tempo_schnell)
+```
+Eine neue Fliege aus der Vorlage. `randf_range(a, b)` liefert eine zufaellige Kommazahl zwischen a und b. Die Fliege entsteht seitlich in der Naehe der Kanone, **dort, wo die Kanone in diesem Moment ist**. Weil die Welt seitlich endlos ist, bleiben die Fliegen so immer in der Naehe. Die Hoehe ist `naechste_hoehe`, das Tempo zufaellig.
+
+```gdscript
+		add_child(fliege)
+		naechste_hoehe -= abstand
+```
+Die Fliege wird ein Kind des Erzeugers und erscheint damit im Spiel. Dann rueckt `naechste_hoehe` um 250 nach oben (y wird kleiner). Irgendwann liegt sie ueber der Linie, und die `while`-Schleife hoert auf.
+
+```gdscript
+	for fliege in get_children():
+		if fliege.position.y > kanone.position.y + loeschen_unter:
+			fliege.queue_free()
+```
+Danach geht der Erzeuger alle seine Kinder durch, also alle freien Fliegen. Ist eine mehr als 300 Pixel unter der Kanone, wird sie geloescht. Das ist die verpasste Fliege, die unten aus dem Bild gezogen ist. Gefangene Fliegen sind hier nicht dabei: Sie sind beim Treffer Kinder der Nadel geworden und keine Kinder des Erzeugers mehr.
+
+### `szenen/spiel.tscn` - geaendert
+
+```
+Spiel (Node2D, traegt spiel.gd)             Skript neu
+├── Boden ...                               (unveraendert)
+├── Erzeuger (Node2D, traegt erzeuger.gd)   neu
+├── Kanone ...                              (nur der Haken ist verschoben, siehe oben)
+└── Bedienung (CanvasLayer)
+    ├── TasteLinks, TasteRechts, TasteSchuss    (unveraendert)
+    ├── Anzeige (Label)                     neu
+    └── Sieg (Label)                        neu
+```
+
+- **Spiel:** traegt jetzt `spiel.gd`.
+- **Fliege1 bis Fliege5 sind weg.** Die Fliegen baut der Erzeuger.
+- **Erzeuger:** ein `Node2D` bei 0, 0 ohne eigenes Bild. Im Inspector: `fliege_szene = fliege.tscn`, `kanone = ../Kanone`. Er muss bei 0, 0 bleiben, weil die Fliegen seine Kinder sind und ihre Positionen sonst verschoben waeren.
+- **Anzeige:** ein `Label` oben links (x 40, y 30), Schriftgroesse 56. Der Text `0 / 100` in der Szene ist nur fuer den Editor, `spiel.gd` ueberschreibt ihn beim Start. Sie haengt im `CanvasLayer` `Bedienung` wie die Tasten und bleibt deshalb an ihrer Stelle im Bild, egal wohin die Kamera geht.
+- **Sieg:** ein `Label` ueber die ganze Bildbreite, Text "Im All!", Schriftgroesse 140, mittig. `visible = false`: am Anfang unsichtbar, `spiel.gd` schaltet es bei 100 ein.
+- Oben in der Datei stehen zwei neue `ext_resource`-Zeilen fuer `spiel.gd` und `erzeuger.gd`.
+
+### `.uid`-Dateien (von Godot selbst angelegt)
+
+`spiel.gd.uid` und `erzeuger.gd.uid`: Kennnummern wie bei den anderen Skripten. Nicht von Hand aendern.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Die Fliege faehrt 0,1 Sekunden nach dem Arm los. Warum kommen beide trotzdem im selben Moment an?
+2. Du faengst zwei Fliegen kurz hintereinander, die zweite kommt an, waehrend die Kanone noch steigt. Auf welcher Hoehe landet die Kanone, und welche Zeilen sorgen dafuer?
+3. Woher weiss der Erzeuger, wann er eine neue Fliege bauen muss, und warum sieht man sie nie aufploppen?
+
+<details><summary>Antworten</summary>
+
+1. Der Arm faehrt `dauer` lang (0,48). Die Fliege wartet `verzoegerung` (0,1, `set_delay`) und faehrt dann nur `dauer - verzoegerung` lang (0,38). 0,1 + 0,38 = 0,48.
+2. Auf -1200 (4 Flugkraft mal 300). `steigen.kill()` haelt den ersten Tween an, der neue faehrt zum Ziel `-flugkraft * hoehe_je_flugkraft`. Das wird aus dem ganzen Stand gerechnet, nicht aus der Stelle, an der die Kanone gerade ist.
+3. Er vergleicht in jedem Bild `naechste_hoehe` mit der Linie `kanone.position.y - vorlauf`. Steigt die Kanone, wandert die Linie nach oben, und die `while`-Schleife fuellt nach. Die Linie liegt 1200 Pixel ueber der Kanone, der Bildrand nur 920: Die Fliege entsteht ueber dem Bild.
 
 </details>

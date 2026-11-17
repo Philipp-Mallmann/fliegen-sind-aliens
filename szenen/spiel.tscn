@@ -1,9 +1,11 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://skripte/kanone.gd" id="1_kanone"]
 [ext_resource type="PackedScene" path="res://szenen/nadel.tscn" id="2_nadel"]
 [ext_resource type="PackedScene" path="res://szenen/fliege.tscn" id="3_fliege"]
 [ext_resource type="Script" path="res://skripte/uebergabe.gd" id="4_uebergabe"]
+[ext_resource type="Script" path="res://skripte/spiel.gd" id="5_spiel"]
+[ext_resource type="Script" path="res://skripte/erzeuger.gd" id="6_erzeuger"]
 
 [sub_resource type="Gradient" id="Gradient_taste"]
 colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
@@ -14,6 +16,7 @@ width = 200
 height = 200
 
 [node name="Spiel" type="Node2D"]
+script = ExtResource("5_spiel")
 
 [node name="Boden" type="Parallax2D" parent="."]
 repeat_size = Vector2(1600, 0)
@@ -150,25 +153,10 @@ theme_override_font_sizes/font_size = 48
 text = "7"
 horizontal_alignment = 1
 
-[node name="Fliege1" parent="." instance=ExtResource("3_fliege")]
-position = Vector2(-500, -500)
-tempo = 150.0
-
-[node name="Fliege2" parent="." instance=ExtResource("3_fliege")]
-position = Vector2(-200, -750)
-tempo = 120.0
-
-[node name="Fliege3" parent="." instance=ExtResource("3_fliege")]
-position = Vector2(100, -450)
-tempo = 180.0
-
-[node name="Fliege4" parent="." instance=ExtResource("3_fliege")]
-position = Vector2(350, -650)
-tempo = 150.0
-
-[node name="Fliege5" parent="." instance=ExtResource("3_fliege")]
-position = Vector2(550, -850)
-tempo = 100.0
+[node name="Erzeuger" type="Node2D" parent="." node_paths=PackedStringArray("kanone")]
+script = ExtResource("6_erzeuger")
+fliege_szene = ExtResource("3_fliege")
+kanone = NodePath("../Kanone")
 
 [node name="Kanone" type="Node2D" parent="."]
 script = ExtResource("1_kanone")
@@ -207,7 +195,7 @@ offset_bottom = -20.0
 color = Color(0.6, 0.6, 0.6, 1)
 
 [node name="Haken" type="Marker2D" parent="Kanone"]
-position = Vector2(620, -860)
+position = Vector2(0, -800)
 
 [node name="Kamera" type="Camera2D" parent="Kanone"]
 offset = Vector2(0, -380)
@@ -258,5 +246,23 @@ offset_right = 200.0
 offset_bottom = 200.0
 theme_override_font_sizes/font_size = 48
 text = "Schuss"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Anzeige" type="Label" parent="Bedienung"]
+offset_left = 40.0
+offset_top = 30.0
+offset_right = 440.0
+offset_bottom = 110.0
+theme_override_font_sizes/font_size = 56
+text = "0 / 100"
+
+[node name="Sieg" type="Label" parent="Bedienung"]
+visible = false
+offset_top = 440.0
+offset_right = 1440.0
+offset_bottom = 640.0
+theme_override_font_sizes/font_size = 140
+text = "Im All!"
 horizontal_alignment = 1
 vertical_alignment = 1
