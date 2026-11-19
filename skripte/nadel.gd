@@ -16,10 +16,13 @@ var geflogen: float = 0.0
 var steckt: bool = false
 # Die Fliege, die an der Nadel steckt. null heisst: noch keine.
 var fliege: Node2D = null
+# Der Punkt, an dem der Faden der Nadel festhaengt: erst die Muendung der Kanone, im Faecher die rechte Hand.
+var anker: Node2D = null
 
 
 func _process(delta: float) -> void:
 	if steckt:
+		faden_spannen()
 		return
 	position.y -= tempo * delta
 	geflogen += tempo * delta
@@ -28,6 +31,7 @@ func _process(delta: float) -> void:
 		treffen(getroffene)
 	elif geflogen >= reichweite:
 		queue_free()
+	faden_spannen()
 
 
 func fliege_an_der_spitze() -> Node2D:
@@ -50,3 +54,9 @@ func treffen(getroffene: Node2D) -> void:
 	get_parent().add_child(fleck)
 	fleck.global_position = global_position
 	getroffen.emit(self)
+
+
+func faden_spannen() -> void:
+	if anker == null:
+		return
+	$Faden.points = PackedVector2Array([anker.global_position, $Oese.global_position])

@@ -7,7 +7,7 @@ extends Node2D
 # Wie lange das Gleiten nach oben dauert, in Sekunden.
 @export var steigdauer: float = 0.8
 
-# Die Flugkraft aller Fliegen, die oben in der Reihe haengen.
+# Die Flugkraft aller Fliegen, die oben im Faecher haengen.
 var flugkraft: int = 0
 # Das Gleiten nach oben, das gerade laeuft. null heisst: Es gab noch keins.
 var steigen: Tween = null
@@ -15,6 +15,7 @@ var steigen: Tween = null
 
 func _ready() -> void:
 	$Kanone/Uebergabe.angekommen.connect(fliege_zaehlen)
+	$Kanone/Arm/Leiste.max_value = ziel
 	anzeige_schreiben()
 
 
@@ -31,4 +32,4 @@ func fliege_zaehlen(dazu: int) -> void:
 
 
 func anzeige_schreiben() -> void:
-	$Bedienung/Anzeige.text = str(flugkraft) + " / " + str(ziel)
+	$Kanone/Arm/Leiste.value = flugkraft

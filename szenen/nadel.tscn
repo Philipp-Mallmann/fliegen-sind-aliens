@@ -7,6 +7,14 @@
 script = ExtResource("1_nadel")
 blutfleck_szene = ExtResource("2_blutfleck")
 
+[node name="Faden" type="Line2D" parent="."]
+top_level = true
+width = 3.0
+default_color = Color(0.55, 0.55, 0.55, 1)
+
+[node name="Oese" type="Marker2D" parent="."]
+position = Vector2(0, 50)
+
 [node name="Strich" type="ColorRect" parent="."]
 offset_left = -3.0
 offset_right = 3.0

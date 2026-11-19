@@ -37,6 +37,7 @@ func schiessen(delta: float) -> void:
 	if Input.is_action_just_pressed("schiessen"):
 		var nadel: Node2D = nadel_szene.instantiate()
 		nadel.position = $Arm/Muendung.global_position
+		nadel.anker = $Arm/Muendung
 		get_parent().add_child(nadel)
 		nadel.getroffen.connect($Uebergabe.starten)
 		nachladen_noch = nachladezeit

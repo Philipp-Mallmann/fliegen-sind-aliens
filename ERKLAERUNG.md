@@ -1382,3 +1382,331 @@ Spiel (Node2D, traegt spiel.gd)             Skript neu
 3. Er vergleicht in jedem Bild `naechste_hoehe` mit der Linie `kanone.position.y - vorlauf`. Steigt die Kanone, wandert die Linie nach oben, und die `while`-Schleife fuellt nach. Die Linie liegt 1200 Pixel ueber der Kanone, der Bildrand nur 920: Die Fliege entsteht ueber dem Bild.
 
 </details>
+
+---
+
+## Abschnitt 5 - Faecher, Faeden und Leiste
+
+**Was der Abschnitt kann:** Die gefangenen Fliegen haengen oben im Bild als **Faecher** nebeneinander. Die Reihe bleibt als Ganzes immer mittig: Kommt eine Fliege dazu, gleiten alle anderen ein halbes Stueck zur Seite. Neue Fliegen kommen abwechselnd links und rechts ans Ende. Wird der Faecher breiter als 1400 Pixel, werden alle Fliegen gemeinsam kleiner, gleitend ueber 1,5 Sekunden, gerade so weit, dass er wieder passt. Jede Nadel zieht einen grauen **Faden** hinter sich her, erst von der Muendung der Kanone. Bei der Uebergabe bringt der Arm den Faden zur rechten Hand, ab dann laeuft er von der Hand zur Fliege. Die Zahl `34 / 100` oben links ist weg, dafuer haengt unten an der Kanone eine **Leiste**, die sich von 0 bis 100 fuellt.
+
+**Platzhalter:** Die Leiste hat das Standard-Aussehen von Godot. Spaeter kommt eine Leiste wie im Lautstaerke-Menue von Pineapple an die gebaute Kanone. Die Faeden sind graue Linien, damit man sieht, wie sehr sie stoeren. Wie man das loest, ist offen.
+
+**Neue Dateien:** `skripte/faecher.gd`. **Geaendert:** `skripte/uebergabe.gd`, `skripte/nadel.gd`, `skripte/kanone.gd`, `skripte/spiel.gd`, `szenen/nadel.tscn`, `szenen/spiel.tscn`.
+
+### Wer macht was
+
+- **`faecher.gd`** kennt die Reihenfolge der Fliegen von links nach rechts, rechnet aus, wo jede hingehoert und wie gross alle sind, und laesst die schon haengenden dorthin gleiten.
+- **`uebergabe.gd`** faehrt wie bisher den Arm hin und zurueck und bringt die **neue** Fliege an ihren Platz. Den Platz fragt sie jetzt beim Faecher nach, statt ihn selbst zu rechnen.
+- **`nadel.gd`** zeichnet ihren Faden. Woran der Faden haengt, steht in `anker`: erst die Muendung, nach der Uebergabe die Hand.
+- **`spiel.gd`** schreibt die Flugkraft in die Leiste statt in ein Label.
+
+### Der Trick 1: Kein Wegdruecken, nur eine Liste
+
+Im Feinkonzept druecken sich die Fliegen gegenseitig weg. Das waere Physik: Jede Fliege muesste ihre Nachbarn spueren. Hier ist es einfacher. Die Fliegen stehen in einer **Liste** von links nach rechts. Aus der Nummer in der Liste folgt der Platz: Die mittlere Nummer sitzt bei x 0, jede weitere ein `abstand` weiter. Kommt eine Fliege dazu, wird fuer **alle** der Platz neu gerechnet, und alle gleiten dorthin. Fuer das Auge sieht das aus wie Wegdruecken.
+
+### Der Trick 2: Der Faecher faehrt nicht mit dem Arm
+
+Der Faecher ist ein Kind der **Kanone**, nicht des **Arms**. Bei der Uebergabe faehrt nur der Arm nach rechts, die Kanone selbst steht. Deshalb bleibt der Faecher stehen. Beim Fahren und beim Steigen bewegt sich die Kanone mit der Kamera, der Faecher kommt mit und bleibt so immer am oberen Bildrand.
+
+### `skripte/faecher.gd` (die ganze Datei)
+
+```gdscript
+extends Node2D
+```
+Das Skript haengt am Knoten `Faecher` unter der Kanone. Seine Position (0, -800) ist die Mitte des Faechers.
+
+```gdscript
+# Wie weit zwei Fliegen im Faecher auseinander sind, solange er noch nicht schrumpfen muss, in Pixeln.
+@export var abstand: float = 110.0
+```
+Eine Fliege ist 100 breit, dazu 10 Luft. Diese Zahl stand vorher in `uebergabe.gd` und ist hierher umgezogen, weil jetzt der Faecher die Plaetze rechnet.
+
+```gdscript
+# Wie breit der Faecher hoechstens werden darf, in Pixeln. Das Bild ist 1440 breit.
+@export var breite: float = 1400.0
+```
+1400 laesst links und rechts je 20 Pixel Rand. Mit 110 pro Fliege passen 12 Fliegen (1320) voll gross hinein. Ab der 13. (1430) muss er schrumpfen.
+
+```gdscript
+# Wie lange das Zusammenruecken und Schrumpfen dauert, in Sekunden. Lang heisst: man merkt es kaum.
+@export var gleitdauer: float = 1.5
+```
+Deine Wahl Z11. Im Inspector aenderbar.
+
+```gdscript
+# Die Nadeln mit Fliege, die im Faecher haengen, von links nach rechts.
+var reihe: Array[Node2D] = []
+```
+Eine Liste. `Array[Node2D]` heisst: Es duerfen nur Knoten vom Typ `Node2D` hinein. Gespeichert wird die **Nadel**, nicht die Fliege, denn die Fliege steckt als Kind an der Nadel. Bewegt man die Nadel, kommen Fliege und Faden mit.
+
+```gdscript
+# Das Gleiten, das gerade laeuft. null heisst: Es gab noch keins.
+var gleiten: Tween = null
+```
+Wie `steigen` in `spiel.gd`: Wir merken uns den Tween, damit wir ihn anhalten koennen, wenn die naechste Fliege kommt, bevor das Gleiten fertig ist.
+
+```gdscript
+func aufnehmen(neue: Node2D) -> void:
+	if reihe.size() % 2 == 0:
+		reihe.push_front(neue)
+	else:
+		reihe.push_back(neue)
+```
+Die Uebergabe ruft das auf, sobald eine Nadel mit Fliege losfaehrt. `reihe.size()` ist die Zahl der Fliegen, die schon haengen. `% 2` ist der Rest beim Teilen durch 2: 0 bei gerader Zahl, 1 bei ungerader. Bei gerader Zahl kommt die neue Fliege nach **vorne** in die Liste (`push_front`, also ganz links), bei ungerader nach **hinten** (`push_back`, ganz rechts). So waechst der Faecher abwechselnd zu beiden Seiten. Bei der allerersten Fliege ist die Liste leer, dann ist vorne und hinten dasselbe.
+
+```gdscript
+	if gleiten != null:
+		gleiten.kill()
+```
+Laeuft noch ein Gleiten von der letzten Fliege, wird es angehalten. Die Fliegen bleiben da stehen, wo sie gerade sind, und gleiten von dort zum neuen Platz. Darum gibt es keinen Sprung.
+
+```gdscript
+	if reihe.size() == 1:
+		return
+```
+Ist die neue Fliege die einzige, gibt es nichts zu verschieben. `return` beendet die Funktion hier. Ohne diese Zeile wuerde ein leerer Tween gestartet, und Godot meldet dann einen Fehler.
+
+```gdscript
+	gleiten = create_tween()
+	gleiten.set_parallel(true)
+```
+Ein neuer Tween. `set_parallel(true)` heisst: Alles, was wir gleich hineinlegen, laeuft **gleichzeitig** statt nacheinander. Sonst wuerde erst die erste Fliege gleiten, dann die zweite und so weiter.
+
+```gdscript
+	for nadel in reihe:
+		if nadel == neue:
+			continue
+```
+Die Schleife geht jede Nadel in der Liste durch. Die neue ueberspringen wir (`continue` springt zur naechsten Runde): Die bringt die Uebergabe an ihren Platz, im Takt mit dem Arm.
+
+```gdscript
+		gleiten.tween_property(nadel, "position", platz(nadel), gleitdauer)
+		gleiten.tween_property(nadel, "scale", Vector2.ONE * groesse(), gleitdauer)
+```
+Zwei Bewegungen je Nadel: zur neuen Position und zur neuen Groesse. `scale` ist der Groessenfaktor eines Knotens: (1, 1) ist normal, (0.5, 0.5) halb so gross, und Kinder schrumpfen mit, also auch die Fliege. `Vector2.ONE` ist (1, 1), mal `groesse()` ergibt zum Beispiel (0.98, 0.98).
+
+```gdscript
+func groesse() -> float:
+	return minf(1.0, breite / (reihe.size() * abstand))
+```
+Wie gross alle Fliegen gerade sein muessen. `reihe.size() * abstand` ist die Breite, die der Faecher bei voller Groesse braeuchte. `breite` geteilt dadurch sagt, wie viel davon hineinpasst. Beispiel 13 Fliegen: 1400 / 1430 = 0,979. Bei 5 Fliegen kaeme 1400 / 550 = 2,5 heraus, die Fliegen wuerden also groesser. `minf(1.0, ...)` nimmt die kleinere von zwei Zahlen, damit ist bei 1,0 Schluss. Bei 50 Fliegen (= 100 Flugkraft) ist der Faktor 0,25, die Fliegen sind dann etwa 25 Pixel gross.
+
+```gdscript
+func platz(nadel: Node2D) -> Vector2:
+	var nummer: int = reihe.find(nadel)
+	var mitte: float = (reihe.size() - 1) / 2.0
+	return Vector2((nummer - mitte) * abstand * groesse(), 0.0)
+```
+Wo eine Nadel hingehoert, gemessen von der Mitte des Faechers. `reihe.find(nadel)` gibt ihre Nummer in der Liste (die erste hat 0). `mitte` ist die Nummer, die genau in der Mitte steht: bei 3 Fliegen 1, bei 4 Fliegen 1,5 (also zwischen zwei Fliegen). `nummer - mitte` ist dann negativ fuer links und positiv fuer rechts. Mal `abstand`, mal `groesse()`: Wenn die Fliegen schrumpfen, ruecken sie im selben Mass zusammen. Beispiel 3 Fliegen: -110, 0, 110. Beispiel 4 Fliegen: -165, -55, 55, 165. y ist immer 0, die Fliegen haengen also auf einer Linie.
+
+### `skripte/uebergabe.gd` - geaendert in Abschnitt 5 (die ganze Datei)
+
+Weg sind: `abstand`, `anzahl`, `haken` und die Funktion `platz`. Das macht jetzt der Faecher. Neu oder geaendert sind nur die markierten Stellen, der Rest ist wie in Abschnitt 3.
+
+```gdscript
+# Wird gesendet, sobald eine Fliege im Faecher oben haengt. Mit dabei: ihre Flugkraft.
+signal angekommen(flugkraft: int)
+```
+Nur der Kommentar sagt jetzt "Faecher" statt "Reihe".
+
+```gdscript
+# Der Arm: linke Hand, Kanone und Muendung. Nur er faehrt, die Kamera und der Faecher bleiben stehen.
+@export var arm: Node2D
+# Der Faecher am oberen Bildrand, in dem die gefangenen Fliegen haengen.
+@export var faecher: Node2D
+# Der Punkt an der rechten Hand, an dem die Faeden der Fliegen im Faecher festhaengen.
+@export var griff: Node2D
+```
+`faecher` ersetzt `haken`, es zeigt auf den Knoten `Faecher`. `griff` ist neu: ein Marker an der Oberkante der rechten Hand. Beide werden im Inspector eingetragen.
+
+```gdscript
+func starten(nadel: Node2D) -> void:
+	nadel.reparent(faecher)
+```
+Wie vorher, nur heisst das Ziel jetzt `faecher`. Die Nadel wird schon beim Treffer Kind des Faechers, bleibt aber noch da, wo sie getroffen hat. In die Liste des Faechers kommt sie erst, wenn ihre Uebergabe startet.
+
+```gdscript
+		var nadel: Node2D = warteschlange.pop_front()
+		faecher.aufnehmen(nadel)
+```
+Neu: Bevor der Arm losfaehrt, nimmt der Faecher die Nadel in seine Liste auf. Dabei gleiten die schon haengenden Fliegen los.
+
+```gdscript
+		var fahrzeit: float = dauer - verzoegerung
+```
+Neu, aber nur der Lesbarkeit wegen: Die Fliege faehrt 0,48 - 0,1 = 0,38 Sekunden. Vorher stand die Rechnung direkt im Tween, jetzt wird sie zweimal gebraucht.
+
+```gdscript
+		hin.parallel().tween_property(nadel, "position", faecher.platz(nadel), fahrzeit).set_delay(verzoegerung)
+		hin.parallel().tween_property(nadel, "scale", Vector2.ONE * faecher.groesse(), fahrzeit).set_delay(verzoegerung)
+```
+Erste Zeile: Der Platz kommt jetzt vom Faecher (`faecher.platz(nadel)`). Zweite Zeile, neu: Die neue Fliege schrumpft auf dem Weg schon auf die Groesse, die alle gerade bekommen. So kommt sie gleich gross wie die anderen an. Die neue Fliege braucht nur 0,38 Sekunden, die anderen gleiten 1,5 Sekunden. Die Neue ist also zuerst fertig, die anderen ruecken danach langsam nach.
+
+```gdscript
+		await hin.finished
+		nadel.anker = griff
+```
+Neu: Sobald Arm und Fliege angekommen sind, haengt der Faden nicht mehr an der Muendung, sondern am Griff der rechten Hand. Das ist die eigentliche Uebergabe des Fadens.
+
+Der Rest (`angekommen.emit`, Rueckfahrt, `laeuft = false`) ist unveraendert.
+
+### `skripte/nadel.gd` - geaendert in Abschnitt 5
+
+```gdscript
+# Der Punkt, an dem der Faden der Nadel festhaengt: erst die Muendung der Kanone, im Faecher die rechte Hand.
+var anker: Node2D = null
+```
+Neu. Die Kanone traegt beim Schuss die Muendung ein, die Uebergabe spaeter den Griff. `null` heisst: kein Faden.
+
+```gdscript
+func _process(delta: float) -> void:
+	if steckt:
+		faden_spannen()
+		return
+	position.y -= tempo * delta
+	geflogen += tempo * delta
+	var getroffene: Node2D = fliege_an_der_spitze()
+	if getroffene != null:
+		treffen(getroffene)
+	elif geflogen >= reichweite:
+		queue_free()
+	faden_spannen()
+```
+Neu sind die beiden Zeilen `faden_spannen()`. Steckt die Nadel, wird nur der Faden nachgezogen (Arm und Faecher bewegen sich ja noch). Fliegt sie, wird der Faden **nach** dem Weiterfliegen gezogen. Andersherum hinge der Faden ein Bild hinterher: Bei 3200 Pixeln pro Sekunde und 60 Bildern sind das 53 Pixel Luecke zwischen Faden und Nadel.
+
+```gdscript
+func faden_spannen() -> void:
+	if anker == null:
+		return
+	$Faden.points = PackedVector2Array([anker.global_position, $Oese.global_position])
+```
+Neu. Ohne Anker gibt es nichts zu zeichnen. Sonst bekommt die Linie `Faden` genau zwei Punkte: den Anker und die `Oese`, das untere Ende der Nadel. `global_position` ist die Stelle in der Welt, egal wem der Knoten gehoert. `PackedVector2Array` ist die Art Liste, die eine `Line2D` fuer ihre Punkte verlangt. Das geht so einfach nur, weil der Faden `top_level` ist (siehe `nadel.tscn`).
+
+### `skripte/kanone.gd` - geaendert in Abschnitt 5
+
+```gdscript
+		nadel.anker = $Arm/Muendung
+```
+Eine neue Zeile in `schiessen`, direkt nach dem Setzen der Position: Die neue Nadel bekommt die Muendung als Anker. Weil die Muendung am Arm haengt, faehrt der Faden bei der Uebergabe mit dem Arm zur Hand.
+
+### `skripte/spiel.gd` - geaendert in Abschnitt 5
+
+```gdscript
+	$Kanone/Arm/Leiste.max_value = ziel
+```
+Neu in `_ready`: Die Leiste geht bis `ziel`, also bis 100. Steht in `spiel.gd` und nicht fest in der Szene, damit Leiste und Ziel nie auseinanderlaufen, wenn man `ziel` im Inspector aendert.
+
+```gdscript
+func anzeige_schreiben() -> void:
+	$Kanone/Arm/Leiste.value = flugkraft
+```
+Statt Text in ein Label zu schreiben, setzt die Funktion jetzt den Wert der Leiste. Die Leiste fuellt sich selbst so weit, wie `value` von `max_value` ist. Der Kommentar ueber `flugkraft` sagt jetzt "Faecher" statt "Reihe".
+
+### `szenen/nadel.tscn` - geaendert
+
+```
+Nadel (Node2D, traegt nadel.gd)
+├── Strich (ColorRect)     (unveraendert)
+├── Faden (Line2D)         neu
+└── Oese (Marker2D)        neu
+```
+
+- **Faden:** eine `Line2D`, also eine Linie durch Punkte. Breite 3, grau. Die Punkte setzt `nadel.gd`. **`top_level = true`** heisst: Die Linie ignoriert Position und Groesse der Nadel und rechnet direkt in Welt-Koordinaten. Ohne das wuerde sie mit der Nadel mitfliegen und im Faecher mitschrumpfen, und man muesste jeden Punkt umrechnen.
+- **Oese:** ein `Marker2D` bei (0, 50), am unteren Ende des Strichs. Dort haengt der Faden. Weil sie ein echtes Kind der Nadel ist, schrumpft ihr Abstand mit, wenn die Nadel im Faecher kleiner wird.
+
+### `szenen/spiel.tscn` - geaendert
+
+```
+Kanone
+├── Arm
+│   ├── LinkeHand, Koerper, Rohr, Muendung   (unveraendert)
+│   └── Leiste (ProgressBar)                  neu
+├── RechteHand                                (unveraendert)
+├── Griff (Marker2D)                          neu
+├── Faecher (Node2D, traegt faecher.gd)       war "Haken"
+├── Kamera                                    (unveraendert)
+└── Uebergabe                                 Inspector geaendert
+Bedienung
+└── Anzeige (Label)                           geloescht
+```
+
+- **Leiste:** eine `ProgressBar` unter der Kanone (x -80 bis 80, y 15 bis 40), `show_percentage = false`, damit keine Prozentzahl darauf steht. Sie haengt am **Arm**, faehrt also bei der Uebergabe mit, wie der Rest der Kanone.
+- **Griff:** ein `Marker2D` bei (620, -100), oben in der Mitte der rechten Hand.
+- **Faecher:** Der alte `Haken` (ein `Marker2D` bei 0, -800) ist jetzt ein `Node2D` namens `Faecher` an derselben Stelle und traegt `faecher.gd`. Ein `Marker2D` ist nur ein Kreuz im Editor, fuer das Skript braucht es das nicht.
+- **Uebergabe:** im Inspector `faecher = ../Faecher` und `griff = ../Griff` statt `haken = ../Haken`.
+- **Anzeige** ist geloescht. Oben in der Datei steht eine neue `ext_resource`-Zeile fuer `faecher.gd`, und `load_steps` ist von 9 auf 10 gestiegen (eine Datei mehr zu laden).
+
+### `.uid`-Dateien (von Godot selbst angelegt)
+
+`faecher.gd.uid`: Kennnummer wie bei den anderen Skripten. Nicht von Hand aendern.
+
+### So wurde es angeschaut
+
+Ein Probelauf ausserhalb des Spielordners hat 50 Faenge nachgestellt und Bilder gemacht. Bei 13 Fliegen ist der Faecher genau 1400 breit, Groesse 0,979. Beim Schrumpfen bewegt sich jede Fliege hoechstens 2,2 Pixel pro Bild, es gibt also keinen Sprung. Bei 50 Fliegen ist die Groesse 0,25, die Leiste steht auf 100. Ob 1,5 Sekunden sich gut anfuehlen und wie sehr die Faeden stoeren, entscheidest du am Spiel.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Es haengen 4 Fliegen im Faecher. Wo genau (x) haengen sie, und wo kommt die 5. hin?
+2. Warum bleibt der Faecher stehen, wenn der Arm zur Hand faehrt, aber der Faden der neuen Fliege faehrt mit?
+3. Du faengst die 13. Fliege, und 0,8 Sekunden spaeter kommt schon die 14. an. Was passiert mit dem Gleiten der 13., und warum springt dabei nichts?
+
+<details><summary>Antworten</summary>
+
+1. `mitte` = (4 - 1) / 2 = 1,5. Nummern 0 bis 3 ergeben -1,5, -0,5, 0,5, 1,5 mal 110: also -165, -55, 55, 165. Bei 4 (gerade) kommt die 5. mit `push_front` nach ganz links. Danach rechnen alle neu mit `mitte` 2: -220, -110, 0, 110, 220. Die Neue landet bei -220, die anderen gleiten je 55 nach rechts.
+2. Der Faecher ist ein Kind der Kanone, der Arm faehrt in der Kanone, also bewegt er den Faecher nicht. Der Faden haengt an `anker`, und das ist bis zum Ende der Fahrt die Muendung, und die sitzt am Arm. Erst danach setzt die Uebergabe `anker = griff`.
+3. `aufnehmen` ruft `gleiten.kill()` auf. Die Fliegen bleiben, wo sie gerade sind (mitten im Weg), und ein neuer Tween laesst sie von dort zum neuen Platz und zur neuen Groesse gleiten. Ein Tween faengt immer beim aktuellen Wert an, darum springt nichts.
+
+</details>
+
+### Nachtrag Abschnitt 5 (gleicher Tag): Steigen, Hoehenversatz, hohe Hand
+
+Philipp hat nach dem ersten Bau noch drei Dinge gewuenscht: Die Fliege soll erst auf die Hoehe des Faechers steigen und dann seitlich an ihren Platz gehen. Die Fliegen sollen nicht auf einer Linie haengen, sondern leicht versetzt. Und die Hand haelt die Faeden weiter oben, damit sie weniger vom Bild verdecken.
+
+#### `skripte/faecher.gd` - geaendert
+
+```gdscript
+# Wie weit eine Fliege hoechstens ueber oder unter der Linie haengt, in Pixeln. Macht den Faecher natuerlicher.
+@export var hoehen_streuung: float = 20.0
+```
+Neu. 20 heisst: Jede Fliege haengt irgendwo zwischen 20 Pixeln hoeher und 20 Pixeln tiefer als die Linie.
+
+```gdscript
+# Fuer jede Nadel ihr eigener Hoehenunterschied. Wird einmal beim Aufnehmen ausgewuerfelt.
+var versatz: Dictionary = {}
+```
+Neu. Ein `Dictionary` ist eine Liste mit Schluesseln: Zu jeder Nadel (Schluessel) steht ihre Zahl (Wert). So behaelt jede Fliege ihren Versatz, auch wenn sie spaeter zur Seite gleitet. Wuerfelte man jedes Mal neu, wuerden alle Fliegen bei jedem Fang auf und ab huepfen.
+
+```gdscript
+	versatz[neue] = randf_range(-hoehen_streuung, hoehen_streuung)
+```
+Neu, erste Zeile in `aufnehmen`. `randf_range(a, b)` gibt eine zufaellige Kommazahl zwischen a und b. Die wird unter der neuen Nadel gespeichert.
+
+```gdscript
+	return Vector2((nummer - mitte) * abstand * groesse(), versatz[nadel])
+```
+Geaendert in `platz`: y ist nicht mehr immer 0, sondern der Versatz dieser Nadel.
+
+#### `skripte/uebergabe.gd` - geaendert
+
+```gdscript
+		var ziel: Vector2 = faecher.platz(nadel)
+		hin.parallel().tween_property(nadel, "position:y", ziel.y, fahrzeit / 2.0).set_delay(verzoegerung)
+		hin.parallel().tween_property(nadel, "position:x", ziel.x, fahrzeit / 2.0).set_delay(verzoegerung + fahrzeit / 2.0)
+```
+Ersetzt die eine Zeile, die die Fliege schraeg zu ihrem Platz fahren liess. `"position:y"` bewegt nur die Hoehe, `"position:x"` nur die Seite. Die Fahrzeit (0,38 s) wird halbiert: Erst steigt die Fliege 0,19 s lang auf die Hoehe des Faechers, dann geht sie 0,19 s lang zur Seite. Die zweite Bewegung wartet dafuer `verzoegerung + fahrzeit / 2.0`, also 0,1 + 0,19 = 0,29 s. Zusammen 0,48 s: Die Fliege kommt weiter gleichzeitig mit dem Arm an. Die Zeile fuer `scale` bleibt, die Fliege schrumpft waehrend der ganzen Fahrt.
+
+#### `szenen/spiel.tscn` - geaendert
+
+- **RechteHand:** von y -100 bis -20 hoch nach y -560 bis -480. Im Bild sitzt sie jetzt rechts oben im oberen Drittel. Die Faeden kreuzen nur noch den Bereich ueber ihr. Nebenbei liegt sie nicht mehr auf der rechten Pfeiltaste fuers Handy.
+- **Griff:** mit der Hand hoch, von (620, -100) nach (620, -560).
+- Der Arm faehrt bei der Uebergabe weiter nach unten rechts (x 480). Am Ende springt der Faden deshalb von der Muendung hoch zur Hand. Ob das stoert, siehst du am Spiel.
+
+#### Frage zur Selbstkontrolle
+
+4. Warum wird der Hoehenversatz in `versatz` gespeichert, statt in `platz` jedes Mal neu ausgewuerfelt?
+
+<details><summary>Antwort</summary>
+
+4. `platz` wird bei jedem Fang fuer alle Fliegen neu aufgerufen. Wuerfelte es jedes Mal neu, bekaeme jede Fliege bei jedem Fang eine neue Hoehe und wuerde sichtbar hoch und runter gleiten. Gespeichert behaelt sie ihre Hoehe, nur x und die Groesse aendern sich.
+
+</details>
