@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://skripte/kanone.gd" id="1_kanone"]
 [ext_resource type="PackedScene" path="res://szenen/nadel.tscn" id="2_nadel"]
@@ -7,6 +7,8 @@
 [ext_resource type="Script" path="res://skripte/spiel.gd" id="5_spiel"]
 [ext_resource type="Script" path="res://skripte/erzeuger.gd" id="6_erzeuger"]
 [ext_resource type="Script" path="res://skripte/faecher.gd" id="7_faecher"]
+[ext_resource type="Script" path="res://skripte/hindernis_erzeuger.gd" id="8_hindernisse"]
+[ext_resource type="PackedScene" path="res://szenen/hindernis.tscn" id="9_hindernis"]
 
 [sub_resource type="Gradient" id="Gradient_taste"]
 colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
@@ -158,6 +160,12 @@ horizontal_alignment = 1
 script = ExtResource("6_erzeuger")
 fliege_szene = ExtResource("3_fliege")
 kanone = NodePath("../Kanone")
+
+[node name="Hindernisse" type="Node2D" parent="." node_paths=PackedStringArray("kanone", "faecher")]
+script = ExtResource("8_hindernisse")
+hindernis_szene = ExtResource("9_hindernis")
+kanone = NodePath("../Kanone")
+faecher = NodePath("../Kanone/Faecher")
 
 [node name="Kanone" type="Node2D" parent="."]
 script = ExtResource("1_kanone")

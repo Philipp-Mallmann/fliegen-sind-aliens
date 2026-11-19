@@ -18,6 +18,8 @@ var steckt: bool = false
 var fliege: Node2D = null
 # Der Punkt, an dem der Faden der Nadel festhaengt: erst die Muendung der Kanone, im Faecher die rechte Hand.
 var anker: Node2D = null
+# true heisst: Die Nadel haengt mit ihrer Fliege fertig im Faecher. Erst dann kann ein Hindernis sie treffen.
+var haengt: bool = false
 
 
 func _process(delta: float) -> void:

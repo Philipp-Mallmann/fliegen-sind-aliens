@@ -43,6 +43,7 @@ func uebergeben() -> void:
 		hin.parallel().tween_property(nadel, "scale", Vector2.ONE * faecher.groesse(), fahrzeit).set_delay(verzoegerung)
 		await hin.finished
 		nadel.anker = griff
+		nadel.haengt = true
 		angekommen.emit(nadel.fliege.flugkraft)
 		var zurueck: Tween = create_tween()
 		zurueck.tween_property(arm, "position", Vector2.ZERO, dauer)

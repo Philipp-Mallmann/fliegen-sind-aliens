@@ -10,8 +10,6 @@ extends Node2D
 @export var breite: float = 400.0
 # Wie weit ueber der Kanone die oberste Fliege schon bereitsteht, in Pixeln. Der Bildrand liegt bei 920.
 @export var vorlauf: float = 1200.0
-# Wie weit unter der Kanone eine Fliege geloescht wird, in Pixeln. Der Bildrand liegt bei 160.
-@export var loeschen_unter: float = 300.0
 # Das langsamste und das schnellste Tempo einer neuen Fliege, in Pixeln pro Sekunde.
 @export var tempo_langsam: float = 100.0
 @export var tempo_schnell: float = 180.0
@@ -28,6 +26,3 @@ func _process(_delta: float) -> void:
 		fliege.tempo = randf_range(tempo_langsam, tempo_schnell)
 		add_child(fliege)
 		naechste_hoehe -= abstand
-	for fliege in get_children():
-		if fliege.position.y > kanone.position.y + loeschen_unter:
-			fliege.queue_free()

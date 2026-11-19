@@ -1,5 +1,8 @@
 extends Node2D
 
+# Wird gesendet, wenn eine Fliege aus dem Faecher entfernt wurde. Mit dabei: ihre Flugkraft.
+signal verloren(flugkraft: int)
+
 # Wie weit zwei Fliegen im Faecher auseinander sind, solange er noch nicht schrumpfen muss, in Pixeln.
 @export var abstand: float = 110.0
 # Wie breit der Faecher hoechstens werden darf, in Pixeln. Das Bild ist 1440 breit.
@@ -23,15 +26,28 @@ func aufnehmen(neue: Node2D) -> void:
 		reihe.push_front(neue)
 	else:
 		reihe.push_back(neue)
+	nachruecken()
+
+
+func entfernen(nadel: Node2D) -> void:
+	reihe.erase(nadel)
+	versatz.erase(nadel)
+	verloren.emit(nadel.fliege.flugkraft)
+	nachruecken()
+
+
+func nachruecken() -> void:
 	if gleiten != null:
 		gleiten.kill()
-	if reihe.size() == 1:
+	var haengende: Array[Node2D] = []
+	for nadel in reihe:
+		if nadel.haengt:
+			haengende.append(nadel)
+	if haengende.is_empty():
 		return
 	gleiten = create_tween()
 	gleiten.set_parallel(true)
-	for nadel in reihe:
-		if nadel == neue:
-			continue
+	for nadel in haengende:
 		gleiten.tween_property(nadel, "position", platz(nadel), gleitdauer)
 		gleiten.tween_property(nadel, "scale", Vector2.ONE * groesse(), gleitdauer)
 

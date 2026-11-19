@@ -13,6 +13,8 @@ extends Node2D
 var aktuelles_tempo: float = 0.0
 # Wie viele Sekunden das Nachladen noch dauert. 0 oder weniger heisst: bereit.
 var nachladen_noch: float = 0.0
+# true heisst: Die Kanone darf nicht schiessen, zum Beispiel waehrend des Absturzes. Setzt spiel.gd.
+var gesperrt: bool = false
 
 
 func _process(delta: float) -> void:
@@ -33,6 +35,8 @@ func fahren(delta: float) -> void:
 func schiessen(delta: float) -> void:
 	nachladen_noch -= delta
 	if nachladen_noch > 0.0:
+		return
+	if gesperrt:
 		return
 	if Input.is_action_just_pressed("schiessen"):
 		var nadel: Node2D = nadel_szene.instantiate()

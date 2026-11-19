@@ -1710,3 +1710,438 @@ Ersetzt die eine Zeile, die die Fliege schraeg zu ihrem Platz fahren liess. `"po
 4. `platz` wird bei jedem Fang fuer alle Fliegen neu aufgerufen. Wuerfelte es jedes Mal neu, bekaeme jede Fliege bei jedem Fang eine neue Hoehe und wuerde sichtbar hoch und runter gleiten. Gespeichert behaelt sie ihre Hoehe, nur x und die Groesse aendern sich.
 
 </details>
+
+## Abschnitt 6 - Hindernisse und Absturz
+
+Ein gelbes Warnschild kuendigt eine Spalte an. Es waechst und blinkt immer schneller. Nach 3 Sekunden faellt ein grauer Klotz durch die Spalte und zermatscht jede Fliege darin, freie und gefangene. Fuer jede verlorene Fliege im Faecher stuerzt der Forscher um ihre Flugkraft ab. Waehrend des Falls kann man nicht schiessen, fahren geht weiter. Danach geht es auf der neuen Hoehe weiter.
+
+### Wer macht was
+
+- `hindernis_erzeuger.gd` wuerfelt alle 6 bis 10 Sekunden eine Spalte aus und setzt dort ein Hindernis hin.
+- `hindernis.gd` warnt, faellt und zermatscht.
+- `faecher.gd` nimmt eine getroffene Fliege aus der Reihe und meldet, wie viel Flugkraft weg ist (Signal `verloren`).
+- `spiel.gd` zieht die Flugkraft ab, laesst die Kanone fallen und sperrt so lange das Schiessen.
+- `kanone.gd` schiesst nicht, solange `gesperrt` true ist.
+
+### Der Trick 1: Die Warnung klebt am Bildrand, nicht an der Welt
+
+Das Hindernis ist ein Knoten in der Welt, damit es an einer festen Stelle x faellt. Waehrend der Warnung setzt es sich aber jedes Bild neu auf `kanone.position.y - 920`. Das ist der obere Bildrand, denn die Kamera haengt an der Kanone. Steigt man waehrend der Warnung, bleibt das Schild trotzdem oben im Bild.
+
+### Der Trick 2: Fallen heisst gleiten mit fester Geschwindigkeit
+
+Beim Steigen gibt es eine feste Dauer (0,8 s). Beim Fallen gibt es stattdessen eine feste Geschwindigkeit (`falltempo`, 1200 px/s). Die Dauer ist dann Strecke geteilt durch Geschwindigkeit. Eine verlorene Fliege (2 Flugkraft, 600 px) dauert 0,5 s, zehn verlorene Fliegen (6000 px) dauern 5 s. Wer mehr verliert, faellt laenger.
+
+### `skripte/hindernis.gd` (die ganze Datei, neu)
+
+```gdscript
+extends Node2D
+```
+Das Hindernis ist ein `Node2D`: Es hat eine Position in der Welt.
+
+```gdscript
+# Wie lange die Warnung laeuft, bevor der Gegenstand faellt, in Sekunden.
+@export var warnzeit: float = 3.0
+# Wie breit die Spalte ist, in Pixeln. Jede Fliege darin wird zermatscht.
+@export var breite: float = 200.0
+# Wie hoch der fallende Gegenstand ist, in Pixeln.
+@export var hoehe: float = 120.0
+# Wie schnell der Gegenstand faellt, in Pixeln pro Sekunde. Muss schneller sein als der Absturz (falltempo in spiel.gd).
+@export var falltempo: float = 1800.0
+```
+Die vier Werte, die du am Spiel einstellst. Warum der Klotz schneller fallen muss als der Forscher, steht unten bei `spiel.gd`.
+
+```gdscript
+# Wie lange ein Blinken der Warnung dauert, am Anfang und am Ende, in Sekunden. Kleiner heisst schneller.
+@export var blinken_anfang: float = 0.5
+@export var blinken_ende: float = 0.1
+```
+Am Anfang ist das Schild eine halbe Sekunde lang einmal an und aus, am Ende nur noch eine Zehntelsekunde: Es blinkt immer hektischer.
+
+```gdscript
+# Wie weit ueber der Kanone der obere Bildrand liegt, in Pixeln.
+@export var bildrand: float = 920.0
+# Wie weit unter der Kanone der Gegenstand verschwindet, in Pixeln. Der untere Bildrand liegt bei 160.
+@export var weg_unter: float = 300.0
+```
+920 ist dieselbe Zahl wie im Fliegen-Erzeuger: Kamera 380 ueber der Kanone plus halbe Bildhoehe 540. Bei 300 unter der Kanone ist der Klotz sicher unten aus dem Bild und wird geloescht.
+
+```gdscript
+# Die Szene des Matsches. Bei jeder zermatschten Fliege entsteht daraus ein Fleck.
+@export var matsch_szene: PackedScene
+```
+Im Inspector steht hier `blutfleck.tscn`. Der rote Fleck aus Abschnitt 3 ist bis Abschnitt 12 auch der Matsch.
+
+```gdscript
+# Die Kanone. Die Warnung bleibt ueber ihr am oberen Bildrand. Setzt der Hindernis-Erzeuger.
+var kanone: Node2D = null
+# Der Faecher. Aus ihm werden getroffene Fliegen entfernt. Setzt der Hindernis-Erzeuger.
+var faecher: Node2D = null
+```
+Kein `@export`, denn das Hindernis entsteht erst im Spiel. Im Inspector gibt es da nichts einzutragen. Der Erzeuger setzt beide Werte, bevor er das Hindernis in die Welt haengt.
+
+```gdscript
+# Wie viele Sekunden schon gewarnt wird.
+var gewarnt: float = 0.0
+```
+Zaehlt hoch. Ist er bei `warnzeit`, faellt der Klotz.
+
+```gdscript
+func _ready() -> void:
+	$Spalte.offset_left = -breite / 2.0
+	$Spalte.offset_right = breite / 2.0
+	$Klotz.offset_left = -breite / 2.0
+	$Klotz.offset_right = breite / 2.0
+	$Klotz.offset_top = -hoehe
+```
+Die gelbe Spalte und der graue Klotz sind `ColorRect`s. Ihre Raender werden hier aus `breite` und `hoehe` gesetzt, mittig um x = 0. So reicht es, `breite` im Inspector zu aendern, und Bild und Treffer stimmen weiter ueberein.
+
+```gdscript
+func _process(delta: float) -> void:
+	if gewarnt < warnzeit:
+		warnen(delta)
+	else:
+		fallen(delta)
+```
+Jedes Bild: erst warnen, nach Ablauf der Warnzeit fallen.
+
+```gdscript
+func warnen(delta: float) -> void:
+	gewarnt += delta
+	position.y = kanone.position.y - bildrand
+```
+Zeit hochzaehlen und am oberen Bildrand bleiben (Trick 1).
+
+```gdscript
+	var anteil: float = gewarnt / warnzeit
+	$Warnung.scale = Vector2.ONE * (0.5 + anteil)
+```
+`anteil` laeuft von 0 (Anfang) bis 1 (gleich faellt es). Das Schild waechst von halber Groesse (0,5) auf anderthalbfache (1,5).
+
+```gdscript
+	var takt: float = lerpf(blinken_anfang, blinken_ende, anteil)
+	$Warnung.visible = fmod(gewarnt, takt) < takt / 2.0
+```
+`lerpf(a, b, anteil)` liegt zwischen a und b, je nach `anteil`: am Anfang 0,5, am Ende 0,1. `fmod(gewarnt, takt)` ist der Rest beim Teilen, er zaehlt immer wieder von 0 bis `takt` hoch. In der ersten Haelfte ist das Schild an, in der zweiten aus. Weil `takt` kleiner wird, blinkt es schneller.
+
+```gdscript
+func fallen(delta: float) -> void:
+	$Warnung.visible = false
+	$Spalte.visible = false
+	position.y += falltempo * delta
+```
+Schild und Spalte weg, der Klotz faellt. Plus heisst nach unten.
+
+```gdscript
+	for fliege in get_tree().get_nodes_in_group("fliegen"):
+		if im_klotz(fliege):
+			zermatschen(fliege)
+```
+Jede Fliege im Spiel steckt in der Gruppe `fliegen`, frei oder gefangen. Jede, die gerade im Klotz steckt, wird zermatscht.
+
+```gdscript
+	if position.y > kanone.position.y + weg_unter:
+		queue_free()
+```
+Unten aus dem Bild: weg damit.
+
+```gdscript
+func im_klotz(fliege: Node2D) -> bool:
+	var groesse: float = fliege.halbe_groesse * fliege.global_scale.x
+```
+Die halbe Groesse der Fliege, so wie sie gerade im Bild ist. Im geschrumpften Faecher ist `global_scale.x` kleiner als 1, dann ist auch die Fliege kleiner.
+
+```gdscript
+	var seitlich: float = absf(fliege.global_position.x - global_position.x)
+	var senkrecht: float = absf(fliege.global_position.y - (global_position.y - hoehe / 2.0))
+	return seitlich <= breite / 2.0 + groesse and senkrecht <= hoehe / 2.0 + groesse
+```
+Dieselbe Idee wie der Treffer der Nadel in Abschnitt 3: Abstand der Mitten, seitlich und senkrecht. Die Mitte des Klotzes liegt `hoehe / 2` ueber seiner Position, denn der Klotz reicht von -120 bis 0. Zwei Rechtecke beruehren sich, wenn der Abstand der Mitten hoechstens die halbe Breite des einen plus die halbe Breite des anderen ist. Dasselbe gilt senkrecht.
+
+```gdscript
+func zermatschen(fliege: Node2D) -> void:
+	if fliege.gefangen:
+		var nadel: Node2D = fliege.get_parent()
+		if not nadel.haengt:
+			return
+		faecher.entfernen(nadel)
+		nadel.queue_free()
+```
+Eine gefangene Fliege steckt an ihrer Nadel, die Nadel ist ihr Elternknoten. Haengt die Nadel noch nicht fertig im Faecher (sie ist gerade unterwegs zur Hand), passiert nichts. Sonst nimmt der Faecher sie aus der Reihe, und die Nadel wird geloescht, mit Fliege und Faden.
+
+Dazwischen steht `nadel.haengt = false`. `queue_free` loescht erst am Ende des Bildes. Fielen zwei Kloetze im selben Bild auf dieselbe Fliege, wuerde der zweite sie sonst noch einmal entfernen, und ihre Flugkraft waere doppelt abgezogen. So sieht der zweite: haengt nicht, nichts zu tun.
+
+```gdscript
+	else:
+		fliege.queue_free()
+```
+Eine freie Fliege wird einfach geloescht.
+
+```gdscript
+	var matsch: Node2D = matsch_szene.instantiate()
+	get_parent().add_child(matsch)
+	matsch.global_position = fliege.global_position
+```
+An der Stelle der Fliege entsteht ein Fleck. Er haengt am Hindernis-Erzeuger, also in der Welt, nicht am Hindernis, das gleich geloescht wird. `queue_free` loescht erst am Ende des Bildes, darum kann man die Position der Fliege hier noch lesen.
+
+### `skripte/hindernis_erzeuger.gd` (die ganze Datei, neu)
+
+```gdscript
+extends Node2D
+
+# Die Szene des Hindernisses. Daraus entsteht jedes neue Hindernis.
+@export var hindernis_szene: PackedScene
+# Die Kanone. Um sie herum wird die Spalte ausgewuerfelt.
+@export var kanone: Node2D
+# Der Faecher. Wird an jedes Hindernis weitergegeben.
+@export var faecher: Node2D
+```
+Wie beim Fliegen-Erzeuger: die Szene, aus der neue Hindernisse entstehen, und die zwei Knoten, die jedes Hindernis kennen muss. Im Inspector steht `hindernis.tscn`, `../Kanone` und `../Kanone/Faecher`.
+
+```gdscript
+# Die kuerzeste und die laengste Pause zwischen zwei Hindernissen, in Sekunden.
+@export var pause_kurz: float = 6.0
+@export var pause_lang: float = 10.0
+# Wie weit links oder rechts von der Kanone die Spalte hoechstens liegt, in Pixeln. Das Bild reicht 720 zu jeder Seite.
+@export var spielraum: float = 700.0
+```
+Deine Wahl Z11: alle 6 bis 10 Sekunden. 700 heisst: Die Spalte liegt immer im Bild.
+
+```gdscript
+# Wie viele Sekunden es noch bis zum naechsten Hindernis dauert.
+var naechstes_in: float = 0.0
+
+
+func _ready() -> void:
+	naechstes_in = randf_range(pause_kurz, pause_lang)
+```
+Ein Countdown wie beim Nachladen der Kanone. Schon das erste Hindernis wartet eine zufaellige Pause ab.
+
+```gdscript
+func _process(delta: float) -> void:
+	naechstes_in -= delta
+	if naechstes_in > 0.0:
+		return
+```
+Herunterzaehlen. Solange noch Zeit ist, passiert nichts.
+
+```gdscript
+	var hindernis: Node2D = hindernis_szene.instantiate()
+	hindernis.position.x = kanone.position.x + randf_range(-spielraum, spielraum)
+	hindernis.kanone = kanone
+	hindernis.faecher = faecher
+	add_child(hindernis)
+	naechstes_in = randf_range(pause_kurz, pause_lang)
+```
+Neues Hindernis bauen, Spalte auswuerfeln, Kanone und Faecher mitgeben, in die Welt haengen. Dann eine neue Pause auswuerfeln. Die Hoehe y setzt das Hindernis selbst (oberer Bildrand).
+
+### `szenen/hindernis.tscn` (neu)
+
+```
+Hindernis (Node2D, traegt hindernis.gd, matsch_szene = blutfleck.tscn)
+├── Spalte (ColorRect)    gelb, 15 % deckend, 200 breit, 1080 hoch (eine Bildhoehe)
+├── Klotz (ColorRect)     grau, 200 breit, von y -120 bis 0, also ueber dem Bildrand
+└── Warnung (Polygon2D)   gelbes Dreieck bei y 80, z_index 1
+    └── Zeichen (Label)   schwarzes "!"
+```
+- **Spalte und Klotz** haben `mouse_filter = 2` (Ignore). Ein `ColorRect` faengt sonst Mausklicks ab, und der linke Mausklick ist Schiessen.
+- **Klotz** liegt waehrend der Warnung knapp ueber dem Bild. Er ist da, man sieht ihn nur noch nicht.
+- **Warnung** hat `z_index = 1`. Die Fliegen im Faecher gehoeren zur Kanone, und die wird spaeter gezeichnet als die Hindernisse, sie laegen also davor. Mit `z_index` 1 liegt das Schild immer obenauf.
+- Gelb ist die zweite Farbe nach dem roten Blut. Das ist eine Ausnahme von "Greybox zuerst", weil eine graue Warnung im grauen Bild nicht auffaellt.
+
+### `skripte/faecher.gd` - geaendert in Abschnitt 6
+
+```gdscript
+# Wird gesendet, wenn eine Fliege aus dem Faecher entfernt wurde. Mit dabei: ihre Flugkraft.
+signal verloren(flugkraft: int)
+```
+Neu. `spiel.gd` hoert darauf und zieht die Flugkraft ab.
+
+```gdscript
+func aufnehmen(neue: Node2D) -> void:
+	versatz[neue] = randf_range(-hoehen_streuung, hoehen_streuung)
+	if reihe.size() % 2 == 0:
+		reihe.push_front(neue)
+	else:
+		reihe.push_back(neue)
+	nachruecken()
+```
+Das Gleiten der anderen Fliegen stand vorher hier in `aufnehmen`. Es steht jetzt in einer eigenen Funktion `nachruecken`, denn auch `entfernen` braucht es.
+
+```gdscript
+func entfernen(nadel: Node2D) -> void:
+	reihe.erase(nadel)
+	versatz.erase(nadel)
+	verloren.emit(nadel.fliege.flugkraft)
+	nachruecken()
+```
+Neu. `erase` nimmt die Nadel aus der Liste und ihren Eintrag aus dem Dictionary (die Notiz N40 aus Abschnitt 5). Dann wird gemeldet, wie viel Flugkraft weg ist, und die anderen ruecken zusammen. Weil es eine weniger ist, rechnet `groesse()` vielleicht wieder groesser: Die Fliegen wachsen dabei zurueck.
+
+```gdscript
+func nachruecken() -> void:
+	if gleiten != null:
+		gleiten.kill()
+```
+Ein laufendes Gleiten anhalten, wie bisher.
+
+```gdscript
+	var haengende: Array[Node2D] = []
+	for nadel in reihe:
+		if nadel.haengt:
+			haengende.append(nadel)
+	if haengende.is_empty():
+		return
+```
+Nur Fliegen gleiten lassen, die schon fertig haengen. Die neue, die gerade unterwegs ist, bewegt die Uebergabe. Frueher stand hier "ueberspringe die Neue", das ergibt dasselbe. Ist keine da, gibt es nichts zu tun. Ein Tween ohne Bewegung darin meldet Godot als Fehler.
+
+```gdscript
+	gleiten = create_tween()
+	gleiten.set_parallel(true)
+	for nadel in haengende:
+		gleiten.tween_property(nadel, "position", platz(nadel), gleitdauer)
+		gleiten.tween_property(nadel, "scale", Vector2.ONE * groesse(), gleitdauer)
+```
+Wie bisher: alle gleichzeitig an den neuen Platz und auf die neue Groesse.
+
+### `skripte/nadel.gd` - geaendert in Abschnitt 6
+
+```gdscript
+# true heisst: Die Nadel haengt mit ihrer Fliege fertig im Faecher. Erst dann kann ein Hindernis sie treffen.
+var haengt: bool = false
+```
+Neu. Warum Fliegen unterwegs nicht getroffen werden: Wuerde die Nadel mitten in der Uebergabe geloescht, wartet die Uebergabe (`await hin.finished`) auf einen Tween, dessen Ziel es nicht mehr gibt. Dann bliebe die Kanone fuer immer gesperrt.
+
+### `skripte/uebergabe.gd` - geaendert in Abschnitt 6
+
+```gdscript
+		nadel.anker = griff
+		nadel.haengt = true
+```
+Die zweite Zeile ist neu. Sobald die Fliege oben angekommen ist, haengt sie, und ab dann kann sie getroffen werden.
+
+### `skripte/kanone.gd` - geaendert in Abschnitt 6
+
+```gdscript
+# true heisst: Die Kanone darf nicht schiessen, zum Beispiel waehrend des Absturzes. Setzt spiel.gd.
+var gesperrt: bool = false
+```
+Neu.
+
+```gdscript
+	if nachladen_noch > 0.0:
+		return
+	if gesperrt:
+		return
+```
+Die zweite Bedingung ist neu, in `schiessen`. Gesperrt heisst: kein Schuss. Das Nachladen zaehlt trotzdem weiter. Die Touch-Taste loest dieselbe Aktion `schiessen` aus, sie ist also mit gesperrt. Fahren ist nicht gesperrt.
+
+### `skripte/erzeuger.gd` - geaendert in Abschnitt 6
+
+Geloescht:
+
+```gdscript
+# Wie weit unter der Kanone eine Fliege geloescht wird, in Pixeln. Der Bildrand liegt bei 160.
+@export var loeschen_unter: float = 300.0
+...
+	for fliege in get_children():
+		if fliege.position.y > kanone.position.y + loeschen_unter:
+			fliege.queue_free()
+```
+Deine Wahl Z31: Fliegen unter dem Bild bleiben. Sonst waere nach einem Absturz das Bild leer, denn der Erzeuger baut nur nach oben neue Fliegen. Jetzt haengen dort wieder die Fliegen, an denen du vorbeigestiegen bist. Bis 100 Flugkraft sind das hoechstens etwa 120 Fliegen. Was ausserhalb des Bildes ist, zeichnet Godot nicht. Das ist gerechnet, im Browser wird es in Abschnitt 8 gemessen.
+
+### `skripte/spiel.gd` - geaendert in Abschnitt 6
+
+```gdscript
+# Wie schnell man abstuerzt, in Pixeln pro Sekunde. Wer mehr verliert, faellt tiefer und darum laenger.
+# Muss langsamer sein als ein Hindernis faellt (falltempo in hindernis.gd), sonst holt der Faecher es ein.
+@export var falltempo: float = 1200.0
+```
+Neu. Der Faecher faellt mit der Kanone mit. Waere er schneller als der Klotz (1800), wuerde er ihn von oben einholen und noch einmal hindurchfallen. Dann waeren weitere Fliegen weg, die gar nicht in der Spalte hingen.
+
+```gdscript
+	$Kanone/Faecher.verloren.connect(fliege_verlieren)
+```
+Neu in `_ready`: Meldet der Faecher einen Verlust, laeuft `fliege_verlieren`.
+
+```gdscript
+	steigen.tween_callback(entsperren)
+```
+Neu in `fliege_zaehlen`, gleich nach dem Steigen. Kommt waehrend eines Falls noch eine Fliege oben an (die Uebergabe lief schon), haelt `steigen.kill()` den Fall an, und dessen `entsperren` kaeme nie. Darum entsperrt auch das Steigen, wenn es fertig ist. War gar nichts gesperrt, aendert `entsperren` nichts. Sofort entsperren waere falsch: Das neue Gleiten kann noch weiter nach unten gehen, und waehrend des Falls darf man nicht schiessen.
+
+```gdscript
+		$Hindernisse.set_process(false)
+		for hindernis in $Hindernisse.get_children():
+			hindernis.queue_free()
+```
+Neu beim Sieg. Die erste Zeile haelt den Hindernis-Erzeuger an: Es kommen keine neuen Hindernisse. Ein Hindernis, das schon warnt oder faellt, hat aber sein eigenes `_process`. Darum werden alle Kinder des Erzeugers geloescht: laufende Hindernisse und die Matsch-Flecken, die dort haengen. Sonst koennte ein Klotz im All noch Fliegen zermatschen.
+
+```gdscript
+func fliege_verlieren(weg: int) -> void:
+	flugkraft -= weg
+	anzeige_schreiben()
+	if steigen != null:
+		steigen.kill()
+```
+Flugkraft abziehen, die Leiste zeigt es sofort. Ein laufendes Steigen oder Fallen anhalten.
+
+```gdscript
+	var neue_hoehe: float = -flugkraft * hoehe_je_flugkraft
+	var strecke: float = absf(neue_hoehe - $Kanone.position.y)
+```
+Wo man hin muss (dieselbe Rechnung wie beim Steigen) und wie weit das von hier ist. `absf` macht die Zahl positiv. Sie koennte negativ sein, wenn man gerade noch am Steigen war und darum noch unter dem neuen Ziel ist.
+
+```gdscript
+	$Kanone.gesperrt = true
+	steigen = create_tween()
+	steigen.tween_property($Kanone, "position:y", neue_hoehe, strecke / falltempo)
+	steigen.tween_callback(entsperren)
+```
+Schiessen sperren, hinuntergleiten. Dauer = Strecke / Geschwindigkeit (Trick 2). `tween_callback` ruft `entsperren` auf, wenn das Gleiten fertig ist. Trifft der Klotz zwei Fliegen kurz nacheinander, startet der zweite Aufruf das Gleiten neu, mit der restlichen Strecke.
+
+```gdscript
+func entsperren() -> void:
+	$Kanone.gesperrt = false
+```
+Am Ziel: wieder schiessen.
+
+### `szenen/spiel.tscn` - geaendert
+
+```
+Spiel
+├── Boden, Erzeuger            (unveraendert)
+├── Hindernisse (Node2D)       neu, traegt hindernis_erzeuger.gd
+├── Kanone ...                 (unveraendert)
+└── Bedienung                  (unveraendert)
+```
+- **Hindernisse** steht vor der Kanone in der Liste. Was frueher in der Liste steht, wird zuerst gezeichnet, die Kanone liegt also ueber dem fallenden Klotz. Der Forscher wird nie getroffen, und so sieht es auch aus.
+- Inspector: `hindernis_szene = hindernis.tscn`, `kanone = ../Kanone`, `faecher = ../Kanone/Faecher`.
+- Oben zwei neue `ext_resource`-Zeilen (Skript und Szene), `load_steps` von 10 auf 12.
+
+### `.uid`-Dateien (von Godot selbst angelegt)
+
+`hindernis.gd.uid`, `hindernis_erzeuger.gd.uid`: Kennnummern wie bei den anderen Skripten. Nicht von Hand aendern.
+
+### So wurde es angeschaut
+
+Ein Probelauf ausserhalb des Spielordners hat vier Faenge nachgestellt (Flugkraft 8, Kanone bei -2400) und ein Hindernis genau ueber die linke Fliege im Faecher gesetzt. Gemessen:
+- Die Warnung ist oben im Bild sichtbar, ueber der Spalte und vor den Fliegen (Bild).
+- Der Klotz trifft die linke Fliege und die zweite. Die liegt 110 daneben, und der Klotz reicht 100 + 50 zur Seite. Flugkraft 8 -> 4, Faecher 4 -> 2, `versatz` 2, Leiste 4.
+- Die Kanone faellt von -2400 auf -1200, genau 4 x 300. Das dauert 1,0 s (1200 px bei 1200 px/s).
+- Ein Schuss waehrend des Falls: keine Nadel. Derselbe Schuss danach: eine Nadel.
+- Eine stehende freie Fliege in der Spalte ist weg, eine 400 daneben lebt.
+- Der Klotz ist danach geloescht.
+
+Wie sich 3 Sekunden Warnung und 6 bis 10 Sekunden Pause anfuehlen, entscheidest du am Spiel.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Du hast 6 Fliegen im Faecher, der Klotz trifft 2 davon. Wie tief faellst du, und wie lange dauert es?
+2. Warum muss `falltempo` in `spiel.gd` kleiner sein als `falltempo` in `hindernis.gd`?
+3. Eine Fliege faehrt gerade zur Hand, als der Klotz durch ihre Stelle faellt. Was passiert mit ihr, und warum ist das so gebaut?
+
+<details><summary>Antworten</summary>
+
+1. 2 Fliegen sind 4 Flugkraft, mal 300 also 1200 px. Bei 1200 px/s dauert das 1 Sekunde. Waehrenddessen kann man nicht schiessen.
+2. Der Faecher faellt mit der Kanone. Waere er schneller als der Klotz, wuerde er ihn einholen, und der Klotz wuerde ein zweites Mal durch den Faecher gehen und noch mehr Fliegen treffen.
+3. Nichts, sie ist sicher. `haengt` ist erst nach der Ankunft true. Wuerde man ihre Nadel loeschen, wartete die Uebergabe auf einen Tween, dessen Ziel weg ist, und die Kanone bliebe fuer immer gesperrt.
+
+</details>
