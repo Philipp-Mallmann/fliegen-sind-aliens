@@ -9,10 +9,15 @@ extends Node2D
 # Wie schnell der Gegenstand faellt, in Pixeln pro Sekunde. Muss schneller sein als der Absturz (falltempo in spiel.gd).
 @export var falltempo: float = 1800.0
 # Wie lange ein Blinken der Warnung dauert, am Anfang und am Ende, in Sekunden. Kleiner heisst schneller.
-@export var blinken_anfang: float = 0.5
+@export var blinken_anfang: float = 1.0
 @export var blinken_ende: float = 0.1
 # Wie weit ueber der Kanone der obere Bildrand liegt, in Pixeln. In der Luft 1060, am Boden etwas mehr (herausgezoomt).
 @export var bildrand: float = 1060.0
+# Wie gross das Warnschild am Anfang und am Ende der Warnung ist. 1 ist die Groesse aus der Szene.
+@export var groesse_anfang: float = 0.25
+@export var groesse_ende: float = 1.5
+# Wie kraeftig die gelbe Spalte am Anfang der Warnung zu sehen ist. 1 heisst: voll, wie am Ende.
+@export var spalte_anfang: float = 0.3
 # Wie weit unter der Kanone der Gegenstand verschwindet, in Pixeln. Der untere Bildrand liegt hoechstens 190 darunter.
 @export var weg_unter: float = 300.0
 # Die Szene des Matsches. Bei jeder zermatschten Fliege entsteht daraus ein Fleck.
@@ -45,7 +50,8 @@ func warnen(delta: float) -> void:
 	gewarnt += delta
 	position.y = kanone.position.y - bildrand
 	var anteil: float = gewarnt / warnzeit
-	$Warnung.scale = Vector2.ONE * (0.5 + anteil)
+	$Warnung.scale = Vector2.ONE * lerpf(groesse_anfang, groesse_ende, anteil)
+	$Spalte.modulate.a = lerpf(spalte_anfang, 1.0, anteil)
 	var takt: float = lerpf(blinken_anfang, blinken_ende, anteil)
 	$Warnung.visible = fmod(gewarnt, takt) < takt / 2.0
 

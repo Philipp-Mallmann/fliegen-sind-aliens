@@ -2734,3 +2734,70 @@ Hand, Griff und Faecher sind um 140 px nach oben gerueckt, genau um so viel, wie
 3. Die Kamera zeigt in der Luft 140 px mehr ueber der Kanone (Rand bei 1060 statt 920), weil die Kanone jetzt unten am Rand sitzt. Alles, was oben am Bildrand bleiben soll, muss um genau so viel nach oben, dann steht es im Bild wieder an derselben Stelle.
 
 </details>
+
+## Spass-Test, Runde 3 - Hindernisse mittiger, laenger, leiser am Anfang
+
+Hindernisse kommen oefter in der Mitte, warnen doppelt so lange, damit man vorher noch eine Fliege aus der Spalte holen kann, und kuendigen sich am Anfang leiser an.
+
+### `skripte/hindernis_erzeuger.gd` - geaendert
+
+```gdscript
+@export var mitte: float = 240.0
+@export var anteil_mitte: float = 0.7
+```
+Neu. Das Bild ist 1440 breit, ein Drittel davon 480, also reicht das innere Drittel 240 zu jeder Seite der Kanone. In 7 von 10 Faellen liegt die Spalte dort.
+
+```gdscript
+	var abstand: float = randf_range(-spielraum, spielraum)
+	if randf() < anteil_mitte:
+		abstand = randf_range(-mitte, mitte)
+	hindernis.position.x = kanone.position.x + abstand
+```
+Erst wird wie bisher irgendwo im Bild gewuerfelt (bis 700 zu jeder Seite). Dann ein zweiter Wurf: Ist `randf()` kleiner als 0.7, wird der erste Wert ueberschrieben, mit einem Wert nur aus dem inneren Drittel. Insgesamt liegt die Spalte dadurch in etwa 80 von 100 Faellen innen: die 70 aus dem zweiten Wurf, und von den anderen 30 landet ein Drittel zufaellig auch innen (240 von 700).
+
+```gdscript
+@export var warnzeit_unten: float = 6.0
+@export var warnzeit_oben: float = 10.0
+```
+Doppelt so lang wie vorher (3 und 5). Bei einem Drittel des Wegs sind es jetzt 8 Sekunden. Die Rechnung darunter ist dieselbe.
+
+### `skripte/hindernis.gd` - geaendert
+
+```gdscript
+@export var blinken_anfang: float = 1.0
+```
+Vorher 0.5. Am Anfang dauert ein Blinken jetzt 1 Sekunde, also langsamer.
+
+```gdscript
+@export var groesse_anfang: float = 0.25
+@export var groesse_ende: float = 1.5
+@export var spalte_anfang: float = 0.3
+```
+Neu. Bisher stand im Code fest `0.5 + anteil`, also 0.5 bis 1.5. Jetzt beginnt das Schild bei einem Viertel seiner Groesse und ist als Regler einstellbar. Die gelbe Spalte beginnt bei 30 Prozent ihrer Deckkraft.
+
+```gdscript
+	$Warnung.scale = Vector2.ONE * lerpf(groesse_anfang, groesse_ende, anteil)
+	$Spalte.modulate.a = lerpf(spalte_anfang, 1.0, anteil)
+```
+In `warnen`. `anteil` geht waehrend der Warnung von 0 auf 1. `lerpf` nimmt den Wert dazwischen: Schild von 0.25 auf 1.5, Spalte von 0.3 auf 1. `modulate.a` ist die Deckkraft, mit der ein Knoten gezeichnet wird, 1 heisst so, wie die Farbe in der Szene eingestellt ist (dort schon schwach gelb, 0.15).
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck beider Skripte PASS.
+- Probe in einer Kopie des Spiels: von 2000 Hindernissen 80,75 % im inneren Drittel, das weiteste 700 px neben der Kanone. Warnzeit bei 0 / 10000 / 20000 / 30000 px: 6 / 8 / 10 / 10 s. Schild am Anfang 0,25, Spalte 0,3; nach 3 s (bei 6 s Warnzeit) Schild 0,88, Spalte 0,65.
+- **Folge, nicht geaendert:** Die Pause zwischen zwei Hindernissen (6 bis 10 s) zaehlt ab dem Erscheinen. Bei 6 bis 10 s Warnzeit laufen jetzt oft zwei Warnungen gleichzeitig.
+- **Nicht gemessen:** wie es sich spielt, und ob man das leise Schild am Anfang noch sieht.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum liegen am Ende etwa 80 und nicht 70 von 100 Spalten im inneren Drittel?
+2. Wie gross ist das Schild nach der Haelfte der Warnzeit?
+3. Was muesstest du aendern, damit nie mehr als ein Hindernis gleichzeitig warnt?
+
+<details><summary>Antworten</summary>
+
+1. In den anderen 30 Faellen gilt der erste Wurf ueber das ganze Bild, und der landet auch manchmal innen: 240 von 700 px, also etwa jedes dritte Mal. 70 + 30 / 3 = 80.
+2. `lerpf(0.25, 1.5, 0.5)` = 0.25 + 0.5 x 1.25 = 0.875, also knapp 0,9.
+3. Die Pause muss laenger sein als die laengste Warnzeit plus Fall, zum Beispiel `pause_kurz` und `pause_lang` ueber 10 Sekunden. Oder der Erzeuger zaehlt erst los, wenn das letzte Hindernis weg ist.
+
+</details>
