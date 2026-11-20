@@ -2145,3 +2145,93 @@ Wie sich 3 Sekunden Warnung und 6 bis 10 Sekunden Pause anfuehlen, entscheidest 
 3. Nichts, sie ist sicher. `haengt` ist erst nach der Ankunft true. Wuerde man ihre Nadel loeschen, wartete die Uebergabe auf einen Tween, dessen Ziel weg ist, und die Kanone bliebe fuer immer gesperrt.
 
 </details>
+
+## Abschnitt 7 - Absturz bis zum Boden, Aufstehen, Neustart
+
+Verliert man die letzte Fliege, faellt man auf den Boden (Flugkraft 0 heisst Hoehe 0, das konnte schon Abschnitt 6). Neu: Unten steht der Forscher kurz wieder auf, dann beginnt alles von vorn. Das Ende nach "Im All!" bleibt vorerst so, wie es ist. Dort kommt spaeter eine eigene Animation, danach geht es zurueck zur Totale (Abschnitt 13/14).
+
+### `skripte/spiel.gd` - geaendert in Abschnitt 7
+
+```gdscript
+	$Kanone/Aufstehen.animation_finished.connect(neustart)
+```
+Neu in `_ready`. `Aufstehen` ist eine Bild-fuer-Bild-Animation (`AnimatedSprite2D`). Ist ihr letztes Bild durch, sendet sie `animation_finished`, und dann laeuft `neustart`. Das Signal kommt nur, wenn die Animation nicht in Schleife laeuft, darum steht in der Szene `loop` auf `false`.
+
+```gdscript
+	aufstehen_abbrechen()
+```
+Neu in `fliege_zaehlen`, gleich nach der Leiste. Es kann sein, dass alle haengenden Fliegen weg sind, aber eine gerade noch zur Hand unterwegs ist (die trifft kein Hindernis, Abschnitt 6). Dann faellt man auf 0, steht auf, und waehrenddessen kommt sie oben an. Dann darf es nicht neu starten. `aufstehen_abbrechen` haelt die Animation an, und weil sie angehalten und nicht fertig ist, kommt `animation_finished` nicht. Bei jedem normalen Fang laeuft die Zeile auch, sie aendert dann nichts, weil ohnehin nichts zu sehen ist.
+
+```gdscript
+	if flugkraft <= 0:
+		steigen.tween_callback(aufstehen)
+	else:
+		steigen.tween_callback(entsperren)
+```
+Geaendert in `fliege_verlieren`, statt der einen Zeile `steigen.tween_callback(entsperren)`. Ist nach dem Verlust nichts mehr uebrig, kommt nach dem Fall nicht das Entsperren, sondern das Aufstehen. Die Kanone bleibt also gesperrt, bis neu gestartet wird. `<=` statt `==`: Sollte die Zahl je unter 0 rutschen, gilt das genauso als "alles weg".
+
+```gdscript
+func aufstehen() -> void:
+	$Kanone/Arm.visible = false
+	$Kanone/Aufstehen.visible = true
+	$Kanone/Aufstehen.play("aufstehen")
+	$Bedienung/Absturz.visible = true
+```
+Laeuft, wenn man unten angekommen ist. Die Kanone mit Hand und Leiste wird versteckt, statt ihrer ist der Forscher zu sehen, der aufsteht. `play` startet die Animation mit dem Namen `aufstehen`, oben im Bild steht "Abgestuerzt!".
+
+```gdscript
+func aufstehen_abbrechen() -> void:
+	$Kanone/Aufstehen.stop()
+	$Kanone/Aufstehen.visible = false
+	$Kanone/Arm.visible = true
+	$Bedienung/Absturz.visible = false
+```
+Das Gegenstueck: anhalten, alles wieder wie vorher. Erklaert oben bei `fliege_zaehlen`.
+
+```gdscript
+func neustart() -> void:
+	get_tree().reload_current_scene()
+```
+`get_tree()` ist der Baum aller Knoten, die gerade laufen. `reload_current_scene()` wirft die ganze Szene `spiel.tscn` weg und laedt sie frisch, so wie beim Spielstart. Darum muss nichts einzeln zurueckgesetzt werden: Flugkraft 0, Kanone bei x 0, neue Fliegen, keine Hindernisse, leerer Faecher. Was spaeter dazukommt (Erzaehler, Totale), startet automatisch mit von vorn. Godot fuehrt das erst am Ende des Bildes aus, nicht mitten in der Funktion.
+
+### `szenen/spiel.tscn` - geaendert in Abschnitt 7
+
+```
+Spiel
+├── ...
+├── Kanone
+│   ├── Arm ...                   (unveraendert)
+│   ├── Aufstehen (AnimatedSprite2D)  neu
+│   └── ...
+└── Bedienung
+    ├── ... , Sieg                (unveraendert)
+    └── Absturz (Label)           neu
+```
+- **Aufstehen:** unsichtbar, bis man unten ist. `position` (0, -100): Das Bild ist 200 hoch und wird um seine Mitte gezeichnet, so steht es mit den Fuessen auf der Hoehe der Kanone. Die Bilder stecken in `sprite_frames`, einer **SpriteFrames**-Resource direkt in der Szene, mit einer Animation `aufstehen`: drei Bilder, `speed` 5 Bilder pro Sekunde (also 0,6 s fuer alle drei), `loop` aus.
+- **Die drei Bilder sind Platzhalter**: je eine `GradientTexture2D` (80 x 200), ein Farbverlauf von oben nach unten (`fill_to` (0, 1)), der oben durchsichtig ist und ab einer Stelle hart grau wird. "liegt": nur das untere Fuenftel grau (ab 0,8), "kniet": die untere Haelfte (ab 0,5), "steht": alles grau. So braucht es keine Bilddatei. Mit deinen Bildern (Abschnitt 10) klickst du im Inspector auf `sprite_frames`, und ziehst deine zwei oder drei Bilder in die Animation `aufstehen` statt der grauen. Kein Code aendert sich.
+- **Absturz:** ein Label wie `Sieg`, gleiche Groesse und Stelle, Text "Abgestuerzt!", unsichtbar.
+- Oben sieben neue `sub_resource`-Bloecke (drei Verlaeufe, drei Texturen, die SpriteFrames), `load_steps` von 12 auf 19.
+
+### So wurde es angeschaut
+
+Ein Probelauf ausserhalb des Spielordners (danach geloescht) hat Flugkraft 2 bei Hoehe -600 eingestellt und die letzte Fliege verlieren lassen. Gemessen:
+- Nach 0,3 s: Kanone bei y -236, also mitten im Fall, Schiessen gesperrt.
+- Nach 0,7 s: unten, Aufstehen sichtbar (zweites Bild), Kanone versteckt, "Abgestuerzt!" sichtbar.
+- Nach 1,7 s: Szene neu geladen, Kanone bei x 0 / y 0, Flugkraft 0, Label weg, neue Fliegen da.
+- Zweiter Fall: waehrend des Aufstehens kommt eine Fliege an. Kein Neustart, man steigt wieder auf -600, Kanone sichtbar und entsperrt.
+
+Wie sich das anfuehlt und ob eine ganze Runde bis 100 Spass macht, entscheidest du beim Spass-Test nach Abschnitt 8 (Z31).
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Du hast eine Fliege (Flugkraft 2) und verlierst sie. Wie lange dauert es vom Treffer bis zum Neustart?
+2. Warum wird beim Neustart nicht jede Variable einzeln auf den Anfang gesetzt?
+3. Was passiert, wenn waehrend des Aufstehens noch eine Fliege bei der Hand ankommt, und welche Zeile sorgt dafuer?
+
+<details><summary>Antworten</summary>
+
+1. 2 x 300 = 600 px Fall bei 1200 px/s sind 0,5 s, dann drei Bilder bei 5 pro Sekunde, also 0,6 s. Zusammen 1,1 s.
+2. `reload_current_scene()` laedt die Szene frisch, alles steht wieder wie beim Start. Einzeln zuruecksetzen hiesse, an Fliegen, Hindernisse, Faecher, Faeden und spaeter den Erzaehler zu denken, und eins vergisst man.
+3. `aufstehen_abbrechen()` in `fliege_zaehlen` haelt die Animation mit `stop()` an. Angehalten ist nicht fertig, darum kommt `animation_finished` nicht, und `neustart` laeuft nie. Man steigt wieder.
+
+</details>

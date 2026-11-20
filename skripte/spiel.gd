@@ -19,6 +19,7 @@ var steigen: Tween = null
 func _ready() -> void:
 	$Kanone/Uebergabe.angekommen.connect(fliege_zaehlen)
 	$Kanone/Faecher.verloren.connect(fliege_verlieren)
+	$Kanone/Aufstehen.animation_finished.connect(neustart)
 	$Kanone/Arm/Leiste.max_value = ziel
 	anzeige_schreiben()
 
@@ -26,6 +27,7 @@ func _ready() -> void:
 func fliege_zaehlen(dazu: int) -> void:
 	flugkraft += dazu
 	anzeige_schreiben()
+	aufstehen_abbrechen()
 	if steigen != null:
 		steigen.kill()
 	steigen = create_tween()
@@ -49,7 +51,28 @@ func fliege_verlieren(weg: int) -> void:
 	$Kanone.gesperrt = true
 	steigen = create_tween()
 	steigen.tween_property($Kanone, "position:y", neue_hoehe, strecke / falltempo)
-	steigen.tween_callback(entsperren)
+	if flugkraft <= 0:
+		steigen.tween_callback(aufstehen)
+	else:
+		steigen.tween_callback(entsperren)
+
+
+func aufstehen() -> void:
+	$Kanone/Arm.visible = false
+	$Kanone/Aufstehen.visible = true
+	$Kanone/Aufstehen.play("aufstehen")
+	$Bedienung/Absturz.visible = true
+
+
+func aufstehen_abbrechen() -> void:
+	$Kanone/Aufstehen.stop()
+	$Kanone/Aufstehen.visible = false
+	$Kanone/Arm.visible = true
+	$Bedienung/Absturz.visible = false
+
+
+func neustart() -> void:
+	get_tree().reload_current_scene()
 
 
 func entsperren() -> void:

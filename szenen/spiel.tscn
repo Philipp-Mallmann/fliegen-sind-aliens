@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://skripte/kanone.gd" id="1_kanone"]
 [ext_resource type="PackedScene" path="res://szenen/nadel.tscn" id="2_nadel"]
@@ -17,6 +17,51 @@ colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
 gradient = SubResource("Gradient_taste")
 width = 200
 height = 200
+
+[sub_resource type="Gradient" id="Gradient_liegt"]
+offsets = PackedFloat32Array(0, 0.8, 0.8, 1)
+colors = PackedColorArray(0, 0, 0, 0, 0, 0, 0, 0, 0.6, 0.6, 0.6, 1, 0.6, 0.6, 0.6, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_liegt"]
+gradient = SubResource("Gradient_liegt")
+width = 80
+height = 200
+fill_to = Vector2(0, 1)
+
+[sub_resource type="Gradient" id="Gradient_kniet"]
+offsets = PackedFloat32Array(0, 0.5, 0.5, 1)
+colors = PackedColorArray(0, 0, 0, 0, 0, 0, 0, 0, 0.6, 0.6, 0.6, 1, 0.6, 0.6, 0.6, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_kniet"]
+gradient = SubResource("Gradient_kniet")
+width = 80
+height = 200
+fill_to = Vector2(0, 1)
+
+[sub_resource type="Gradient" id="Gradient_steht"]
+colors = PackedColorArray(0.6, 0.6, 0.6, 1, 0.6, 0.6, 0.6, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_steht"]
+gradient = SubResource("Gradient_steht")
+width = 80
+height = 200
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_aufstehen"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("GradientTexture2D_liegt")
+}, {
+"duration": 1.0,
+"texture": SubResource("GradientTexture2D_kniet")
+}, {
+"duration": 1.0,
+"texture": SubResource("GradientTexture2D_steht")
+}],
+"loop": false,
+"name": &"aufstehen",
+"speed": 5.0
+}]
 
 [node name="Spiel" type="Node2D"]
 script = ExtResource("5_spiel")
@@ -203,6 +248,12 @@ offset_right = 80.0
 offset_bottom = 40.0
 show_percentage = false
 
+[node name="Aufstehen" type="AnimatedSprite2D" parent="Kanone"]
+visible = false
+position = Vector2(0, -100)
+sprite_frames = SubResource("SpriteFrames_aufstehen")
+animation = &"aufstehen"
+
 [node name="RechteHand" type="ColorRect" parent="Kanone"]
 offset_left = 560.0
 offset_top = -560.0
@@ -277,5 +328,15 @@ offset_right = 1440.0
 offset_bottom = 640.0
 theme_override_font_sizes/font_size = 140
 text = "Im All!"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Absturz" type="Label" parent="Bedienung"]
+visible = false
+offset_top = 440.0
+offset_right = 1440.0
+offset_bottom = 640.0
+theme_override_font_sizes/font_size = 140
+text = "Abgestuerzt!"
 horizontal_alignment = 1
 vertical_alignment = 1
