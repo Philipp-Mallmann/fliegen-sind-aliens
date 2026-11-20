@@ -2801,3 +2801,15 @@ In `warnen`. `anteil` geht waehrend der Warnung von 0 auf 1. `lerpf` nimmt den W
 3. Die Pause muss laenger sein als die laengste Warnzeit plus Fall, zum Beispiel `pause_kurz` und `pause_lang` ueber 10 Sekunden. Oder der Erzeuger zaehlt erst los, wenn das letzte Hindernis weg ist.
 
 </details>
+
+## Spass-Test, Runde 4 - schnelle Fliege gibt 5
+
+### `skripte/erzeuger.gd` - geaendert
+
+```gdscript
+@export var flugkraft_schnell: int = 5
+```
+Vorher 6. Die schnelle Fliege war dir noch zu stark. Sonst aendert sich nichts. Bis 100 brauchst du jetzt zum Beispiel 20 schnelle oder 50 normale.
+
+So angeschaut: Verify PASS, Schnellcheck PASS. Wie es sich spielt, entscheidest du.
+

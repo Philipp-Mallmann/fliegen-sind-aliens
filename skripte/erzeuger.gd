@@ -15,7 +15,7 @@ extends Node2D
 @export var anteil_schnell: float = 0.5
 # Wie viel Flugkraft eine normale und eine schnelle Fliege geben.
 @export var flugkraft_normal: int = 2
-@export var flugkraft_schnell: int = 6
+@export var flugkraft_schnell: int = 5
 # Wie viel schneller eine schnelle Fliege ist als eine normale. 4 heisst: viermal so schnell.
 @export var faktor_schnell: float = 4.0
 # Wie viele Umdrehungen pro Sekunde eine normale Fliege um sich selbst macht.
