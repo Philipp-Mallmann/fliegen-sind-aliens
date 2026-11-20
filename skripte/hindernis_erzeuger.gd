@@ -15,12 +15,14 @@ extends Node2D
 @export var mitte: float = 240.0
 # Wie oft die Spalte im inneren Drittel liegt. 0.7 heisst: in 7 von 10 Faellen, sonst irgendwo im Bild.
 @export var anteil_mitte: float = 0.7
-# Die Warnzeit ganz unten und die laengste Warnzeit weiter oben, in Sekunden. Oben ist der Faecher breiter, man braucht mehr Zeit.
+# Die Warnzeit in Sekunden: ganz unten, an der Spitze und ganz oben bei 100 Flugkraft.
+# Bis zur Spitze waechst sie (der Faecher wird breiter), danach wird es wieder knapper.
 @export var warnzeit_unten: float = 6.0
-@export var warnzeit_oben: float = 10.0
-# Ab dieser Hoehe gilt die laengste Warnzeit, in Pixeln. Bis dahin waechst sie gleichmaessig.
-# 20000 sind zwei Drittel des Wegs bis 100 Flugkraft (100 x 300 px). Bei einem Drittel sind es dann 8 s.
-@export var hoehe_oben: float = 20000.0
+@export var warnzeit_spitze: float = 9.0
+@export var warnzeit_ende: float = 5.0
+# Wo die Spitze liegt und wo das Ende, in Pixeln Hoehe. 15000 ist die Haelfte, 30000 sind 100 Flugkraft (100 x 300 px).
+@export var hoehe_spitze: float = 15000.0
+@export var hoehe_ende: float = 30000.0
 
 # Wie viele Sekunden es noch bis zum naechsten Hindernis dauert.
 var naechstes_in: float = 0.0
@@ -41,7 +43,15 @@ func _process(delta: float) -> void:
 	hindernis.position.x = kanone.position.x + abstand
 	hindernis.kanone = kanone
 	hindernis.faecher = faecher
-	var anteil: float = clampf(-kanone.position.y / hoehe_oben, 0.0, 1.0)
-	hindernis.warnzeit = lerpf(warnzeit_unten, warnzeit_oben, anteil)
+	hindernis.warnzeit = warnzeit_hier()
+	hindernis.volle_warnzeit = warnzeit_spitze
 	add_child(hindernis)
 	naechstes_in = randf_range(pause_kurz, pause_lang)
+
+
+func warnzeit_hier() -> float:
+	var hoehe: float = -kanone.position.y
+	if hoehe < hoehe_spitze:
+		return lerpf(warnzeit_unten, warnzeit_spitze, clampf(hoehe / hoehe_spitze, 0.0, 1.0))
+	var anteil: float = (hoehe - hoehe_spitze) / (hoehe_ende - hoehe_spitze)
+	return lerpf(warnzeit_spitze, warnzeit_ende, clampf(anteil, 0.0, 1.0))

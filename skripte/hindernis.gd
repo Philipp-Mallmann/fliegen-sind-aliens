@@ -29,6 +29,8 @@ var kanone: Node2D = null
 var faecher: Node2D = null
 # Wie viele Sekunden schon gewarnt wird.
 var gewarnt: float = 0.0
+# Die laengste Warnzeit, die vorkommt. Daran haengt das Aussehen: Gleiche Restzeit heisst gleiches Schild. Setzt der Hindernis-Erzeuger.
+var volle_warnzeit: float = 9.0
 
 
 func _ready() -> void:
@@ -49,7 +51,8 @@ func _process(delta: float) -> void:
 func warnen(delta: float) -> void:
 	gewarnt += delta
 	position.y = kanone.position.y - bildrand
-	var anteil: float = gewarnt / warnzeit
+	var rest: float = warnzeit - gewarnt
+	var anteil: float = clampf(1.0 - rest / volle_warnzeit, 0.0, 1.0)
 	$Warnung.scale = Vector2.ONE * lerpf(groesse_anfang, groesse_ende, anteil)
 	$Spalte.modulate.a = lerpf(spalte_anfang, 1.0, anteil)
 	var takt: float = lerpf(blinken_anfang, blinken_ende, anteil)

@@ -2813,3 +2813,69 @@ Vorher 6. Die schnelle Fliege war dir noch zu stark. Sonst aendert sich nichts. 
 
 So angeschaut: Verify PASS, Schnellcheck PASS. Wie es sich spielt, entscheidest du.
 
+## Spass-Test, Runde 5 - Warnzeit wird oben wieder knapper, Schild zeigt die Restzeit
+
+Bis zur halben Hoehe waechst die Warnzeit, danach wird sie knapper bis 5 Sekunden bei 100. Und das Warnschild sieht jetzt immer so aus, wie es bei der Zeit aussieht, die noch bleibt. Eine kurze Warnung beginnt also schon groesser und schneller blinkend.
+
+### `skripte/hindernis_erzeuger.gd` - geaendert
+
+```gdscript
+@export var warnzeit_unten: float = 6.0
+@export var warnzeit_spitze: float = 9.0
+@export var warnzeit_ende: float = 5.0
+@export var hoehe_spitze: float = 15000.0
+@export var hoehe_ende: float = 30000.0
+```
+Ersetzt `warnzeit_oben` (10) und `hoehe_oben` (20000). Drei Punkte: unten 6 s, bei der halben Hoehe (50 Flugkraft = 15000 px) 9 s, bei 100 Flugkraft (30000 px) 5 s. Bis zur Spitze steigt es so schnell wie vorher (1 Sekunde je 5000 px), darum sind es dort 9 und nicht 10.
+
+```gdscript
+	hindernis.warnzeit = warnzeit_hier()
+	hindernis.volle_warnzeit = warnzeit_spitze
+```
+Statt der zwei Zeilen mit `anteil` und `lerpf`. Die Rechnung steckt jetzt in einer eigenen Funktion, weil es zwei Strecken sind. Das Hindernis erfaehrt ausserdem, was die laengste Warnzeit ueberhaupt ist (9 s).
+
+```gdscript
+func warnzeit_hier() -> float:
+	var hoehe: float = -kanone.position.y
+	if hoehe < hoehe_spitze:
+		return lerpf(warnzeit_unten, warnzeit_spitze, clampf(hoehe / hoehe_spitze, 0.0, 1.0))
+	var anteil: float = (hoehe - hoehe_spitze) / (hoehe_ende - hoehe_spitze)
+	return lerpf(warnzeit_spitze, warnzeit_ende, clampf(anteil, 0.0, 1.0))
+```
+Neu. Unter der Spitze: von 6 nach 9, je nachdem, wie weit man schon ist. `return` gibt den Wert zurueck und beendet die Funktion, die Zeilen darunter laufen dann nicht. Ueber der Spitze: `anteil` ist, wie weit man von 15000 bis 30000 schon ist (0 bis 1), und `lerpf` geht damit von 9 nach 5. `clampf` haelt den Anteil zwischen 0 und 1, ueber 30000 bleibt es also bei 5.
+
+### `skripte/hindernis.gd` - geaendert
+
+```gdscript
+var volle_warnzeit: float = 9.0
+```
+Neu. Setzt der Erzeuger.
+
+```gdscript
+	var rest: float = warnzeit - gewarnt
+	var anteil: float = clampf(1.0 - rest / volle_warnzeit, 0.0, 1.0)
+```
+Statt `var anteil: float = gewarnt / warnzeit`. Vorher lief jede Warnung von klein nach gross, egal wie lang sie war. Jetzt haengt das Aussehen nur an der **Restzeit**: Bei 9 s Rest ist `anteil` 0 (kleinstes Schild, langsamstes Blinken), bei 0 s Rest ist er 1. Eine Warnung mit nur 5 s faengt bei 1 - 5/9 = 0,44 an, also so, wie eine lange Warnung aussieht, wenn bei ihr noch 5 s uebrig sind. So kannst du am Schild ablesen, wie viel Zeit bleibt. Schild, Spalte und Blinken benutzen denselben `anteil` wie vorher.
+
+Folge: Auch ganz unten (6 s) beginnt die Warnung nicht mehr ganz klein, sondern bei einem Drittel. Ganz klein beginnt nur die laengste Warnung bei halber Hoehe.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck beider Skripte PASS.
+- Probe in einer Kopie: Warnzeit bei 0 / 25 / 50 / 75 / 100 / 110 Flugkraft: 6 / 7,5 / 9 / 7 / 5 / 5 s. Eine 9-s-Warnung startet mit Schild 0,25, eine 5-s-Warnung mit 0,81. Hat die 9-s-Warnung noch 5 s, steht ihr Schild auch bei 0,81 und die Spalte bei 0,61, genau wie bei der frischen 5-s-Warnung. Kurz vor Schluss beide 1,49.
+- Nicht gemessen: wie es sich spielt.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Wie lange warnt ein Hindernis bei 80 Flugkraft?
+2. Wie gross ist das Schild einer 6-s-Warnung ganz am Anfang?
+3. Warum braucht das Hindernis `volle_warnzeit` und nicht nur seine eigene `warnzeit`?
+
+<details><summary>Antworten</summary>
+
+1. 80 x 300 = 24000 px. (24000 - 15000) / 15000 = 0,6. `lerpf(9, 5, 0.6)` = 9 - 0,6 x 4 = 6,6 s.
+2. `anteil` = 1 - 6/9 = 0,33. `lerpf(0.25, 1.5, 0.33)` = 0,25 + 0,33 x 1,25 = etwa 0,67.
+3. Mit nur der eigenen Zeit liefe jede Warnung von klein nach gross, eine kurze einfach schneller. Erst der Vergleich mit der laengsten zeigt, wie viel Zeit noch bleibt, und damit sieht dieselbe Restzeit immer gleich aus.
+
+</details>
+
