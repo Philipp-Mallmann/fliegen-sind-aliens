@@ -19,8 +19,8 @@ extends Node2D
 # Wie kraeftig die gelbe Spalte am Anfang der Warnung zu sehen ist. 1 heisst: voll, wie am Ende.
 @export var spalte_anfang: float = 0.3
 # Wie laut der Warnton am Anfang und am Ende der Warnung piept, in Dezibel. 0 ist die Lautstaerke der Datei.
-@export var ton_leise: float = -24.0
-@export var ton_laut: float = -8.0
+@export var ton_leise: float = -30.0
+@export var ton_laut: float = -20.0
 # Wie weit unter der Kanone der Gegenstand verschwindet, in Pixeln. Der untere Bildrand liegt hoechstens 190 darunter.
 @export var weg_unter: float = 300.0
 # Die Szene des Matsches. Bei jeder zermatschten Fliege entsteht daraus ein Fleck.

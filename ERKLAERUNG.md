@@ -3094,3 +3094,15 @@ Statt `$TonKlotz` und `$TonMatsch`. `get_parent()` ist der Hindernis-Erzeuger (d
 
 </details>
 
+## Spass-Test, Runde 8 - Warnpiepen leiser
+
+### `skripte/hindernis.gd` und `szenen/hindernis.tscn` - geaendert
+
+```gdscript
+@export var ton_leise: float = -30.0
+@export var ton_laut: float = -20.0
+```
+Vorher -24 und -8. Das Piepen hat dich gestoert, jetzt ist es auch am Ende der Warnung leiser als alle anderen Toene (die liegen bei -8 bis -14). In der Szene steht der Startwert von `TonWarnung` passend auf -30. Schneller wird es weiterhin, wie das Blinken.
+
+So angeschaut: Verify PASS, Schnellcheck PASS. Wie es klingt, entscheidest du.
+
