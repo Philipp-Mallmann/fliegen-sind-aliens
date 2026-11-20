@@ -3012,3 +3012,11 @@ Neu in `zermatschen`.
 3. `pitch_scale` 0.6: Die Datei laeuft langsamer und tiefer.
 
 </details>
+
+### `export_presets.cfg` - geaendert in Spass-Test, Runde 6
+
+In `html/head_include` steht jetzt vorn ein zweites kleines JavaScript, vor der Messseite. Es gehoert nicht zum Spiel, sondern zur Webseite, die der Export baut, und es bleibt (anders als die Messseite):
+- `navigator.audioSession.type='playback'` sagt dem iPhone: Diese Seite spielt Ton wie eine Musik-App. Ohne die Zeile ist jeder Ton stumm, solange der Stummschalter am iPhone an ist.
+- Der Rest weckt den Ton wieder auf, wenn der Browser ihn nach einem Wechsel in eine andere App angehalten hat, bei der naechsten Beruehrung oder Taste.
+- Nebenwirkung: Laeuft am Handy Musik aus einer anderen App, haelt sie an, wenn das Spiel Ton macht.
+
