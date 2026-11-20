@@ -4,6 +4,8 @@ extends Node2D
 @export var tempo: float = 250.0
 # Wie schnell die Kanone anfaehrt und abbremst, in Pixeln pro Sekunde pro Sekunde.
 @export var beschleunigung: float = 600.0
+# Welcher Teil des Tempos waehrend Uebergabe und Steigen bleibt. 0.5 heisst: halb so schnell.
+@export var steig_anteil: float = 0.5
 # Die Szene der Nadel. Bei jedem Schuss entsteht daraus eine neue Nadel.
 @export var nadel_szene: PackedScene
 # Wie lange die Kanone nach einem Schuss nachlaedt, in Sekunden.
@@ -15,19 +17,22 @@ var aktuelles_tempo: float = 0.0
 var nachladen_noch: float = 0.0
 # true heisst: Die Kanone darf nicht schiessen, zum Beispiel waehrend des Absturzes. Setzt spiel.gd.
 var gesperrt: bool = false
+# true heisst: Die Kanone steigt gerade nach einem Fang und faehrt darum langsamer. Setzt spiel.gd.
+var steigt: bool = false
 
 
 func _process(delta: float) -> void:
-	if $Uebergabe.laeuft:
-		aktuelles_tempo = 0.0
-		return
 	fahren(delta)
-	schiessen(delta)
+	if not $Uebergabe.laeuft:
+		schiessen(delta)
 
 
 func fahren(delta: float) -> void:
 	var richtung: float = Input.get_axis("links", "rechts")
-	var ziel_tempo: float = richtung * tempo
+	var hoechstes: float = tempo
+	if steigt or $Uebergabe.laeuft:
+		hoechstes = tempo * steig_anteil
+	var ziel_tempo: float = richtung * hoechstes
 	aktuelles_tempo = move_toward(aktuelles_tempo, ziel_tempo, beschleunigung * delta)
 	position.x += aktuelles_tempo * delta
 

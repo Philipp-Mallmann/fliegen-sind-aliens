@@ -2280,3 +2280,231 @@ Tastatur und Maus im Browser (Chromium und WebKit, am Bild abgelesen): D und Pfe
 3. Die Fliegen unter dem Bild wieder loeschen (wie bis Abschnitt 5) und nach einem Absturz neu auswuerfeln, statt alle bis 100 aufzuheben.
 
 </details>
+
+## Spass-Test, Runde 1 - Aenderungen nach deinem ersten Durchspielen
+
+Kein neuer Abschnitt, sondern das, was du nach dem Spielen am itch-Draft gesagt hast: Leiste an die rechte Hand, zweite Schusstaste, Lenken beim Steigen, Fliegen kommen von der Seite nach, mehr Warnzeit weiter oben, und zum Testen eine schnelle Fliegenart. Die richtigen Fliegenarten (Groesse, Flugmuster) baut Abschnitt 9.
+
+### `skripte/fliege.gd` - geaendert
+
+```gdscript
+# Um diese Stelle fliegt die Fliege hin und her. Setzt der Erzeuger, bevor die Fliege ins Spiel kommt.
+var mitte_x: float = 0.0
+```
+Hiess vorher `start_x` und wurde in `_ready` auf die Startstelle gesetzt. Jetzt kann eine Fliege **ausserhalb** des Bildes starten und trotzdem um eine Stelle **im** Bild hin und her fliegen. Darum sind Start und Mitte zwei verschiedene Dinge, und die Mitte setzt der Erzeuger. `_ready` ist weg, es hatte nur diese eine Zeile.
+
+```gdscript
+	if position.x > mitte_x + strecke:
+		richtung = -1.0
+	if position.x < mitte_x - strecke:
+		richtung = 1.0
+```
+Dieselben Zeilen wie vorher, nur mit `mitte_x`. Der Trick beim Hereinfliegen steckt genau hier: Startet eine Fliege rechts weit draussen, ist sie schon "zu weit rechts", also dreht sie sofort nach links und fliegt ins Bild. Links draussen genauso andersherum. Es braucht dafuer keine einzige neue Zeile.
+
+Auch der Kommentar von `strecke` sagt jetzt "von ihrer Mitte" statt "von ihrem Startpunkt".
+
+### `skripte/erzeuger.gd` - neu geschrieben
+
+Das ganze Skript, weil sich fast alles geaendert hat.
+
+```gdscript
+@export var fliege_szene: PackedScene
+@export var kanone: Node2D
+@export var abstand: float = 250.0
+@export var breite: float = 400.0
+@export var vorlauf: float = 1200.0
+@export var tempo_langsam: float = 100.0
+@export var tempo_schnell: float = 180.0
+```
+Wie bisher. `abstand` gilt jetzt nur noch fuer die Fliegen, die **oben ueber dem Bild** bereitstehen. `breite` ist jetzt, wie weit die **Mitte** einer Fliege von der Kanone liegen darf.
+
+```gdscript
+@export var anteil_schnell: float = 0.5
+@export var flugkraft_normal: int = 3
+@export var flugkraft_schnell: int = 10
+```
+Die Testart fuer den Spass-Test. `0.5` heisst: Jede Fliege ist mit halber Chance schnell. Normal gibt 3, schnell gibt 10. So kommst du schneller bis 100 und kannst das Ende testen.
+
+```gdscript
+@export var mindestens: int = 4
+@export var naehe: float = 900.0
+@export var einflug_x: float = 800.0
+@export var einflug_oben: float = 850.0
+@export var einflug_unten: float = 300.0
+```
+Das Nachfuellen. Sind weniger als 4 freie Fliegen **in der Naehe**, kommt eine von der Seite. "In der Naehe" heisst: hoechstens 900 px links oder rechts der Kanone und zwischen 300 und 850 px ueber ihr. Die Kanone steht in der Bildmitte, der Bildrand ist 720 px weg, die Naehe reicht also etwas ueber den Rand hinaus. Neue Fliegen starten bei 800, also ausserhalb des Bildes (720 + halbe Fliege 50 = 770). 300 bis 850 ueber der Kanone ist der Teil des Bildes ueber der Muendung (140) und unter dem oberen Rand (920), dort kann man sie treffen.
+
+Wichtig: `einflug_x` muss groesser sein als `breite` + `strecke` der Fliege (400 + 300 = 700). Sonst liegt der Startpunkt innerhalb des Hin-und-her-Bereichs, und die Fliege dreht nicht sofort ins Bild.
+
+```gdscript
+@export var loeschen_seitlich: float = 2000.0
+@export var loeschen_unten: float = 300.0
+```
+Freie Fliegen, die mehr als 2000 px seitlich weg sind oder mehr als 300 px unter der Kanone (unterer Bildrand: 160), werden geloescht. Das ist die Variante aus Abschnitt 6, die du damals als Ausweg genannt hattest (Z32): unten loeschen, und wenn man wieder herunterkommt, kommen neue nach. So bleiben es immer nur etwa ein Dutzend Fliegen statt bis zu 170, auch gut fuers Handy.
+
+```gdscript
+func _process(_delta: float) -> void:
+	while naechste_hoehe > kanone.position.y - vorlauf:
+		var x: float = kanone.position.x + randf_range(-breite, breite)
+		fliege_bauen(x, x, naechste_hoehe)
+		naechste_hoehe -= abstand
+	aufraeumen()
+	if freie_in_der_naehe() < mindestens:
+		hereinfliegen()
+```
+Drei Dinge je Bild:
+1. Die `while`-Schleife ist die alte: oben ueber dem Bild steht alle 250 px eine Fliege bereit, bevor man dorthin steigt. Neu ist nur, dass das Bauen in `fliege_bauen` steckt. Start und Mitte sind hier dieselbe Stelle `x`.
+2. `aufraeumen()` loescht, was zu weit weg ist.
+3. Fehlen Fliegen in der Naehe, kommt **eine** von der Seite. `if` statt `while` mit Absicht: hoechstens eine je Bild. Bei 60 Bildern pro Sekunde sind vier fehlende Fliegen trotzdem nach 4 Bildern da, und eine `while`-Schleife koennte sich aufhaengen, wenn eine neue Fliege knapp nicht mitgezaehlt wird.
+
+```gdscript
+func fliege_bauen(start_x: float, mitte_x: float, hoehe: float) -> void:
+	var fliege: Node2D = fliege_szene.instantiate()
+	fliege.position = Vector2(start_x, hoehe)
+	fliege.mitte_x = mitte_x
+	fliege.tempo = randf_range(tempo_langsam, tempo_schnell)
+	fliege.flugkraft = flugkraft_normal
+	if randf() < anteil_schnell:
+		fliege.tempo *= 2.0
+		fliege.flugkraft = flugkraft_schnell
+	add_child(fliege)
+```
+Baut eine Fliege: an `start_x`, fliegt um `mitte_x`. Erst normal mit Tempo 100 bis 180 und 3 Flugkraft. `randf()` ist eine Zufallszahl zwischen 0 und 1, sie ist in der Haelfte der Faelle kleiner als 0.5. Dann wird das Tempo verdoppelt (`*= 2.0` heisst "mal 2 nehmen und wieder hineinschreiben") und die Fliege gibt 10. Aussehen tut sie gleich, du erkennst sie am Tempo (Greybox).
+
+```gdscript
+func hereinfliegen() -> void:
+	var seite: float = 1.0
+	if randf() < 0.5:
+		seite = -1.0
+	var start_x: float = kanone.position.x + seite * einflug_x
+	var mitte_x: float = kanone.position.x + randf_range(-breite, breite)
+	var hoehe: float = kanone.position.y - randf_range(einflug_unten, einflug_oben)
+	fliege_bauen(start_x, mitte_x, hoehe)
+```
+Wuerfelt eine Seite (1 rechts, -1 links). Start 800 px neben der Kanone auf dieser Seite, Mitte irgendwo bis 400 px neben der Kanone, Hoehe zwischen 300 und 850 ueber ihr. Minus, weil nach oben y kleiner wird. Wie die Fliege dann hereinfliegt, steht oben bei `fliege.gd`.
+
+```gdscript
+func freie_in_der_naehe() -> int:
+	var anzahl: int = 0
+	for fliege in get_children():
+		var seitlich: float = absf(fliege.position.x - kanone.position.x)
+		var ueber: float = kanone.position.y - fliege.position.y
+		if seitlich <= naehe and ueber >= einflug_unten and ueber <= einflug_oben:
+			anzahl += 1
+	return anzahl
+```
+Zaehlt. `get_children()` sind nur die **freien** Fliegen: Eine gefangene haengt seit Abschnitt 3 an ihrer Nadel (`reparent`), sie ist kein Kind des Erzeugers mehr. `absf` macht aus einer Zahl ihren Betrag ohne Minus, damit links und rechts gleich zaehlen. `ueber` ist, wie weit die Fliege ueber der Kanone ist. Eine Fliege, die gerade erst hereinfliegt, zaehlt schon mit (800 liegt unter 900). Sonst kaeme jedes Bild noch eine dazu, bis die erste im Bild ist.
+
+```gdscript
+func aufraeumen() -> void:
+	for fliege in get_children():
+		var zu_tief: bool = fliege.position.y > kanone.position.y + loeschen_unten
+		var zu_weit: bool = absf(fliege.position.x - kanone.position.x) > loeschen_seitlich
+		if zu_tief or zu_weit:
+			fliege.queue_free()
+```
+Loescht freie Fliegen, die zu tief oder seitlich zu weit weg sind. `queue_free` loescht am Ende des Bildes, nicht sofort.
+
+### `skripte/hindernis_erzeuger.gd` - geaendert
+
+```gdscript
+@export var warnzeit_unten: float = 3.0
+@export var warnzeit_oben: float = 5.0
+@export var hoehe_oben: float = 20000.0
+```
+Neu. Unten warnt ein Hindernis 3 Sekunden, ab 20000 px Hoehe 5 Sekunden, dazwischen waechst es gleichmaessig. Bis 100 Flugkraft steigt man 100 x 300 = 30000 px. Ein Drittel davon sind 10000 px, dort sind es 4 Sekunden, wie du es wolltest. Weiter gerechnet (1 Sekunde je Drittel) ist man bei zwei Dritteln, also 20000 px, bei 5 und bleibt dort. **Aendert man `hoehe_je_flugkraft` in `spiel.gd`, muss `hoehe_oben` mit**, sonst stimmen die Drittel nicht mehr.
+
+```gdscript
+	var anteil: float = clampf(-kanone.position.y / hoehe_oben, 0.0, 1.0)
+	hindernis.warnzeit = lerpf(warnzeit_unten, warnzeit_oben, anteil)
+```
+Neu, bevor das Hindernis ins Spiel kommt. `-kanone.position.y` ist die Hoehe als positive Zahl. Geteilt durch 20000 ergibt das, wie weit man auf dem Weg zu den 5 Sekunden ist: 0 unten, 0.5 bei 10000, 1 bei 20000. `clampf` haelt die Zahl zwischen 0 und 1, darueber bleibt es also bei 1. `lerpf` (kennst du aus `hindernis.gd` vom Blinken) nimmt den Wert dazwischen: bei 0.5 genau die Mitte von 3 und 5, also 4. Die Warnzeit gilt fuer die Hoehe, in der das Hindernis entsteht.
+
+### `skripte/kanone.gd` - geaendert
+
+```gdscript
+# Welcher Teil des Tempos waehrend Uebergabe und Steigen bleibt. 0.5 heisst: halb so schnell.
+@export var steig_anteil: float = 0.5
+...
+# true heisst: Die Kanone steigt gerade nach einem Fang und faehrt darum langsamer. Setzt spiel.gd.
+var steigt: bool = false
+```
+Neu.
+
+```gdscript
+func _process(delta: float) -> void:
+	fahren(delta)
+	if not $Uebergabe.laeuft:
+		schiessen(delta)
+```
+Vorher stand die Kanone waehrend der Uebergabe (`aktuelles_tempo = 0.0` und `return`). Jetzt faehrt sie immer, nur schiessen geht waehrend der Uebergabe weiter nicht. Das geht ohne Umbau: Arm, rechte Hand, Faecher und Kamera sind Kinder der Kanone und fahren einfach mit. Der Arm faehrt seine Uebergabe-Strecke weiter relativ zur Kanone.
+
+```gdscript
+	var hoechstes: float = tempo
+	if steigt or $Uebergabe.laeuft:
+		hoechstes = tempo * steig_anteil
+	var ziel_tempo: float = richtung * hoechstes
+```
+Neu in `fahren`. Normal ist das hoechste Tempo 250. Waehrend der Uebergabe oder des Steigens ist es halb so viel, 125. Das Anfahren und Abbremsen (`move_toward`) bleibt, die Kanone bremst also weich auf das halbe Tempo herunter statt zu springen.
+
+### `skripte/spiel.gd` - geaendert
+
+```gdscript
+	$Kanone.steigt = true
+```
+Neu in `fliege_zaehlen`, bevor das Steigen anfaengt.
+
+```gdscript
+	$Kanone.steigt = false
+```
+Neu in `fliege_verlieren` (beim Absturz faehrt man wieder mit vollem Tempo, wie bisher) und in `entsperren`. `entsperren` laeuft am Ende jedes Steigens, darum ist das die Stelle, an der das halbe Tempo endet.
+
+```gdscript
+	$Kanone/RechteHand/Leiste.max_value = ziel
+...
+	$Kanone/RechteHand/Leiste.value = flugkraft
+```
+Nur der Pfad, weil die Leiste umgezogen ist.
+
+### `szenen/spiel.tscn` - geaendert
+
+```
+Kanone
+  Arm                 (Leiste ist hier weg)
+  RechteHand
+    Leiste            (neu hier, unter der Hand, 160 x 20)
+Bedienung
+  TasteSchussLinks    (neu, x 40, y 480, ueber der linken Pfeiltaste)
+    Wort "Schuss"
+  TasteSchuss         (y 460 -> 480, ueber der rechten Pfeiltaste)
+```
+- Die Leiste haengt jetzt an der rechten Hand. Dort sammeln sich die Fliegen, die Leiste zeigt also, was die Hand haelt. Sie faehrt bei der Uebergabe nicht mehr mit dem Arm. Beim Aufstehen bleibt sie sichtbar (versteckt wird nur der `Arm`).
+- Die zweite Schusstaste ist eine Kopie der ersten mit derselben Aktion `schiessen`. Zwei Tasten, eine Aktion: Godot ist egal, welche gedrueckt wird. Beide sitzen 20 px tiefer als vorher, damit die Leiste unter der Hand die rechte Taste nicht beruehrt.
+- Bekannt seit Abschnitt 8: Am PC sieht man die Schrift "Schuss" ohne Taste, jetzt auf beiden Seiten.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck aller fuenf Skripte PASS.
+- Probe in einer Kopie des Spiels (nicht im Spielordner, danach geloescht), 60 Bilder pro Sekunde fest:
+  - Beim Start 6 Fliegen, 4 in der Naehe, davon 2 gerade ausserhalb des Bildes beim Hereinfliegen.
+  - Von 400 gebauten Fliegen 196 schnell (10) und 210 normal (3), also etwa die Haelfte.
+  - Fahren nach rechts: frei 250 px/s, waehrend der Uebergabe 125, waehrend des Steigens 125, danach wieder 250.
+  - Hoch bis 15000 px und dann auf 3000 gefallen: 2 Bilder spaeter 2 Fliegen in der Naehe (eine je Bild), nach 4 Sekunden 4, alle im Bild ueber der Muendung. An allen Messpunkten hoechstens 12 Fliegen insgesamt. 5000 px seitlich gefahren: die alten weg, 4 neue da.
+  - Warnzeit bei 0 / 5000 / 10000 / 15000 / 20000 / 30000 px: 3,0 / 3,5 / 4,0 / 4,5 / 5,0 / 5,0 s.
+- Bild mit sichtbaren Touch-Tasten: Leiste unter der rechten Hand, beide Schusstasten ueber den Pfeilen, nichts ueberdeckt sich.
+- Handy-Probe (Browser, Safari-Engine und Chromium): Chromium alle vier Tasten ok. In der Safari-Engine ist die rechte Schusstaste ok. Die linke war im ersten Lauf am Bild zu sehen (Nadel mit Faden), die Probe meldet sie aber als FAIL: Die Nadel der rechten Taste davor war in ihrer Messflaeche noch nicht verschwunden. **Ob beide Tasten am iPhone ankommen, zeigt nur dein Geraet.**
+- **Nicht gemessen:** wie es sich spielt. Das entscheidest du.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum fliegt eine Fliege, die 800 px rechts neben der Kanone entsteht, von selbst ins Bild, obwohl in `fliege.gd` keine Zeile fuers Hereinfliegen steht?
+2. Wie lange warnt ein Hindernis bei 50 Flugkraft, und wie rechnest du das aus?
+3. Warum steht beim Nachfuellen `if` und nicht `while`?
+
+<details><summary>Antworten</summary>
+
+1. Ihre Mitte liegt hoechstens 400 px neben der Kanone, sie fliegt 300 px zu jeder Seite. 800 ist also schon rechts ausserhalb ihres Bereichs, darum setzt die Zeile `if position.x > mitte_x + strecke` die Richtung sofort auf links.
+2. 50 x 300 = 15000 px. 15000 / 20000 = 0,75. `lerpf(3, 5, 0.75)` = 3 + 0,75 x 2 = 4,5 Sekunden.
+3. So kommt hoechstens eine Fliege je Bild dazu. Das reicht (4 Fliegen in 4 Bildern), und eine `while`-Schleife wuerde sich aufhaengen, falls eine neue Fliege einmal knapp nicht mitgezaehlt wird.
+
+</details>

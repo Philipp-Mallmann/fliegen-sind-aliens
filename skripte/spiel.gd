@@ -20,7 +20,7 @@ func _ready() -> void:
 	$Kanone/Uebergabe.angekommen.connect(fliege_zaehlen)
 	$Kanone/Faecher.verloren.connect(fliege_verlieren)
 	$Kanone/Aufstehen.animation_finished.connect(neustart)
-	$Kanone/Arm/Leiste.max_value = ziel
+	$Kanone/RechteHand/Leiste.max_value = ziel
 	anzeige_schreiben()
 
 
@@ -28,6 +28,7 @@ func fliege_zaehlen(dazu: int) -> void:
 	flugkraft += dazu
 	anzeige_schreiben()
 	aufstehen_abbrechen()
+	$Kanone.steigt = true
 	if steigen != null:
 		steigen.kill()
 	steigen = create_tween()
@@ -49,6 +50,7 @@ func fliege_verlieren(weg: int) -> void:
 	var neue_hoehe: float = -flugkraft * hoehe_je_flugkraft
 	var strecke: float = absf(neue_hoehe - $Kanone.position.y)
 	$Kanone.gesperrt = true
+	$Kanone.steigt = false
 	steigen = create_tween()
 	steigen.tween_property($Kanone, "position:y", neue_hoehe, strecke / falltempo)
 	if flugkraft <= 0:
@@ -77,7 +79,8 @@ func neustart() -> void:
 
 func entsperren() -> void:
 	$Kanone.gesperrt = false
+	$Kanone.steigt = false
 
 
 func anzeige_schreiben() -> void:
-	$Kanone/Arm/Leiste.value = flugkraft
+	$Kanone/RechteHand/Leiste.value = flugkraft
