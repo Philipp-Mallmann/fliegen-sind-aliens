@@ -71,7 +71,7 @@ repeat_size = Vector2(1600, 0)
 
 [node name="Streifen" type="ColorRect" parent="Boden"]
 offset_right = 1600.0
-offset_bottom = 160.0
+offset_bottom = 300.0
 color = Color(0.45, 0.45, 0.45, 1)
 
 [node name="Pfosten1" type="ColorRect" parent="Boden"]
@@ -249,9 +249,9 @@ animation = &"aufstehen"
 
 [node name="RechteHand" type="ColorRect" parent="Kanone"]
 offset_left = 560.0
-offset_top = -560.0
+offset_top = -700.0
 offset_right = 680.0
-offset_bottom = -480.0
+offset_bottom = -620.0
 color = Color(0.6, 0.6, 0.6, 1)
 
 [node name="Leiste" type="ProgressBar" parent="Kanone/RechteHand"]
@@ -262,14 +262,15 @@ offset_bottom = 110.0
 show_percentage = false
 
 [node name="Griff" type="Marker2D" parent="Kanone"]
-position = Vector2(620, -560)
+position = Vector2(620, -700)
 
 [node name="Faecher" type="Node2D" parent="Kanone"]
-position = Vector2(0, -800)
+position = Vector2(0, -940)
 script = ExtResource("7_faecher")
 
 [node name="Kamera" type="Camera2D" parent="Kanone"]
-offset = Vector2(0, -380)
+offset = Vector2(0, -447)
+zoom = Vector2(0.85, 0.85)
 
 [node name="Uebergabe" type="Node" parent="Kanone" node_paths=PackedStringArray("arm", "faecher", "griff")]
 script = ExtResource("4_uebergabe")

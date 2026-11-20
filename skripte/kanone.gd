@@ -4,8 +4,8 @@ extends Node2D
 @export var tempo: float = 250.0
 # Wie schnell die Kanone anfaehrt und abbremst, in Pixeln pro Sekunde pro Sekunde.
 @export var beschleunigung: float = 600.0
-# Welcher Teil des Tempos waehrend Uebergabe und Steigen bleibt. 0.5 heisst: halb so schnell.
-@export var steig_anteil: float = 0.5
+# Welcher Teil des Tempos waehrend Uebergabe und Steigen bleibt. 0 heisst: Man lenkt dann gar nicht, 0.5 hiesse halb so schnell.
+@export var steig_anteil: float = 0.0
 # Die Szene der Nadel. Bei jedem Schuss entsteht daraus eine neue Nadel.
 @export var nadel_szene: PackedScene
 # Wie lange die Kanone nach einem Schuss nachlaedt, in Sekunden.

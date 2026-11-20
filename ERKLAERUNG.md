@@ -2508,3 +2508,229 @@ Bedienung
 3. So kommt hoechstens eine Fliege je Bild dazu. Das reicht (4 Fliegen in 4 Bildern), und eine `while`-Schleife wuerde sich aufhaengen, falls eine neue Fliege einmal knapp nicht mitgezaehlt wird.
 
 </details>
+
+## Spass-Test, Runde 2 - Fliegen weichen aus, Kamera, Steigen beim Treffer
+
+Deine zweite Runde Rueckmeldung: Die schnelle Fliege war zu leicht und gab zu viel. Die normale dreht sich jetzt und wippt. Fliegen in der unteren Bildhaelfte und oben beim Faecher fliegen aus dem Bild. Die Kamera zoomt beim Abheben heran, die Kanone sitzt dann unten am Rand. Man steigt schon beim Treffer und lenkt dabei nicht mehr. Das halbe Tempo aus Runde 1 ist damit wieder weg.
+
+### `skripte/fliege.gd` - geaendert
+
+```gdscript
+@export var drehtempo: float = 0.0
+@export var wipp_hoehe: float = 0.0
+@export var wipp_tempo: float = 4.0
+```
+Neu. Drei Regler fuer Drehen und Wippen. 0 heisst: Die Fliege dreht oder wippt nicht. So kann dieselbe Szene beide Arten sein, der Erzeuger stellt die Werte ein. `drehtempo` ist im **Bogenmass** pro Sekunde, so rechnet Godot Winkel: Eine ganze Umdrehung ist `TAU`, etwa 6,28.
+
+```gdscript
+var flucht: float = 0.0
+var grund_y: float = 0.0
+var zeit: float = 0.0
+```
+Neu. `flucht` 0 heisst hin und her, 1 heisst ab nach rechts, -1 ab nach links. Das setzt der Erzeuger. `grund_y` ist die Hoehe, um die die Fliege wippt, `zeit` zaehlt die Sekunden fuers Wippen.
+
+```gdscript
+func _ready() -> void:
+	grund_y = position.y
+```
+Wieder da, mit neuem Inhalt. Wenn die Fliege ins Spiel kommt, hat der Erzeuger ihre Hoehe schon gesetzt. Die merkt sie sich als Mitte des Wippens.
+
+```gdscript
+	zeit += delta
+	rotation += drehtempo * delta
+	position.y = grund_y + sin(zeit * wipp_tempo) * wipp_hoehe
+```
+Neu in `_process`, nach der Zeile `if gefangen: return`. Eine gefangene Fliege bleibt also in dem Winkel stehen, in dem sie getroffen wurde.
+- `rotation` ist der Drehwinkel des Knotens. Jedes Bild kommt ein Stueck dazu, also dreht sie sich staendig.
+- `sin` (Sinus) geht gleichmaessig zwischen -1 und 1 hin und her. Mal `wipp_hoehe` (25) ergibt das -25 bis 25 px um `grund_y`. `wipp_tempo` 4 heisst: Ein ganzes Auf und Ab dauert 2 x 3,14 / 4 = etwa 1,6 Sekunden.
+- Bei der schnellen Fliege sind beide Regler 0, dort aendert sich nichts: `rotation` + 0 und `grund_y` + 0.
+
+```gdscript
+	if flucht != 0.0:
+		position.x += flucht * tempo * delta
+		return
+```
+Neu. Flieht die Fliege, fliegt sie nur noch geradeaus in ihre Fluchtrichtung, ohne umzudrehen. `return` ueberspringt das Hin und Her darunter. Geloescht wird sie vom Erzeuger, wenn sie weit genug draussen ist.
+
+### `skripte/erzeuger.gd` - geaendert
+
+Geloescht: `abstand`, `vorlauf`, `naechste_hoehe` und die `while`-Schleife, die oben ueber dem Bild alle 250 px eine Fliege bereitgestellt hat. Die wuerden jetzt beim Hereinsteigen sofort im oberen Viertel landen und fliehen. Alle Fliegen kommen nur noch von der Seite. Die Funktion `fliege_bauen` ist in `hereinfliegen` aufgegangen, weil es nur noch einen Weg gibt, eine Fliege zu bauen.
+
+```gdscript
+@export var flugkraft_normal: int = 2
+@export var flugkraft_schnell: int = 6
+@export var faktor_schnell: float = 4.0
+@export var drehungen_normal: float = 1.0
+@export var wippen_normal: float = 25.0
+```
+Normal gibt 2, schnell 6. Die schnelle ist viermal so schnell wie eine normale (vorher doppelt), also 400 bis 720 px/s. Die normale dreht sich einmal pro Sekunde und wippt 25 px.
+
+```gdscript
+@export var naehe: float = 1000.0
+@export var einflug_x: float = 900.0
+@export var einflug_oben: float = 750.0
+@export var einflug_unten: float = 560.0
+@export var flucht_unten: float = 520.0
+@export var flucht_oben: float = 790.0
+@export var loeschen_seitlich: float = 1100.0
+```
+Neue Zahlen und zwei neue Regler. In der Luft liegt der obere Bildrand jetzt 1060 px ueber der Kanone (siehe Kamera unten). Die Bildmitte ist also 520 ueber ihr, das obere Viertel beginnt bei 1060 - 270 = 790. **Nur zwischen 520 und 790 fliegen die Fliegen ruhig hin und her.** Darunter und darueber fliehen sie.
+- Neue Fliegen kommen zwischen 560 und 750 herein. Das sind 40 px Abstand zu jeder Grenze, mehr als das Wippen (25), sonst wuerde eine wippende Fliege gleich fliehen.
+- Start bei 900 statt 800: Am Boden ist herausgezoomt, das Bild reicht dort 847 px zur Seite. Bei 800 haette man die neue Fliege entstehen sehen.
+- `naehe` und `loeschen_seitlich` wachsen mit, damit eine startende Fliege mitzaehlt und nicht sofort geloescht wird.
+
+```gdscript
+func _process(_delta: float) -> void:
+	aufraeumen()
+	fliehen_lassen()
+	if freie_in_der_naehe() < mindestens:
+		hereinfliegen()
+```
+Erst wegraeumen, dann pruefen, wer fliehen muss, dann nachfuellen.
+
+```gdscript
+func hereinfliegen() -> void:
+	...
+	fliege.tempo = randf_range(tempo_langsam, tempo_schnell)
+	if randf() < anteil_schnell:
+		fliege.tempo *= faktor_schnell
+		fliege.flugkraft = flugkraft_schnell
+	else:
+		fliege.flugkraft = flugkraft_normal
+		fliege.drehtempo = drehungen_normal * TAU
+		fliege.wipp_hoehe = wippen_normal
+	add_child(fliege)
+```
+Wie vorher, nur in einer Funktion. Neu ist das `else`: Nur die normale Fliege bekommt Drehen und Wippen. `drehungen_normal * TAU` rechnet Umdrehungen in Bogenmass um (1 x 6,28).
+
+```gdscript
+func fliehen_lassen() -> void:
+	for fliege in get_children():
+		if fliege.flucht != 0.0:
+			continue
+		var ueber: float = kanone.position.y - fliege.position.y
+		if ueber < flucht_unten or ueber > flucht_oben:
+			if fliege.position.x < kanone.position.x:
+				fliege.flucht = -1.0
+			else:
+				fliege.flucht = 1.0
+```
+Neu. Fuer jede freie Fliege, die noch nicht flieht (`continue` springt zur naechsten): Liegt sie unter 520 oder ueber 790, flieht sie. Die Kanone steht immer in der Bildmitte, also ist der naehere Rand der auf ihrer Seite der Kanone: Ist sie links von der Kanone, geht es nach links, sonst nach rechts. Weil die Fliegen nur seitlich fliegen, kommen sie in diese Bereiche vor allem, **wenn du steigst**: Das Bild faehrt hoch, die Fliegen rutschen darin nach unten.
+
+```gdscript
+		if fliege.flucht == 0.0 and seitlich <= naehe:
+			anzahl += 1
+```
+Geaendert in `freie_in_der_naehe`. Eine fliehende Fliege zaehlt nicht mehr mit, denn die ist gleich weg, und fuer sie soll schon eine neue kommen. Die Hoehe muss hier nicht mehr geprueft werden: Wer ausserhalb von 520 bis 790 ist, flieht schon, das hat `fliehen_lassen` kurz vorher erledigt.
+
+### `skripte/uebergabe.gd` - geaendert
+
+```gdscript
+# Wird gesendet, sobald eine Fliege getroffen ist, noch vor der Fahrt zur Hand. Mit dabei: ihre Flugkraft.
+signal gefangen(flugkraft: int)
+```
+Hiess `angekommen` und kam erst, wenn die Fliege oben im Faecher hing. Jetzt kommt es gleich in `starten`:
+
+```gdscript
+	nadel.reparent(faecher)
+	gefangen.emit(nadel.fliege.flugkraft)
+```
+`spiel.gd` haengt am Signal das Steigen an, also steigst du ab dem Treffer. Die Uebergabe laeuft trotzdem wie bisher, nur waehrend du schon steigst. Das geht, weil Arm, Faecher und Hand Kinder der Kanone sind und mit hochfahren. Die Zeile `angekommen.emit(...)` weiter unten ist weg.
+
+### `skripte/kanone.gd` - geaendert
+
+```gdscript
+# Welcher Teil des Tempos waehrend Uebergabe und Steigen bleibt. 0 heisst: Man lenkt dann gar nicht, 0.5 hiesse halb so schnell.
+@export var steig_anteil: float = 0.0
+```
+Nur der Wert und der Kommentar: 0 statt 0.5. Du lenkst beim Steigen nicht mehr. Der Code aus Runde 1 bleibt, damit du es im Inspector wieder aufdrehen kannst. Faehrst du gerade, rollt die Kanone kurz aus (Abbremsen, `beschleunigung`) und steht dann.
+
+### `skripte/hindernis.gd` - geaendert
+
+```gdscript
+@export var bildrand: float = 1060.0
+```
+920 -> 1060, weil der obere Bildrand in der Luft jetzt hoeher ueber der Kanone liegt. Am Boden (herausgezoomt) liegt er bei 1082, die Warnung steht dort also 22 px unter dem Rand. Nur der Kommentar von `weg_unter` ist sonst noch geaendert.
+
+### `skripte/spiel.gd` - geaendert
+
+```gdscript
+@export var zoom_boden: float = 0.85
+@export var versatz_boden: float = -447.0
+@export var zoom_luft: float = 1.0
+@export var versatz_luft: float = -520.0
+...
+var kamerafahrt: Tween = null
+```
+Neu. Zwei Einstellungen der Kamera:
+- **Boden:** `zoom` 0.85 heisst, alles ist 85 Prozent so gross, man sieht mehr. Der Versatz (`offset` der Kamera) ist, wie weit ueber der Kanone die Bildmitte liegt. -447 = -380 / 0.85: So steht die Kanone im Bild genau dort, wo sie vorher war, nur kleiner.
+- **Luft:** `zoom` 1, also die Groesse von vorher. Die Bildmitte liegt 520 ueber der Kanone, das Bild reicht 540 nach unten, die Kanone sitzt also 20 px ueber dem unteren Rand.
+
+```gdscript
+	$Kanone/Uebergabe.gefangen.connect(fliege_zaehlen)
+	...
+	$Kanone/Kamera.zoom = Vector2.ONE * zoom_boden
+	$Kanone/Kamera.offset.y = versatz_boden
+```
+Das Signal heisst jetzt `gefangen`. Neu: Beim Start stellt `_ready` die Kamera auf den Boden. So gilt, was im Inspector bei `spiel.gd` steht, auch wenn in der Szene an der Kamera etwas anderes eingetragen ist.
+
+```gdscript
+	kamera_fahren(zoom_luft, versatz_luft, steigdauer)
+```
+Neu in `fliege_zaehlen`, bei jedem Fang. Beim ersten zoomt die Kamera heran, gleichzeitig mit dem Steigen (gleiche Dauer). Danach ist sie schon in der Luft, und die Fahrt aendert nichts mehr.
+
+```gdscript
+		kamera_fahren(zoom_boden, versatz_boden, strecke / falltempo)
+```
+Neu in `fliege_verlieren`, nur wenn alles weg ist (`flugkraft <= 0`). Waehrend du zum Boden faellst, zoomt die Kamera wieder heraus, genauso lang wie der Fall.
+
+```gdscript
+func kamera_fahren(zoom: float, versatz: float, dauer: float) -> void:
+	if kamerafahrt != null:
+		kamerafahrt.kill()
+	kamerafahrt = create_tween()
+	kamerafahrt.set_parallel(true)
+	kamerafahrt.tween_property($Kanone/Kamera, "zoom", Vector2.ONE * zoom, dauer)
+	kamerafahrt.tween_property($Kanone/Kamera, "offset:y", versatz, dauer)
+```
+Neu. Gleiches Muster wie `steigen`: eine laufende Fahrt abbrechen, eine neue anlegen. `set_parallel(true)` laesst Zoom und Versatz gleichzeitig gleiten statt nacheinander. `"offset:y"` heisst: nur die y-Zahl des Versatzes. `Vector2.ONE * zoom` ist (0.85, 0.85), gleich viel Zoom in beide Richtungen.
+
+### `szenen/spiel.tscn` - geaendert
+
+```
+Boden/Streifen   unten 160 -> 300 (herausgezoomt sah man sonst darunter das Leere)
+Kanone/RechteHand  y -560 -> -700
+Kanone/Griff       y -560 -> -700
+Kanone/Faecher     y -800 -> -940
+Kanone/Kamera      offset -380 -> -447, zoom 1 -> 0.85
+```
+Hand, Griff und Faecher sind um 140 px nach oben gerueckt, genau um so viel, wie der obere Bildrand in der Luft hoeher liegt (1060 statt 920). Im Bild stehen sie also an derselben Stelle wie vorher. Die Kamera-Werte der Szene sind dieselben wie in `spiel.gd` und werden dort beim Start ohnehin gesetzt.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck aller sechs geaenderten Skripte PASS.
+- Probe in einer Kopie des Spiels (ausserhalb des Spielordners), 60 Bilder pro Sekunde fest, Hindernisse aus:
+  - Von 300 Fliegen 151 schnell (6 Flugkraft, Tempo 400-720, dreht nicht) und 149 normal (2, dreht, wippt).
+  - Eine normale Fliege: 2,0 Umdrehungen in 2 Sekunden, wippt 50 px (25 hoch, 25 runter).
+  - Neue Fliegen: 4, keine flieht beim Start. Nach 5 Bildern sind 3 noch ausserhalb des Bodenbildes, die vierte war schnell und schon 60 px weit.
+  - Schuss auf eine Fliege: getroffen im 7. Bild, gestiegen im selben Bild. Rechts gehalten: 6 px Fahrt in den ersten 20 Bildern des Steigens (Ausrollen), danach wieder 250 px/s.
+  - Kamera: Start Zoom 0,85 / Versatz -447, in der Luft 1,0 / -520, nach dem Absturz auf 0 wieder 0,85 / -447.
+  - Nach dem Steigen: 8 Fliegen fliehen, alle zum naeheren Rand, keine falsch. 5 Sekunden spaeter 4 Fliegen, alle ruhig.
+- Zwei Bilder (am Boden und in der Luft): Am Boden ist die Kanone kleiner und der Boden zu sehen. In der Luft sitzt die Kanone unten am Rand, kein Boden. Dabei gefunden und behoben: Unter dem Bodenstreifen war ein dunkler Rand.
+- **Gesehen, nicht geaendert:** Die rechte Hand liegt in der Hoehe, in der Fliegen hin und her fliegen. Eine Fliege kann hinter der Hand durchfliegen. Das war vorher auch schon so.
+- Handy-Probe: In der Safari-Engine kommen beide Schusstasten an. In Chromium meldet die Probe die linke als FAIL, am Bild hat sie aber geschossen und getroffen (Nadel steckt in einer Fliege). Der Arm fuhr gleich danach zur Hand, der Faden lief schraeg an der schmalen Messflaeche vorbei.
+- **Nicht gemessen:** wie es sich spielt.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum flieht eine Fliege meistens dann, wenn du gerade eine andere gefangen hast?
+2. Was passiert mit `rotation` und `position.y` bei einer schnellen Fliege, und warum muss dafuer kein `if` im Code stehen?
+3. Warum stehen Faecher, Hand und Griff 140 px hoeher als vorher, und warum sieht man das im Bild nicht?
+
+<details><summary>Antworten</summary>
+
+1. Die Fliegen fliegen nur seitlich, ihre Hoehe aendert sich nicht. Steigst du, faehrt das Bild hoch, und die Fliegen rutschen darin nach unten in die untere Haelfte (unter 520 ueber der Kanone). Dort setzt `fliehen_lassen` ihre Flucht.
+2. Nichts: `drehtempo` und `wipp_hoehe` sind 0. `rotation += 0` aendert nichts, und `grund_y + sin(...) * 0` ist immer `grund_y`.
+3. Die Kamera zeigt in der Luft 140 px mehr ueber der Kanone (Rand bei 1060 statt 920), weil die Kanone jetzt unten am Rand sitzt. Alles, was oben am Bildrand bleiben soll, muss um genau so viel nach oben, dann steht es im Bild wieder an derselben Stelle.
+
+</details>

@@ -1,7 +1,7 @@
 extends Node
 
-# Wird gesendet, sobald eine Fliege im Faecher oben haengt. Mit dabei: ihre Flugkraft.
-signal angekommen(flugkraft: int)
+# Wird gesendet, sobald eine Fliege getroffen ist, noch vor der Fahrt zur Hand. Mit dabei: ihre Flugkraft.
+signal gefangen(flugkraft: int)
 
 # Wie lange die Fahrt hinueber dauert, in Sekunden. Der Rueckweg dauert genauso lang.
 @export var dauer: float = 0.48
@@ -9,7 +9,7 @@ signal angekommen(flugkraft: int)
 @export var verzoegerung: float = 0.1
 # Wie weit der Arm von der Mitte nach rechts faehrt, in Pixeln. Dort sitzt die rechte Hand.
 @export var ziel_x: float = 480.0
-# Der Arm: linke Hand, Kanone und Muendung. Nur er faehrt, die Kamera und der Faecher bleiben stehen.
+# Der Arm: linke Hand, Kanone und Muendung. Nur er faehrt zur Seite, die Kamera und der Faecher nicht.
 @export var arm: Node2D
 # Der Faecher am oberen Bildrand, in dem die gefangenen Fliegen haengen.
 @export var faecher: Node2D
@@ -24,6 +24,7 @@ var warteschlange: Array[Node2D] = []
 
 func starten(nadel: Node2D) -> void:
 	nadel.reparent(faecher)
+	gefangen.emit(nadel.fliege.flugkraft)
 	warteschlange.append(nadel)
 	if not laeuft:
 		uebergeben()
@@ -44,7 +45,6 @@ func uebergeben() -> void:
 		await hin.finished
 		nadel.anker = griff
 		nadel.haengt = true
-		angekommen.emit(nadel.fliege.flugkraft)
 		var zurueck: Tween = create_tween()
 		zurueck.tween_property(arm, "position", Vector2.ZERO, dauer)
 		await zurueck.finished

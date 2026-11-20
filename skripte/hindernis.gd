@@ -11,9 +11,9 @@ extends Node2D
 # Wie lange ein Blinken der Warnung dauert, am Anfang und am Ende, in Sekunden. Kleiner heisst schneller.
 @export var blinken_anfang: float = 0.5
 @export var blinken_ende: float = 0.1
-# Wie weit ueber der Kanone der obere Bildrand liegt, in Pixeln.
-@export var bildrand: float = 920.0
-# Wie weit unter der Kanone der Gegenstand verschwindet, in Pixeln. Der untere Bildrand liegt bei 160.
+# Wie weit ueber der Kanone der obere Bildrand liegt, in Pixeln. In der Luft 1060, am Boden etwas mehr (herausgezoomt).
+@export var bildrand: float = 1060.0
+# Wie weit unter der Kanone der Gegenstand verschwindet, in Pixeln. Der untere Bildrand liegt hoechstens 190 darunter.
 @export var weg_unter: float = 300.0
 # Die Szene des Matsches. Bei jeder zermatschten Fliege entsteht daraus ein Fleck.
 @export var matsch_szene: PackedScene
