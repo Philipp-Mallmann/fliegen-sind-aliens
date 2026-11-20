@@ -5,8 +5,8 @@ signal verloren(flugkraft: int)
 
 # Wie weit zwei Fliegen im Faecher auseinander sind, solange er noch nicht schrumpfen muss, in Pixeln.
 @export var abstand: float = 110.0
-# Wie breit der Faecher hoechstens werden darf, in Pixeln. Das Bild ist 1440 breit.
-@export var breite: float = 1400.0
+# Wie breit der Faecher hoechstens werden darf, in Pixeln. Das Bild ist 1440 breit, 1152 laesst je ein Zehntel (144) Rand.
+@export var breite: float = 1152.0
 # Wie lange das Zusammenruecken und Schrumpfen dauert, in Sekunden. Lang heisst: man merkt es kaum.
 @export var gleitdauer: float = 1.5
 # Wie weit eine Fliege hoechstens ueber oder unter der Linie haengt, in Pixeln. Macht den Faecher natuerlicher.
@@ -32,7 +32,7 @@ func aufnehmen(neue: Node2D) -> void:
 func entfernen(nadel: Node2D) -> void:
 	reihe.erase(nadel)
 	versatz.erase(nadel)
-	verloren.emit(nadel.fliege.flugkraft)
+	verloren.emit(nadel.flugkraft())
 	nachruecken()
 
 

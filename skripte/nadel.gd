@@ -1,6 +1,6 @@
 extends Node2D
 
-# Wird gesendet, sobald die Nadel eine Fliege getroffen hat. Mit dabei: die Nadel selbst.
+# Wird gesendet, sobald die Nadel in ihrer letzten Fliege stecken bleibt. Mit dabei: die Nadel selbst.
 signal getroffen(nadel: Node2D)
 
 # Wie schnell die Nadel fliegt, in Pixeln pro Sekunde.
@@ -9,16 +9,20 @@ signal getroffen(nadel: Node2D)
 @export var reichweite: float = 2160.0
 # Die Szene des Blutflecks. Bei jedem Treffer entsteht daraus ein neuer Fleck.
 @export var blutfleck_szene: PackedScene
+# Um wie viel die Trefferflaeche einer Fliege groesser ist als die Fliege selbst. 1.125 heisst: ein Achtel groesser.
+@export var trefferzugabe: float = 1.125
+# Wie weit die aufgespiessten Fliegen am Faden untereinander haengen, in Pixeln. Die Fliege ist 100 hoch.
+@export var spiess_abstand: float = 110.0
 
 # Wie viele Pixel die Nadel schon geflogen ist.
 var geflogen: float = 0.0
-# true heisst: Die Nadel hat eine Fliege getroffen und steckt fest.
+# true heisst: Die Nadel steckt in ihrer letzten Fliege und fliegt nicht mehr.
 var steckt: bool = false
-# Die Fliege, die an der Nadel steckt. null heisst: noch keine.
-var fliege: Node2D = null
+# Die Fliegen, die an der Nadel stecken, in der Reihenfolge, in der sie getroffen wurden.
+var aufgespiesste: Array[Node2D] = []
 # Der Punkt, an dem der Faden der Nadel festhaengt: erst die Muendung der Kanone, im Faecher die rechte Hand.
 var anker: Node2D = null
-# true heisst: Die Nadel haengt mit ihrer Fliege fertig im Faecher. Erst dann kann ein Hindernis sie treffen.
+# true heisst: Die Nadel haengt mit ihren Fliegen fertig im Faecher. Erst dann kann ein Hindernis sie treffen.
 var haengt: bool = false
 
 
@@ -30,34 +34,70 @@ func _process(delta: float) -> void:
 	geflogen += tempo * delta
 	var getroffene: Node2D = fliege_an_der_spitze()
 	if getroffene != null:
-		treffen(getroffene)
+		aufspiessen(getroffene)
+	if not aufgespiesste.is_empty():
+		if geflogen >= reichweite or not noch_eine_darueber():
+			stecken_bleiben()
 	elif geflogen >= reichweite:
 		queue_free()
 	faden_spannen()
 
 
+func trifft(kandidat: Node2D, nur_darueber: bool) -> bool:
+	if kandidat.gefangen:
+		return false
+	var halb: float = kandidat.halbe_groesse * trefferzugabe
+	var seitlich: float = absf(kandidat.global_position.x - global_position.x)
+	if seitlich > halb:
+		return false
+	if nur_darueber:
+		return kandidat.global_position.y < global_position.y and kandidat.global_position.y > bildrand_oben()
+	return absf(kandidat.global_position.y - global_position.y) <= halb
+
+
 func fliege_an_der_spitze() -> Node2D:
 	for kandidat in get_tree().get_nodes_in_group("fliegen"):
-		if kandidat.gefangen:
-			continue
-		var seitlich: float = absf(kandidat.global_position.x - global_position.x)
-		var senkrecht: float = absf(kandidat.global_position.y - global_position.y)
-		if seitlich <= kandidat.halbe_groesse and senkrecht <= kandidat.halbe_groesse:
+		if trifft(kandidat, false):
 			return kandidat
 	return null
 
 
-func treffen(getroffene: Node2D) -> void:
-	steckt = true
-	fliege = getroffene
-	fliege.gefangen = true
-	fliege.get_node("Summen").stop()
+func noch_eine_darueber() -> bool:
+	for kandidat in get_tree().get_nodes_in_group("fliegen"):
+		if trifft(kandidat, true):
+			return true
+	return false
+
+
+func bildrand_oben() -> float:
+	var kamera: Camera2D = get_viewport().get_camera_2d()
+	return kamera.get_screen_center_position().y - 540.0 / kamera.zoom.y
+
+
+func aufspiessen(getroffene: Node2D) -> void:
+	for alte in aufgespiesste:
+		alte.position.y += spiess_abstand
+	aufgespiesste.append(getroffene)
+	getroffene.gefangen = true
+	getroffene.get_node("Summen").stop()
 	$TonTreffer.play()
-	fliege.reparent(self)
+	getroffene.reparent(self)
+	getroffene.position = Vector2.ZERO
 	var fleck: Node2D = blutfleck_szene.instantiate()
 	get_parent().add_child(fleck)
 	fleck.global_position = global_position
+
+
+func stecken_bleiben() -> void:
+	steckt = true
 	getroffen.emit(self)
+
+
+func flugkraft() -> int:
+	var summe: int = 0
+	for fliege in aufgespiesste:
+		summe += fliege.flugkraft
+	return summe
 
 
 func faden_spannen() -> void:

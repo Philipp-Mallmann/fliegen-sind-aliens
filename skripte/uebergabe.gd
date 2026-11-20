@@ -24,7 +24,7 @@ var warteschlange: Array[Node2D] = []
 
 func starten(nadel: Node2D) -> void:
 	nadel.reparent(faecher)
-	gefangen.emit(nadel.fliege.flugkraft)
+	gefangen.emit(nadel.flugkraft())
 	warteschlange.append(nadel)
 	if not laeuft:
 		uebergeben()

@@ -3130,3 +3130,195 @@ Spiel
 - Bild am Boden und in der Luft: Schachbrett zu sehen, Fliegen gut lesbar.
 - Kanone 200 px nach rechts: Die Kante des Musters wandert im Bild um etwa 83 px nach links (200 x 0,5 x Zoom 0,85), es bewegt sich also mit.
 
+## Spass-Test, Runde 10 - Mehrfach-Treffer, schnellerer Fall mit Wackeln, Faecher mittiger, groessere Trefferflaeche
+
+### `skripte/nadel.gd` - neu geschrieben
+
+Die Nadel kann jetzt mehrere Fliegen aufspiessen (Double Kill, Triple Kill). Liegt ueber der getroffenen Fliege auf dem Bildschirm noch eine in ihrer Bahn, fliegt sie weiter und nimmt die getroffene mit. Sie bleibt in der letzten stecken.
+
+```gdscript
+signal getroffen(nadel: Node2D)
+```
+Gleicher Name wie vorher, aber das Signal kommt jetzt erst, wenn die Nadel in ihrer **letzten** Fliege stecken bleibt. Erst dann beginnt die Uebergabe.
+
+```gdscript
+@export var trefferzugabe: float = 1.125
+@export var spiess_abstand: float = 110.0
+```
+Neu. `trefferzugabe`: Die Trefferflaeche einer Fliege ist ein Achtel groesser als die Fliege selbst (100 -> 112,5 px, also 56,25 zu jeder Seite). Gilt nur fuer die Nadel, Hindernisse treffen weiter genau die Fliege (zu deinen Gunsten). `spiess_abstand`: so weit haengen die Fliegen am Spiess untereinander, 10 px mehr als eine Fliege hoch ist, damit sie sich nicht beruehren.
+
+```gdscript
+var aufgespiesste: Array[Node2D] = []
+```
+Ersetzt `var fliege`. Statt einer Fliege merkt sich die Nadel eine Liste, in der Reihenfolge der Treffer.
+
+```gdscript
+func _process(delta: float) -> void:
+	if steckt:
+		faden_spannen()
+		return
+	position.y -= tempo * delta
+	geflogen += tempo * delta
+	var getroffene: Node2D = fliege_an_der_spitze()
+	if getroffene != null:
+		aufspiessen(getroffene)
+	if not aufgespiesste.is_empty():
+		if geflogen >= reichweite or not noch_eine_darueber():
+			stecken_bleiben()
+	elif geflogen >= reichweite:
+		queue_free()
+	faden_spannen()
+```
+Der Anfang ist wie vorher: fliegen, zaehlen, an der Spitze nach einer Fliege suchen. Neu:
+- Eine getroffene Fliege wird aufgespiesst, die Nadel fliegt aber weiter.
+- Hat die Nadel schon Fliegen, prueft sie jedes Bild: Ist darueber im Bild noch eine in meiner Bahn? Wenn nicht mehr (oder die Reichweite ist um), bleibt sie stecken. "Jedes Bild" ist wichtig: Fliegt eine Fliege aus der Bahn, bevor die Nadel sie erreicht, bleibt die Nadel trotzdem stehen und verschwindet nicht mit ihrer Beute.
+- Hat sie keine Fliege und die Reichweite ist um, verschwindet sie wie bisher (`elif` heisst "sonst, wenn").
+
+```gdscript
+func trifft(kandidat: Node2D, nur_darueber: bool) -> bool:
+	if kandidat.gefangen:
+		return false
+	var halb: float = kandidat.halbe_groesse * trefferzugabe
+	var seitlich: float = absf(kandidat.global_position.x - global_position.x)
+	if seitlich > halb:
+		return false
+	if nur_darueber:
+		return kandidat.global_position.y < global_position.y and kandidat.global_position.y > bildrand_oben()
+	return absf(kandidat.global_position.y - global_position.y) <= halb
+```
+Neu. Eine Frage fuer zwei Faelle, darum ein Schalter `nur_darueber`.
+- Gefangene Fliegen zaehlen nie.
+- Seitlich muss die Fliege nah genug an der Nadel sein (mit der groesseren Trefferflaeche).
+- Fall 1, `nur_darueber` falsch: Steckt die Spitze gerade in der Fliege? Das ist die alte Rechnung aus `fliege_an_der_spitze`.
+- Fall 2, `nur_darueber` wahr: Liegt die Fliege ueber der Spitze (kleineres y) und noch im Bild (groesseres y als der obere Bildrand)?
+
+```gdscript
+func fliege_an_der_spitze() -> Node2D:
+	for kandidat in get_tree().get_nodes_in_group("fliegen"):
+		if trifft(kandidat, false):
+			return kandidat
+	return null
+
+
+func noch_eine_darueber() -> bool:
+	for kandidat in get_tree().get_nodes_in_group("fliegen"):
+		if trifft(kandidat, true):
+			return true
+	return false
+```
+Zwei kurze Schleifen ueber alle Fliegen, die eine fragt Fall 1, die andere Fall 2.
+
+```gdscript
+func bildrand_oben() -> float:
+	var kamera: Camera2D = get_viewport().get_camera_2d()
+	return kamera.get_screen_center_position().y - 540.0 / kamera.zoom.y
+```
+Neu. `get_viewport().get_camera_2d()` holt die Kamera, die gerade das Bild zeigt. `get_screen_center_position()` ist die Mitte des Bildes in der Welt. Das Bild ist 1080 hoch, also liegt der obere Rand 540 darueber, beim Zoom 0.85 entsprechend mehr (540 / 0.85).
+
+```gdscript
+func aufspiessen(getroffene: Node2D) -> void:
+	for alte in aufgespiesste:
+		alte.position.y += spiess_abstand
+	aufgespiesste.append(getroffene)
+	getroffene.gefangen = true
+	getroffene.get_node("Summen").stop()
+	$TonTreffer.play()
+	getroffene.reparent(self)
+	getroffene.position = Vector2.ZERO
+	...Blutfleck wie bisher
+```
+Hiess `treffen`. Neu:
+- Alle schon aufgespiessten Fliegen rutschen um 110 px nach unten. Die neue kommt an die Spitze (`Vector2.ZERO`, also genau auf die Nadel). So haengen sie immer mit gleichem Abstand untereinander, ohne Physik.
+- Vorher blieb die Fliege dort, wo die Spitze sie gerade erwischt hatte. Das schwankt um bis zu 56 px, und beim Spiess haetten sich zwei Fliegen dann ueberlappt. Gemessen, darum geaendert.
+- `append` haengt die neue Fliege hinten an die Liste.
+
+```gdscript
+func stecken_bleiben() -> void:
+	steckt = true
+	getroffen.emit(self)
+
+
+func flugkraft() -> int:
+	var summe: int = 0
+	for fliege in aufgespiesste:
+		summe += fliege.flugkraft
+	return summe
+```
+Neu. `stecken_bleiben` ist das alte Ende von `treffen`. `flugkraft()` zaehlt die Flugkraft aller Fliegen am Spiess zusammen.
+
+### `skripte/uebergabe.gd` und `skripte/faecher.gd` - geaendert
+
+```gdscript
+	gefangen.emit(nadel.flugkraft())        # uebergabe.gd, starten
+	verloren.emit(nadel.flugkraft())        # faecher.gd, entfernen
+```
+Statt `nadel.fliege.flugkraft`. Ein Spiess mit drei Fliegen bringt alle drei Werte, und verliert man ihn, sind alle drei weg (der Faden reisst).
+
+```gdscript
+@export var breite: float = 1152.0
+```
+In `faecher.gd`, vorher 1400. Das Bild ist 1440 breit, je ein Zehntel (144 px) Rand zu jeder Seite: 1440 - 2 x 144 = 1152. Ab dieser Breite schrumpft der Faecher.
+
+### `skripte/hindernis.gd` - geaendert
+
+```gdscript
+@export var falltempo: float = 3000.0
+```
+Vorher 1800. Der Klotz muss schneller fallen als du abstuerzt, sonst holt dich der fallende Faecher ihn von oben ein und verliert Fliegen, die gar nicht in der Spalte hingen. Dein Absturz ist jetzt 2400.
+
+### `skripte/spiel.gd` - geaendert
+
+```gdscript
+@export var falltempo: float = 2400.0
+@export var wackeln_fall: float = 5.0
+@export var wackeln_aufprall: float = 28.0
+@export var aufprall_dauer: float = 0.4
+...
+var wackel_staerke: float = 0.0
+var wackel_zeit: float = 0.0
+```
+Doppelt so schneller Fall (vorher 1200). Dazu die Regler fuers Wackeln der Kamera: beim Fallen hoechstens 5 px zur Seite, beim Aufprall 28 px fuer 0,4 Sekunden.
+
+```gdscript
+func _process(delta: float) -> void:
+	if wackel_zeit > 0.0:
+		wackel_zeit -= delta
+		$Kanone/Kamera.position = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * wackel_staerke
+	else:
+		$Kanone/Kamera.position = Vector2.ZERO
+
+
+func wackeln(staerke: float, dauer: float) -> void:
+	wackel_staerke = staerke
+	wackel_zeit = dauer
+```
+Neu. Solange Wackelzeit uebrig ist, springt die Kamera jedes Bild an eine zufaellige Stelle um ihren Platz, hoechstens `wackel_staerke` weit. Danach steht sie wieder genau an ihrem Platz (`Vector2.ZERO`). Es wird die `position` der Kamera bewegt, nicht ihr `offset`, denn den braucht schon die Kamerafahrt beim Zoomen. Die Tasten liegen im `CanvasLayer` und wackeln nicht mit.
+
+```gdscript
+	wackel_zeit = 0.0                                  # in fliege_zaehlen
+	wackeln(wackeln_fall, strecke / falltempo)          # in fliege_verlieren
+	wackeln(wackeln_aufprall, aufprall_dauer)           # in aufstehen
+```
+Faengst du mitten im Fall eine Fliege, hoert das Wackeln auf. Beim Fall wackelt es genau so lange, wie der Fall dauert. Am Boden (`aufstehen` laeuft nur, wenn man unten bei 0 ankommt) wackelt es einmal kraeftig.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck aller fuenf Skripte PASS.
+- Probe in einer Kopie, dreimal hintereinander gleich: Trefferflaeche 55 px daneben trifft, 58 px daneben nicht. Drei Fliegen uebereinander in der Bahn: alle drei aufgespiesst, eine vierte ausserhalb des Bildes nicht, +6 Flugkraft, Abstaende genau 0 / 110 / 220 px. Fall 400 px in 10 Bildern (2400 px/s). Wackeln beim Fall bis etwa 7 px (5 in jede Richtung, schraeg mehr), beim Aufprall bis etwa 35 px.
+- Bild in der Luft: Dreier-Spiess haengt untereinander am Faecher, Faden zur Hand.
+- **Gesehen, nicht geaendert:** Ein langer Spiess haengt weit nach unten, ein Dreier bis etwa in die Hoehe der rechten Hand und in den Streifen, in dem freie Fliegen fliegen. Der Faden geht von der obersten Fliege zur Hand, die unteren haengen darunter.
+- **Nicht gemessen:** wie es sich spielt.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum prueft die Nadel in jedem Bild, ob noch eine Fliege darueber ist, und nicht nur einmal beim ersten Treffer?
+2. Warum muss der Klotz jetzt schneller fallen als vorher?
+3. Wie viel Flugkraft bringt ein Spiess aus einer schnellen (5) und zwei normalen Fliegen (2)?
+
+<details><summary>Antworten</summary>
+
+1. Die Fliegen fliegen weiter. Ist die obere aus der Bahn, bevor die Nadel sie erreicht, muss die Nadel trotzdem stehen bleiben, sonst flöge sie mit ihrer Beute bis zur Reichweite und verschwaende.
+2. Weil man jetzt mit 2400 px/s abstuerzt. Waere der Klotz langsamer, faellt der Faecher an ihm vorbei durch ihn hindurch und verliert weitere Fliegen.
+3. 5 + 2 + 2 = 9, `flugkraft()` zaehlt alle zusammen.
+
+</details>

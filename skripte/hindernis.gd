@@ -6,8 +6,8 @@ extends Node2D
 @export var breite: float = 200.0
 # Wie hoch der fallende Gegenstand ist, in Pixeln.
 @export var hoehe: float = 120.0
-# Wie schnell der Gegenstand faellt, in Pixeln pro Sekunde. Muss schneller sein als der Absturz (falltempo in spiel.gd).
-@export var falltempo: float = 1800.0
+# Wie schnell der Gegenstand faellt, in Pixeln pro Sekunde. Muss schneller sein als der Absturz (falltempo in spiel.gd, 2400).
+@export var falltempo: float = 3000.0
 # Wie lange ein Blinken der Warnung dauert, am Anfang und am Ende, in Sekunden. Kleiner heisst schneller.
 @export var blinken_anfang: float = 1.0
 @export var blinken_ende: float = 0.1
