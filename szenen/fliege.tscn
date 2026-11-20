@@ -22,6 +22,6 @@ color = Color(0.1, 0.1, 0.1, 1)
 
 [node name="Summen" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("2_summen")
-volume_db = -10.0
+volume_db = -20.0
 autoplay = true
 max_distance = 760.0

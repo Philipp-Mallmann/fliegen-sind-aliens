@@ -3020,3 +3020,77 @@ In `html/head_include` steht jetzt vorn ein zweites kleines JavaScript, vor der 
 - Der Rest weckt den Ton wieder auf, wenn der Browser ihn nach einem Wechsel in eine andere App angehalten hat, bei der naechsten Beruehrung oder Taste.
 - Nebenwirkung: Laeuft am Handy Musik aus einer anderen App, haelt sie an, wenn das Spiel Ton macht.
 
+## Spass-Test, Runde 7 - Ton bricht nicht mehr ab
+
+Du hast gemeldet: Bei vielen Fliegen, Hindernissen und einem Treffer "kackt der Ton ab". Gemessen an einer Aufnahme im vollen Betrieb (8 Fliegen in der Mitte, zwei Warnungen gleichzeitig, Klotz trifft Fliegen, vier Schuesse mit Fang): Die Summe aller Toene erreichte die Obergrenze (0,0 dBFS, 17 Samples ueber -1 dBFS). Darueber wird das Signal abgeschnitten, das klingt kratzig und abgehackt. Dazu kamen zwei echte Abbrueche, siehe unten.
+
+**Was es nicht war:** Der Treffer-Ton wird nicht abgeschnitten, obwohl die Nadel gleich danach umgehaengt wird (`reparent`). In der Aufnahme laeuft er volle 0,3 Sekunden.
+
+### Lautstaerken in den Szenen - geaendert
+
+Jeder Tonspieler ist 8 dB leiser, das Summen 10 dB leiser (es summen viele Fliegen gleichzeitig, ihre Lautstaerken addieren sich):
+
+| Spieler | vorher | jetzt |
+|---------|--------|-------|
+| `Kanone/TonSchuss` | -4 | -12 |
+| `Kanone/Uebergabe/TonArm` | -10 | -18 |
+| `Ton/Steigen`, `Ton/Absturz` | 0 | -8 |
+| `Ton/Aufstehen` | -6 | -14 |
+| `Ton/Sieg` | 2 | -6 |
+| `nadel.tscn` `TonTreffer` | -3 | -11 |
+| `fliege.tscn` `Summen` | -10 | -20 |
+| `hindernis.tscn` `TonWarnung` (Startwert) | -16 | -24 |
+| `TonKlotz` | 0 | -8 |
+| `TonMatsch` | -3 | -11 |
+
+Alles klingt im Verhaeltnis wie vorher, nur mit Platz nach oben. Ist es dir insgesamt zu leise, dreht man das am Geraet lauter, nicht im Spiel.
+
+### `szenen/hindernis.tscn` und `szenen/spiel.tscn` - Klotz und Matsch umgezogen
+
+`TonKlotz` und `TonMatsch` sind aus der Hindernis-Szene heraus und haengen jetzt in `spiel.tscn` unter `Hindernisse` (dem Hindernis-Erzeuger). Grund: Ein Hindernis loescht sich selbst (`queue_free`), sobald es unter dem Bild ist, etwa 0,75 Sekunden nach dem Fall. Mit ihm verschwanden seine Tonspieler, und ihr Ton brach mitten drin ab (Klotz 1 Sekunde, Matsch 0,8 Sekunden lang). Der Erzeuger wird nie geloescht, dort laufen die Toene aus.
+
+`max_polyphony` 3 bzw. 4: So viele Male darf derselbe Spieler gleichzeitig klingen. Standard ist 1, dann bricht jedes neue `play()` den laufenden Ton ab. Werden zwei Fliegen im selben Moment zermatscht, klingen jetzt beide.
+
+Nebenbei: Beim Sieg loescht `spiel.gd` alle Kinder von `Hindernisse`, also jetzt auch diese zwei Spieler. Das schadet nicht, danach kommen keine Hindernisse mehr.
+
+### `skripte/hindernis.gd` - geaendert
+
+```gdscript
+@export var ton_leise: float = -24.0
+@export var ton_laut: float = -8.0
+```
+Wie oben, 8 dB leiser.
+
+```gdscript
+	if an and not $Warnung.visible and not $TonWarnung.playing:
+```
+Neu ist `and not $TonWarnung.playing`. Am Ende einer Warnung blinkt das Schild alle 0,1 Sekunden, das Piepen dauert aber 0,19. Vorher startete jedes Blinken das Piepen neu und schnitt das alte ab, das klang abgehackt. Jetzt piept es erst wieder, wenn das letzte Piepen fertig ist. `playing` ist wahr, solange der Spieler noch spielt.
+
+```gdscript
+		get_parent().get_node("TonKlotz").play()
+...
+	get_parent().get_node("TonMatsch").play()
+```
+Statt `$TonKlotz` und `$TonMatsch`. `get_parent()` ist der Hindernis-Erzeuger (das Hindernis ist sein Kind), dort liegen die beiden Spieler jetzt. So wird auch der Matsch-Fleck schon seit Abschnitt 6 in `get_parent()` gesetzt.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS.
+- Aufnahme mit dem Movie Maker im vollen Betrieb, gleicher Ablauf vorher und nachher: Spitze **0,0 -> -5,7 dBFS**, Samples ueber -1 dBFS **17 -> 0**.
+- Treffer-Ton allein aufgenommen: laeuft 0,3 s durch (das war es nicht).
+- **Nicht gemessen:** im Browser am Handy. Dort spielt Godot die Toene ueber den Browser ab, das kann am PC nicht aufgenommen werden. Ob es am Handy jetzt sauber klingt, zeigt nur dein Geraet.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum kann ein Ton abbrechen, wenn sein Knoten geloescht wird, und wie wurde das hier geloest?
+2. Was bedeutet `max_polyphony` 4?
+3. Warum wurde nicht nur das Summen leiser gemacht?
+
+<details><summary>Antworten</summary>
+
+1. Ein Tonspieler spielt nur, solange er im Szenenbaum ist. Das Hindernis loescht sich, sobald es unten raus ist, und seine Kinder mit. Die Spieler fuer Klotz und Matsch haengen jetzt am Hindernis-Erzeuger, der bleibt.
+2. Derselbe Spieler darf bis zu vier Mal gleichzeitig klingen. Ein fuenftes `play()` stoppt den aeltesten.
+3. Uebersteuert hat die Summe aller Toene, nicht ein einzelner. Alle gleich viel leiser haelt das Verhaeltnis gleich und schafft Platz nach oben.
+
+</details>
+
