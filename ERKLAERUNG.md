@@ -3322,3 +3322,66 @@ Faengst du mitten im Fall eine Fliege, hoert das Wackeln auf. Beim Fall wackelt 
 3. 5 + 2 + 2 = 9, `flugkraft()` zaehlt alle zusammen.
 
 </details>
+
+## Spass-Test, Runde 11 - Fliegen haengen am Seil, Faecher lockerer
+
+### `skripte/nadel.gd` - geaendert
+
+```gdscript
+	for alte in aufgespiesste:
+		alte.position.y += spiess_abstand
+```
+Geloescht aus `aufspiessen`. Die Fliegen werden nicht mehr senkrecht unter die Nadel geschoben.
+
+```gdscript
+	getroffene.get_node("Loch").visible = true
+```
+Neu in `aufspiessen`: Die getroffene Fliege zeigt ihr Schussloch (siehe `fliege.tscn`).
+
+```gdscript
+	var richtung: Vector2 = $Oese.global_position.direction_to(anker.global_position)
+	var anzahl: int = aufgespiesste.size()
+	for nummer in anzahl:
+		var fliege: Node2D = aufgespiesste[nummer]
+		var schritte: int = anzahl - 1 - nummer
+		fliege.global_position = $Oese.global_position + richtung * spiess_abstand * global_scale.x * schritte
+		fliege.global_rotation = richtung.angle() - PI / 2.0
+```
+Neu am Ende von `faden_spannen`, laeuft also jedes Bild:
+- `richtung` ist die Richtung des Fadens, von der Oese der Nadel zum Anker (erst die Muendung, im Faecher die Hand). `direction_to` gibt einen Pfeil der Laenge 1 in diese Richtung.
+- Jede Fliege kommt auf den Faden: die neueste direkt an die Oese (`schritte` 0), die davor 110 px weiter den Faden entlang, die davor 220 px. Ihr Schussloch sitzt in der Mitte, also genau auf dem Faden.
+- `global_scale.x`: Schrumpft der Faecher die Nadel, ruecken die Fliegen am Faden genauso zusammen.
+- `global_rotation` dreht jede Fliege so, wie der Faden laeuft. `angle()` ist der Winkel des Pfeils. Minus `PI / 2` (90 Grad), weil die Fliege "nach unten" auf ihrer y-Achse hat, nicht auf der x-Achse. Dreht sich der Faden (der Arm faehrt zur Hand), drehen sich die Fliegen mit.
+
+### `szenen/fliege.tscn` - geaendert
+
+Neuer Knoten `Loch` (`ColorRect`, 16 x 16, dunkelrot, in der Mitte der Fliege, unsichtbar). Wird beim Aufspiessen sichtbar.
+
+### `skripte/faecher.gd` - geaendert
+
+```gdscript
+@export var abstand: float = 90.0
+@export var hoehen_streuung: float = 60.0
+```
+Vorher 110 und 20. Die Fliegen ruecken naeher zusammen (unter 100 ueberlappen sie sich leicht) und haengen bis zu 60 px hoeher oder tiefer. So liegen sie nicht mehr auf einer Linie, sondern auch mal ueber- oder untereinander.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS.
+- Bilder (in einer Kopie, gesteuerte Schuesse): Dreier-Spiess im Flug, die Fliegen mit Schussloch am Faden schraeg zur Kanone. Faecher nach zehn Schuessen mit 14 Fliegen, locker verteilt, Spiesse am Seil Richtung Hand.
+- Nicht gemessen: wie es sich spielt.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum liegt das Schussloch immer auf dem Faden?
+2. Warum muss `faden_spannen` die Fliegen jedes Bild neu setzen und nicht nur einmal beim Treffer?
+3. Was aendert sich, wenn du `hoehen_streuung` auf 0 stellst?
+
+<details><summary>Antworten</summary>
+
+1. Das Loch ist die Mitte der Fliege, und genau die Mitte wird auf einen Punkt des Fadens gesetzt (Oese plus Richtung mal Abstand).
+2. Der Faden bewegt sich: Die Nadel fliegt, der Arm faehrt zur Hand, der Faecher rueckt zusammen. Die Fliegen sollen an ihm bleiben.
+3. Alle Fliegen haengen wieder genau auf einer Linie.
+
+</details>
+

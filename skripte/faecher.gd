@@ -3,14 +3,14 @@ extends Node2D
 # Wird gesendet, wenn eine Fliege aus dem Faecher entfernt wurde. Mit dabei: ihre Flugkraft.
 signal verloren(flugkraft: int)
 
-# Wie weit zwei Fliegen im Faecher auseinander sind, solange er noch nicht schrumpfen muss, in Pixeln.
-@export var abstand: float = 110.0
+# Wie weit zwei Fliegen im Faecher auseinander sind, solange er noch nicht schrumpfen muss, in Pixeln. Unter 100 ueberlappen sie sich leicht.
+@export var abstand: float = 90.0
 # Wie breit der Faecher hoechstens werden darf, in Pixeln. Das Bild ist 1440 breit, 1152 laesst je ein Zehntel (144) Rand.
 @export var breite: float = 1152.0
 # Wie lange das Zusammenruecken und Schrumpfen dauert, in Sekunden. Lang heisst: man merkt es kaum.
 @export var gleitdauer: float = 1.5
 # Wie weit eine Fliege hoechstens ueber oder unter der Linie haengt, in Pixeln. Macht den Faecher natuerlicher.
-@export var hoehen_streuung: float = 20.0
+@export var hoehen_streuung: float = 60.0
 
 # Die Nadeln mit Fliege, die im Faecher haengen, von links nach rechts.
 var reihe: Array[Node2D] = []

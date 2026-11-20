@@ -25,3 +25,13 @@ stream = ExtResource("2_summen")
 volume_db = -20.0
 autoplay = true
 max_distance = 760.0
+
+[node name="Loch" type="ColorRect" parent="."]
+visible = false
+offset_left = -8.0
+offset_top = -8.0
+offset_right = 8.0
+offset_bottom = 8.0
+mouse_filter = 2
+color = Color(0.55, 0.05, 0.05, 1)
+

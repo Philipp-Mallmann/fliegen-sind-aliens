@@ -11,7 +11,7 @@ signal getroffen(nadel: Node2D)
 @export var blutfleck_szene: PackedScene
 # Um wie viel die Trefferflaeche einer Fliege groesser ist als die Fliege selbst. 1.125 heisst: ein Achtel groesser.
 @export var trefferzugabe: float = 1.125
-# Wie weit die aufgespiessten Fliegen am Faden untereinander haengen, in Pixeln. Die Fliege ist 100 hoch.
+# Wie weit die aufgespiessten Fliegen am Faden hintereinander haengen, in Pixeln. Die Fliege ist 100 gross.
 @export var spiess_abstand: float = 110.0
 
 # Wie viele Pixel die Nadel schon geflogen ist.
@@ -75,14 +75,13 @@ func bildrand_oben() -> float:
 
 
 func aufspiessen(getroffene: Node2D) -> void:
-	for alte in aufgespiesste:
-		alte.position.y += spiess_abstand
 	aufgespiesste.append(getroffene)
 	getroffene.gefangen = true
 	getroffene.get_node("Summen").stop()
 	$TonTreffer.play()
 	getroffene.reparent(self)
 	getroffene.position = Vector2.ZERO
+	getroffene.get_node("Loch").visible = true
 	var fleck: Node2D = blutfleck_szene.instantiate()
 	get_parent().add_child(fleck)
 	fleck.global_position = global_position
@@ -104,3 +103,10 @@ func faden_spannen() -> void:
 	if anker == null:
 		return
 	$Faden.points = PackedVector2Array([anker.global_position, $Oese.global_position])
+	var richtung: Vector2 = $Oese.global_position.direction_to(anker.global_position)
+	var anzahl: int = aufgespiesste.size()
+	for nummer in anzahl:
+		var fliege: Node2D = aufgespiesste[nummer]
+		var schritte: int = anzahl - 1 - nummer
+		fliege.global_position = $Oese.global_position + richtung * spiess_abstand * global_scale.x * schritte
+		fliege.global_rotation = richtung.angle() - PI / 2.0
