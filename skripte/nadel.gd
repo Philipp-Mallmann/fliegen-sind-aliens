@@ -81,6 +81,7 @@ func aufspiessen(getroffene: Node2D) -> void:
 	$TonTreffer.play()
 	getroffene.reparent(self)
 	getroffene.position = Vector2.ZERO
+	getroffene.rotation = 0.0
 	getroffene.get_node("Loch").visible = true
 	var fleck: Node2D = blutfleck_szene.instantiate()
 	get_parent().add_child(fleck)
@@ -105,7 +106,7 @@ func faden_spannen() -> void:
 	$Faden.points = PackedVector2Array([anker.global_position, $Oese.global_position])
 	var richtung: Vector2 = $Oese.global_position.direction_to(anker.global_position)
 	var anzahl: int = aufgespiesste.size()
-	for nummer in anzahl:
+	for nummer in anzahl - 1:
 		var fliege: Node2D = aufgespiesste[nummer]
 		var schritte: int = anzahl - 1 - nummer
 		fliege.global_position = $Oese.global_position + richtung * spiess_abstand * global_scale.x * schritte

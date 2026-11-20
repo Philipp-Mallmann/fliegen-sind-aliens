@@ -3385,3 +3385,13 @@ Vorher 110 und 20. Die Fliegen ruecken naeher zusammen (unter 100 ueberlappen si
 
 </details>
 
+### Nachtrag Runde 11 - Nagel gerade, Seil schraeg
+
+```gdscript
+	getroffene.rotation = 0.0                  # in aufspiessen
+	for nummer in anzahl - 1:                  # in faden_spannen, vorher: in anzahl
+```
+Die Fliege, in der der Nagel steckt, haengt am Nagel, und der Nagel ist gerade. Darum steht sie gerade (`rotation` 0, eine drehende Fliege hoert dabei auf, schief zu stehen) und bleibt an der Spitze. `anzahl - 1` heisst: Die Schleife laesst die letzte, neueste Fliege aus. Nur die vorher durchstochenen sind auf das Seil gerutscht und drehen sich mit ihm. Bei `schritte` ist die erste davon 110 px den Faden entlang, die naechste 220.
+
+Angeschaut am Bild: im Flug und im Faecher steht die Nagel-Fliege gerade, die Seil-Fliegen liegen schraeg in Fadenrichtung.
+
