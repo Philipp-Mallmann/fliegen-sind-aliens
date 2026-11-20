@@ -3106,3 +3106,27 @@ Vorher -24 und -8. Das Piepen hat dich gestoert, jetzt ist es auch am Ende der W
 
 So angeschaut: Verify PASS, Schnellcheck PASS. Wie es klingt, entscheidest du.
 
+## Spass-Test, Runde 9 - grober Hintergrund
+
+Damit man sieht, dass man nach links oder rechts faehrt (und wie hoch man steigt), liegt jetzt hinter allem ein grobes Schachbrett. Kein Code, nur Knoten in der Szene.
+
+### `szenen/spiel.tscn` - geaendert
+
+```
+Spiel
+  Hintergrund   (Parallax2D, ganz oben im Baum)
+    Feld1       (ColorRect 400 x 400 bei 0, 0)
+    Feld2       (ColorRect 400 x 400 bei 400, 400)
+```
+- `Hintergrund` steht als erstes Kind von `Spiel`. Godot zeichnet von oben nach unten im Baum, also liegt er hinter allem anderen.
+- Ein `Parallax2D` kennst du vom Boden (Abschnitt 1): Er wiederholt seinen Inhalt. `repeat_size` (800, 800) heisst: alle 800 px nach rechts und nach unten kommt dasselbe noch einmal, diesmal in beide Richtungen, nicht nur seitlich. `repeat_times` 3 legt genug Kopien daneben, dass auch das herausgezoomte Bild am Boden voll ist.
+- In einem 800er-Quadrat liegen zwei hellere Felder schraeg gegenueber, die anderen zwei Viertel bleiben die normale Hintergrundfarbe. So entsteht das Schachbrett. Die helleren Felder sind 0.34 grau, der Hintergrund etwa 0.30, also nur ein leichter Unterschied.
+- `scroll_scale` (0.5, 0.5): Der Hintergrund bewegt sich halb so schnell wie die Welt. Dadurch wirkt er weiter weg. Man sieht die Bewegung trotzdem.
+- `mouse_filter` 2 heisst: Die Felder fangen keine Mausklicks ab.
+
+### So wurde es angeschaut
+
+- Verify PASS.
+- Bild am Boden und in der Luft: Schachbrett zu sehen, Fliegen gut lesbar.
+- Kanone 200 px nach rechts: Die Kante des Musters wandert im Bild um etwa 83 px nach links (200 x 0,5 x Zoom 0,85), es bewegt sich also mit.
+
