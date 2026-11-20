@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://skripte/fliege.gd" id="1_fliege"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/summen.ogg" id="2_summen"]
 
 [node name="Fliege" type="Node2D" groups=["fliegen"]]
 script = ExtResource("1_fliege")
@@ -18,3 +19,9 @@ offset_top = -25.0
 offset_right = 50.0
 offset_bottom = 50.0
 color = Color(0.1, 0.1, 0.1, 1)
+
+[node name="Summen" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("2_summen")
+volume_db = -10.0
+autoplay = true
+max_distance = 760.0

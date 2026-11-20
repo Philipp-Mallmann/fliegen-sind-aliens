@@ -18,6 +18,9 @@ extends Node2D
 @export var groesse_ende: float = 1.5
 # Wie kraeftig die gelbe Spalte am Anfang der Warnung zu sehen ist. 1 heisst: voll, wie am Ende.
 @export var spalte_anfang: float = 0.3
+# Wie laut der Warnton am Anfang und am Ende der Warnung piept, in Dezibel. 0 ist die Lautstaerke der Datei.
+@export var ton_leise: float = -16.0
+@export var ton_laut: float = 0.0
 # Wie weit unter der Kanone der Gegenstand verschwindet, in Pixeln. Der untere Bildrand liegt hoechstens 190 darunter.
 @export var weg_unter: float = 300.0
 # Die Szene des Matsches. Bei jeder zermatschten Fliege entsteht daraus ein Fleck.
@@ -56,7 +59,13 @@ func warnen(delta: float) -> void:
 	$Warnung.scale = Vector2.ONE * lerpf(groesse_anfang, groesse_ende, anteil)
 	$Spalte.modulate.a = lerpf(spalte_anfang, 1.0, anteil)
 	var takt: float = lerpf(blinken_anfang, blinken_ende, anteil)
-	$Warnung.visible = fmod(gewarnt, takt) < takt / 2.0
+	var an: bool = fmod(gewarnt, takt) < takt / 2.0
+	if an and not $Warnung.visible:
+		$TonWarnung.volume_db = lerpf(ton_leise, ton_laut, anteil)
+		$TonWarnung.play()
+	$Warnung.visible = an
+	if gewarnt >= warnzeit:
+		$TonKlotz.play()
 
 
 func fallen(delta: float) -> void:
@@ -87,6 +96,7 @@ func zermatschen(fliege: Node2D) -> void:
 		nadel.queue_free()
 	else:
 		fliege.queue_free()
+	$TonMatsch.play()
 	var matsch: Node2D = matsch_szene.instantiate()
 	get_parent().add_child(matsch)
 	matsch.global_position = fliege.global_position

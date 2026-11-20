@@ -40,6 +40,7 @@ func fliege_zaehlen(dazu: int) -> void:
 	anzeige_schreiben()
 	aufstehen_abbrechen()
 	$Kanone.steigt = true
+	$Ton/Steigen.play()
 	if steigen != null:
 		steigen.kill()
 	steigen = create_tween()
@@ -48,6 +49,7 @@ func fliege_zaehlen(dazu: int) -> void:
 	kamera_fahren(zoom_luft, versatz_luft, steigdauer)
 	if flugkraft >= ziel:
 		$Bedienung/Sieg.visible = true
+		$Ton/Sieg.play()
 		$Kanone.set_process(false)
 		$Hindernisse.set_process(false)
 		for hindernis in $Hindernisse.get_children():
@@ -63,6 +65,7 @@ func fliege_verlieren(weg: int) -> void:
 	var strecke: float = absf(neue_hoehe - $Kanone.position.y)
 	$Kanone.gesperrt = true
 	$Kanone.steigt = false
+	$Ton/Absturz.play()
 	steigen = create_tween()
 	steigen.tween_property($Kanone, "position:y", neue_hoehe, strecke / falltempo)
 	if flugkraft <= 0:
@@ -77,6 +80,7 @@ func aufstehen() -> void:
 	$Kanone/Aufstehen.visible = true
 	$Kanone/Aufstehen.play("aufstehen")
 	$Bedienung/Absturz.visible = true
+	$Ton/Aufstehen.play()
 
 
 func aufstehen_abbrechen() -> void:

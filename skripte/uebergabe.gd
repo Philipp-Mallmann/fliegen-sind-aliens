@@ -35,6 +35,7 @@ func uebergeben() -> void:
 	while warteschlange.size() > 0:
 		var nadel: Node2D = warteschlange.pop_front()
 		faecher.aufnehmen(nadel)
+		$TonArm.play()
 		var fahrzeit: float = dauer - verzoegerung
 		var hin: Tween = create_tween()
 		hin.tween_property(arm, "position", Vector2(ziel_x, 0.0), dauer)

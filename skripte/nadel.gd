@@ -51,6 +51,8 @@ func treffen(getroffene: Node2D) -> void:
 	steckt = true
 	fliege = getroffene
 	fliege.gefangen = true
+	fliege.get_node("Summen").stop()
+	$TonTreffer.play()
 	fliege.reparent(self)
 	var fleck: Node2D = blutfleck_szene.instantiate()
 	get_parent().add_child(fleck)

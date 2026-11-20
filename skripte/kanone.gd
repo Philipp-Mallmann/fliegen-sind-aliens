@@ -50,3 +50,4 @@ func schiessen(delta: float) -> void:
 		get_parent().add_child(nadel)
 		nadel.getroffen.connect($Uebergabe.starten)
 		nachladen_noch = nachladezeit
+		$TonSchuss.play()

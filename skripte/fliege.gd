@@ -14,6 +14,9 @@ extends Node2D
 @export var wipp_hoehe: float = 0.0
 # Wie schnell sie wippt. 4 heisst: ein Auf und Ab dauert etwa 1,6 Sekunden.
 @export var wipp_tempo: float = 4.0
+# Wie tief und wie hoch das Summen hoechstens klingt. 1 ist die Tonhoehe der Datei. Jede Fliege wuerfelt ihre eigene.
+@export var tonhoehe_tief: float = 0.8
+@export var tonhoehe_hoch: float = 1.4
 
 # Um diese Stelle fliegt die Fliege hin und her. Setzt der Erzeuger, bevor die Fliege ins Spiel kommt.
 var mitte_x: float = 0.0
@@ -31,6 +34,7 @@ var zeit: float = 0.0
 
 func _ready() -> void:
 	grund_y = position.y
+	$Summen.pitch_scale = randf_range(tonhoehe_tief, tonhoehe_hoch)
 
 
 func _process(delta: float) -> void:

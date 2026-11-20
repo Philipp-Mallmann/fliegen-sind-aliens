@@ -2879,3 +2879,136 @@ Folge: Auch ganz unten (6 s) beginnt die Warnung nicht mehr ganz klein, sondern 
 
 </details>
 
+## Spass-Test, Runde 6 - Glas-Leiste, Tasten unten, Platzhalter-Toene
+
+Deine Variante 2: Die Tasten liegen unten nebeneinander, die Leiste ist ein dickes, schraeges Glas, das zur rechten Hand hochlaeuft und sich von unten fuellt. Dazu hat jetzt jedes Ereignis einen Ton. Die Toene sind Platzhalter, du musst nichts auswaehlen. Abschnitt 11 ersetzt oder bestaetigt sie.
+
+### `szenen/spiel.tscn` - geaendert: Leiste und Tasten
+
+```
+Kanone/RechteHand/Leiste   80 x 435, rotation 0.328, pivot_offset (40, 435), fill_mode 3
+Bedienung/TasteLinks        (40, 880),   scale 0.85
+Bedienung/TasteSchussLinks  (220, 880),  scale 0.85
+Bedienung/TasteSchuss       (1050, 880), scale 0.85
+Bedienung/TasteRechts       (1230, 880), scale 0.85
+```
+- Die Leiste ist weiter eine `ProgressBar`, nur hochkant: 80 breit, 435 lang.
+- `fill_mode 3` heisst "von unten nach oben fuellen", wie ein Glas.
+- `rotation` ist der Drehwinkel im Bogenmass: 0.328 sind etwa 19 Grad. So lehnt sie oben nach rechts, zur Hand.
+- `pivot_offset` ist der Punkt, um den gedreht wird: (40, 435) ist unten in der Mitte. Der Fuss bleibt also stehen, nur die Spitze kippt zur Hand.
+- Die Tasten sind mit `scale 0.85` kleiner (200 -> 170 px) und liegen nebeneinander ganz unten: links Pfeil aussen, Schuss innen; rechts Schuss innen, Pfeil aussen. Darueber ist auf der rechten Seite Platz fuer das Glas.
+
+### Die Tondateien - `assets/audio/sfx/`
+
+| Datei | Woher | Wofuer |
+|-------|-------|--------|
+| `schuss.wav` | Sonniss GDC 2026, Cinematic Sound Design, "Woosh Sweep Slide" | Schuss |
+| `treffer.wav` | Sonniss GDC 2026, Epic Stock Media, "Hit Blood Spill Splat" | Fang |
+| `arm.wav` | Sonniss GDC 2026, Epic Stock Media, "Robot Motor Servo Whine" | Arm faehrt zur Hand |
+| `steigen.ogg` | Sonniss GDC 2026, 344 Audio, "Wind Rush Whoosh" | Steigen, tiefer abgespielt auch Absturz |
+| `warnung.wav` | Sonniss GDC 2026, InMotionAudio, "Thermometer Beep" | Warnpiepen |
+| `klotz.wav` | Sonniss GDC 2026, 344 Audio, "Metal Slow Whoosh Rattle" | Hindernis faellt |
+| `matsch.wav` | Sonniss GDC 2026, Epic Stock Media, "Gore Heavy Impact Smash" | Fliege zermatscht |
+| `aufstehen.wav` | Sonniss GDC 2026, Epic Stock Media, "Cloth Canvas Bag Slide" | Aufstehen |
+| `sieg.ogg` | Sonniss GDC 2026, Epic Stock Media, "Power Up Bright Positive" | Im All |
+| `summen.ogg` | selbst erzeugt (Saegezahn 180 Hz, Fluegelschlag 30 Hz), Platzhalter | Fliegen summen |
+
+Alle wurden vorher gleich laut gemacht (der lauteste Teil auf -18 dB), Stille vorn und hinten weggeschnitten und in Mono gespeichert. Die Sonniss-Klaenge darf man in Spielen frei verwenden, ohne Namensnennung. In der Bibliothek gab es kein Fliegensummen, darum ist `summen.ogg` erzeugt. In `summen.ogg.import` steht `loop=true`: Godot spielt die Datei als Schleife, ohne Ende.
+
+### Die Szenen - Tonspieler
+
+- `szenen/fliege.tscn`: neuer Knoten `Summen` (`AudioStreamPlayer2D`), `autoplay`, `volume_db` -10, `max_distance` 760.
+- `szenen/nadel.tscn`: `TonTreffer` (-3 dB).
+- `szenen/hindernis.tscn`: `TonWarnung` (-16 dB, wird im Skript geaendert), `TonKlotz` (0 dB), `TonMatsch` (-3 dB).
+- `szenen/spiel.tscn`: `Kanone/TonSchuss` (-4 dB), `Kanone/Uebergabe/TonArm` (-10 dB), dazu ein Knoten `Ton` mit `Steigen` (0 dB), `Absturz` (dieselbe Datei, `pitch_scale` 0.6, also tiefer und langsamer), `Aufstehen` (-6 dB), `Sieg` (+2 dB).
+
+Ein `AudioStreamPlayer` spielt eine Tondatei ab, wenn man `play()` aufruft. `volume_db` ist die Lautstaerke in Dezibel: 0 heisst so laut wie die Datei, minus heisst leiser (-6 ist etwa halb so laut).
+
+Das Summen ist ein `AudioStreamPlayer2D`: Der hat einen Ort in der Welt. Godot macht ihn leiser, je weiter er von der Mitte der Kamera weg ist, und ab `max_distance` (760 px) ist er stumm. Der Bildrand liegt 720 px neben der Mitte. Darum ist eine Fliege in der Mitte am lautesten und am Rand still, **ohne eine Zeile Code**. Links und rechts verteilt Godot den Ton dabei auch ein wenig auf die beiden Lautsprecher. `autoplay` heisst: Er faengt von selbst an, sobald die Fliege ins Spiel kommt.
+
+### `skripte/fliege.gd` - geaendert
+
+```gdscript
+@export var tonhoehe_tief: float = 0.8
+@export var tonhoehe_hoch: float = 1.4
+...
+	$Summen.pitch_scale = randf_range(tonhoehe_tief, tonhoehe_hoch)
+```
+Neu, die letzte Zeile in `_ready`. `pitch_scale` ist die Tonhoehe: 1 wie die Datei, 1.4 hoeher (und schneller), 0.8 tiefer. Jede Fliege wuerfelt ihre eigene, darum klingen mehrere Fliegen wie ein Chor.
+
+### `skripte/nadel.gd` - geaendert
+
+```gdscript
+	fliege.get_node("Summen").stop()
+	$TonTreffer.play()
+```
+Neu in `treffen`. Eine gefangene Fliege summt nicht mehr, und der Fang klatscht. `get_node("Summen")` holt den Knoten `Summen` aus der Fliege, so wie `$Summen` es in ihrem eigenen Skript tut.
+
+### `skripte/kanone.gd` - geaendert
+
+```gdscript
+		$TonSchuss.play()
+```
+Neu, letzte Zeile beim Schuss.
+
+### `skripte/uebergabe.gd` - geaendert
+
+```gdscript
+		$TonArm.play()
+```
+Neu, gleich nach `faecher.aufnehmen(nadel)`: Wenn der Arm losfaehrt, surrt der Motor.
+
+### `skripte/spiel.gd` - geaendert
+
+```gdscript
+	$Ton/Steigen.play()      # in fliege_zaehlen
+	$Ton/Sieg.play()         # dort, wenn das Ziel erreicht ist
+	$Ton/Absturz.play()      # in fliege_verlieren
+	$Ton/Aufstehen.play()    # in aufstehen
+```
+Je eine neue Zeile an der Stelle, an der das Ereignis passiert.
+
+### `skripte/hindernis.gd` - geaendert
+
+```gdscript
+@export var ton_leise: float = -16.0
+@export var ton_laut: float = 0.0
+```
+Neu. Wie laut das Piepen am Anfang und am Ende der Warnung ist.
+
+```gdscript
+	var an: bool = fmod(gewarnt, takt) < takt / 2.0
+	if an and not $Warnung.visible:
+		$TonWarnung.volume_db = lerpf(ton_leise, ton_laut, anteil)
+		$TonWarnung.play()
+	$Warnung.visible = an
+	if gewarnt >= warnzeit:
+		$TonKlotz.play()
+```
+Geaendert in `warnen`. Vorher stand `$Warnung.visible = fmod(...) < ...` direkt da. Jetzt wird das Ergebnis erst in `an` gemerkt. Ist das Schild jetzt an, war es aber eben noch aus, beginnt gerade ein Blinken: Dann piept es, und zwar umso lauter, je weiter die Warnung ist (`anteil`, wie bei der Groesse des Schilds). Danach wird das Schild wie vorher gezeigt oder versteckt. Ist die Warnzeit gerade um, faellt der Klotz, und sein Ton startet. Das passiert genau einmal, denn im naechsten Bild laeuft schon `fallen` statt `warnen`.
+
+```gdscript
+	$TonMatsch.play()
+```
+Neu in `zermatschen`.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck aller sechs geaenderten Skripte PASS.
+- **Am aufgenommenen Ton gemessen** (Godot Movie Maker, ein gesteuerter Lauf in einer Kopie, Ton als WAV): Stille -46,7 dB. Eine Fliege mitten im Bild -31,5 dB, 360 px seitlich -38,1 dB, am Bildrand (720 px) und ausserhalb: kein Ton. Schuss bei 5,0 s (-20 dB), Warnpiepen ab 6,2 s, Klotz bei 8,0 s, Fang mit Steigen ab 8,5 s, alle in der Aufnahme zu finden.
+- Handy-Probe: Pfeiltasten und rechte Schusstaste ok. Die linke Schusstaste meldet die Probe als FAIL. Am Bild schiesst sie in beiden Engines: in Chromium trifft sie eine Fliege (der Arm faehrt danach weg, der Faden verfehlt die Messflaeche), in der Safari-Engine steht die Nadel mit Faden im Bild (dort stoerte eine gelbe Warnspalte die Messung).
+- **Nicht gemessen:** ob die Toene passen und zusammen gut klingen. Das hoerst du. Bekannt: Am Ende einer Warnung blinkt das Schild alle 0,1 s, das Piepen dauert 0,19 s, es wird dann fast ein Dauerton.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum braucht das Leiserwerden der Fliegen zum Rand keine Zeile Code?
+2. Warum piept die Warnung nicht in jedem Bild, obwohl `warnen` in jedem Bild laeuft?
+3. Warum klingt `Absturz` anders als `Steigen`, obwohl es dieselbe Datei ist?
+
+<details><summary>Antworten</summary>
+
+1. Das Summen ist ein `AudioStreamPlayer2D`. Godot rechnet selbst aus, wie weit er von der Kamera weg ist, und macht ihn bis `max_distance` (760) immer leiser.
+2. Es piept nur, wenn das Schild gerade angeht (`an` ist wahr, aber `$Warnung.visible` war noch falsch). Das ist einmal je Blinken.
+3. `pitch_scale` 0.6: Die Datei laeuft langsamer und tiefer.
+
+</details>
