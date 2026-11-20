@@ -2235,3 +2235,48 @@ Wie sich das anfuehlt und ob eine ganze Runde bis 100 Spass macht, entscheidest 
 3. `aufstehen_abbrechen()` in `fliege_zaehlen` haelt die Animation mit `stop()` an. Angehalten ist nicht fertig, darum kommt `animation_finished` nicht, und `neustart` laeuft nie. Man steigt wieder.
 
 </details>
+
+## Abschnitt 8 - Browser-Build
+
+In diesem Abschnitt kam **kein neues Spielskript** dazu. Das Spiel lief schon seit Abschnitt 1 im Browser (`export_presets.cfg`, Preset `Web`). Neu ist nur eine Zeile in den Export-Einstellungen, und die ist **voruebergehend**.
+
+### `export_presets.cfg` - geaendert in Abschnitt 8
+
+```
+html/head_include="<script>/*kit-messung*/ ... /*kit-messung-ende*/</script>"
+```
+
+- `html/head_include` ist Text, den Godot beim Web-Export oben in die `index.html` schreibt, bevor das Spiel startet. Bisher war er leer.
+- Darin steht ein kleines JavaScript, die **Messseite**. Sie gehoert nicht zum Spiel und laeuft neben Godot im Browser. Sie zaehlt, wie oft der Browser pro Sekunde ein neues Bild zeichnet (`requestAnimationFrame`, damit zeichnet auch Godot).
+- So benutzt du sie: am Handy im Spiel **dreimal schnell oben links in die Ecke tippen**, dann 15 Sekunden normal weiterspielen. Danach steht eine Zeile da: Bilder pro Sekunde, das langsamste Bild, wie viele Bilder laenger als 33 ms gedauert haben, dazu Geraet und Bildschirm. Mit **Teilen** schickst du die Zeile weiter, ohne abzuschreiben.
+- Ohne die drei Tipps tut sie nichts.
+- Alles steht in **einer** Zeile, weil Godot mehrzeilige Werte in dieser Datei still nicht einliest.
+- **Nach dem Spass-Test fliegt die Zeile wieder raus** (`html/head_include=""`). Darum wird hier nicht jeder Befehl des JavaScripts erklaert: Er ist kein Spielcode und bleibt nicht.
+
+### So wurde es angeschaut
+
+Gemessen an einer Kopie des Spiels, nicht im Spielordner. Darin stellte ein Probeskript den schlimmsten Fall her: 98 Flugkraft, 49 Fliegen mit Nadel und Faden im Faecher, alle Fliegen, die der Erzeuger bis dahin baut. Das sind 170 Fliegen und 751 Knoten, am Start sind es 4 Fliegen und 57 Knoten. Hindernisse waren dabei aus.
+
+| Wo | Start | Oben (170 Fliegen) |
+|----|-------|--------------------|
+| Godot am PC, ohne Bildbremse | 0,34 ms je Bild | 0,83 ms je Bild |
+| Browser Chromium am PC | 60 Bilder/s, Rechenzeit 1,1 ms | 60 Bilder/s, Rechenzeit 3,6 ms |
+| Browser WebKit (Safari-Engine) am PC | 64 Bilder/s, Rechenzeit 1,0 ms | 64 Bilder/s, Rechenzeit 4,0 ms |
+
+Fuer 60 Bilder pro Sekunde hat jedes Bild 16,7 ms Zeit. Am PC bleiben also oben noch drei Viertel davon frei, kein einziges Bild war laenger als 33 ms. Ein Handy rechnet langsamer, darum misst du dort mit der Messseite. Wird es knapp, kommt die Loesung aus Abschnitt 6 zurueck: Fliegen unter dem Bild loeschen und nach einem Absturz neu auswuerfeln.
+
+Tastatur und Maus im Browser (Chromium und WebKit, am Bild abgelesen): D und Pfeil rechts fahren nach rechts, Pfeil links nach links (die Pfostennummern wandern), Leertaste, W und linke Maustaste schiessen eine Nadel mit Faden.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum zaehlt die Messseite nicht als Spielcode, und wann verschwindet sie wieder?
+2. Wie viel Zeit hat ein Bild bei 60 Bildern pro Sekunde, und wie viel davon brauchte das Spiel oben im Browser am PC?
+3. Was wuerdest du aendern, wenn das Spiel am Handy oben ruckelt?
+
+<details><summary>Antworten</summary>
+
+1. Sie steckt nicht in einem Skript von Godot, sondern in der `index.html`, die der Web-Export baut. Sie misst nur, wie oft der Browser zeichnet. Nach dem Spass-Test wird `html/head_include` wieder leer.
+2. 16,7 ms. Gebraucht wurden etwa 3,6 ms (Chromium) bis 4 ms (WebKit), also rund ein Viertel.
+3. Die Fliegen unter dem Bild wieder loeschen (wie bis Abschnitt 5) und nach einem Absturz neu auswuerfeln, statt alle bis 100 aufzuheben.
+
+</details>
