@@ -3395,3 +3395,59 @@ Die Fliege, in der der Nagel steckt, haengt am Nagel, und der Nagel ist gerade. 
 
 Angeschaut am Bild: im Flug und im Faecher steht die Nagel-Fliege gerade, die Seil-Fliegen liegen schraeg in Fadenrichtung.
 
+## Spass-Test, Runde 12 - Seil-Fliegen aufrecht, Faecher in zwei Reihen
+
+### `skripte/nadel.gd` - geaendert
+
+```gdscript
+		fliege.global_rotation = richtung.angle() - PI / 2.0
+```
+Geloescht. Auch die Fliegen am Seil haengen jetzt aufrecht, Fluegel oben. Ihr Loch sitzt weiter genau auf dem Faden.
+
+### `szenen/fliege.tscn` und `szenen/hindernis.tscn` - geaendert
+
+- `Fliege` hat `z_index` 1. Der `z_index` sagt, was vorne gezeichnet wird: hoeher heisst weiter vorn. Der Faden hat 0, er liegt also hinter jeder Fliege. Er verschwindet am Rand der Fliege und kommt auf der anderen Seite wieder heraus. Mit dem roten Loch in der Mitte sieht es aus, als ginge er hindurch. Fuer die echten Bilder (Abschnitt 10) wird jede Fliege in Vorder- und Hinterteil geteilt, dann laeuft der Faden zwischen den beiden Teilen.
+- `Warnung` (das Schild) und `Klotz` haben jetzt `z_index` 2, damit sie vor den Fliegen bleiben.
+
+### `skripte/faecher.gd` - geaendert
+
+```gdscript
+@export var hoehen_streuung: float = 30.0
+@export var reihen_abstand: float = 90.0
+```
+Streuung 60 -> 30, dafuer neu: Die Fliegen haengen in zwei Reihen, die untere 90 px tiefer.
+
+```gdscript
+func groesse() -> float:
+	return minf(1.0, breite / (reihe.size() * abstand / 2.0))
+```
+`/ 2.0` ist neu. Weil sich zwei Reihen die Breite teilen, braucht jede Fliege nur noch einen halben Abstand Breite. Der Faecher schrumpft also erst bei doppelt so vielen Fliegen (ab etwa 26 statt 13).
+
+```gdscript
+	var unten: float = 0.0
+	if nummer % 2 == 1:
+		unten = reihen_abstand
+	return Vector2((nummer - mitte) * abstand / 2.0 * groesse(), unten + versatz[nadel])
+```
+In `platz`. `nummer % 2` ist der Rest beim Teilen durch 2: 0 bei geraden, 1 bei ungeraden Plaetzen. Jede zweite Fliege haengt eine Reihe tiefer. Seitlich liegen die Plaetze nur noch einen halben Abstand auseinander. So entsteht ein Zickzack: oben, unten, oben, unten, jede halb versetzt, wie zusammengedraengte Luftballons. Dazu kommt wie bisher der zufaellige Hoehenversatz.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS.
+- Bilder in einer Kopie: Dreier-Spiess im Flug mit aufrechten Fliegen, Faden hinter ihnen. Faecher nach zehn Schuessen mit 14 Fliegen in zwei versetzten Reihen, rund 550 px breit, Spiess-Fliegen darunter am Seil.
+- Nicht gemessen: wie es sich spielt.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Wo haengt die Fliege auf Platz 4 und wo die auf Platz 5?
+2. Ab wie vielen Fliegen schrumpft der Faecher jetzt (`breite` 1152, `abstand` 90)?
+3. Warum sieht der Faden durch die Fliege durchgezogen aus, obwohl nichts geteilt ist?
+
+<details><summary>Antworten</summary>
+
+1. 4 % 2 = 0, also oben. 5 % 2 = 1, also eine Reihe (90 px) tiefer. Seitlich 45 px auseinander.
+2. Sobald Anzahl x 45 groesser als 1152 ist, also ab 26 Fliegen.
+3. Der Faden liegt hinter der Fliege (`z_index` 0 gegen 1). Man sieht ihn bis zum Rand, dann das Loch, dann wieder ab dem anderen Rand.
+
+</details>
+

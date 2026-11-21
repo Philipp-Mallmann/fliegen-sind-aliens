@@ -4,6 +4,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/summen.ogg" id="2_summen"]
 
 [node name="Fliege" type="Node2D" groups=["fliegen"]]
+z_index = 1
 script = ExtResource("1_fliege")
 
 [node name="Fluegel" type="ColorRect" parent="."]

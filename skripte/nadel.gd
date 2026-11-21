@@ -110,4 +110,3 @@ func faden_spannen() -> void:
 		var fliege: Node2D = aufgespiesste[nummer]
 		var schritte: int = anzahl - 1 - nummer
 		fliege.global_position = $Oese.global_position + richtung * spiess_abstand * global_scale.x * schritte
-		fliege.global_rotation = richtung.angle() - PI / 2.0

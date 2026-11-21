@@ -10,7 +10,10 @@ signal verloren(flugkraft: int)
 # Wie lange das Zusammenruecken und Schrumpfen dauert, in Sekunden. Lang heisst: man merkt es kaum.
 @export var gleitdauer: float = 1.5
 # Wie weit eine Fliege hoechstens ueber oder unter der Linie haengt, in Pixeln. Macht den Faecher natuerlicher.
-@export var hoehen_streuung: float = 60.0
+@export var hoehen_streuung: float = 30.0
+
+# Wie weit die untere Reihe unter der oberen haengt, in Pixeln. Die Fliegen haengen im Zickzack: abwechselnd oben und unten.
+@export var reihen_abstand: float = 90.0
 
 # Die Nadeln mit Fliege, die im Faecher haengen, von links nach rechts.
 var reihe: Array[Node2D] = []
@@ -53,10 +56,13 @@ func nachruecken() -> void:
 
 
 func groesse() -> float:
-	return minf(1.0, breite / (reihe.size() * abstand))
+	return minf(1.0, breite / (reihe.size() * abstand / 2.0))
 
 
 func platz(nadel: Node2D) -> Vector2:
 	var nummer: int = reihe.find(nadel)
 	var mitte: float = (reihe.size() - 1) / 2.0
-	return Vector2((nummer - mitte) * abstand * groesse(), versatz[nadel])
+	var unten: float = 0.0
+	if nummer % 2 == 1:
+		unten = reihen_abstand
+	return Vector2((nummer - mitte) * abstand / 2.0 * groesse(), unten + versatz[nadel])
