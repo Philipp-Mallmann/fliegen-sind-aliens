@@ -4638,3 +4638,33 @@ Und diese gilt in der Schleife, mit dem einfachen Tempo wie bisher. Sie steht hi
 - Verify PASS, Schnellcheck PASS.
 - Probe ohne Bildschirm: bei Tempo 484 gerade 967 px/s, in der Schleife 484 px/s, landet 6,7 px neben der Linie (den Rest rastet `position.y = grund_y` ein), 6 Wenden in 10 s.
 - Nicht gemessen: wie es sich spielt.
+
+## Fehler behoben - Koeder-Fliege blieb nach dem Ausweichen stehen
+
+### `skripte/fliege_koeder.gd` - geaendert
+
+Vorher, in `schwingen`:
+
+```gdscript
+	position.x = move_toward(position.x, mitte_x, tempo_eilig * delta)
+	if position.x == mitte_x:
+```
+
+Jetzt:
+
+```gdscript
+	var neues_x: float = move_toward(position.x, mitte_x, tempo_eilig * delta)
+	position.x = neues_x
+	if neues_x == mitte_x:
+```
+
+Der Fehler: Godot speichert `position` mit weniger Nachkommastellen als eine normale Variable wie `mitte_x`. Schreibt man eine Zahl in `position.x` und liest sie wieder aus, kann sie darum ein winziges Stueck anders sein (gemessen: 0,000015 px). Der Vergleich `position.x == mitte_x` war dann nie wahr, der Schwung hoerte nie auf, und die Fliege stand, bis die naechste Warnung einen neuen Schwung ausloeste. Das traf etwa jede dritte Fliege nach dem Ausweichen, je nachdem, ob die Zahl zufaellig genau passte.
+
+Die Loesung: Das Ergebnis von `move_toward` kommt erst in die eigene Variable `neues_x`. Die wird verglichen, bevor irgendetwas gerundet ist. `move_toward` liefert am Ziel genau `mitte_x` zurueck, der Vergleich stimmt also immer.
+
+Merksatz: Kommazahlen nie mit `==` vergleichen, nachdem sie in `position` gesteckt wurden. Der Vergleich `position == ziel` weiter oben im Skript ist in Ordnung, weil dort beide Seiten gleich genau gespeichert sind (beide sind `Vector2`).
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS.
+- Nachgestellt: 60 einzelne Ausweichmanoever, je eine Fliege und ein Hindernis. Vorher standen 20 von 60 Fliegen zwei Sekunden nach dem Klotz unbewegt (`schwingt` blieb `true`). Nachher 0 von 60.

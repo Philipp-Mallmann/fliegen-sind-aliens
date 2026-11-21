@@ -83,8 +83,9 @@ func warnung_im_bild() -> Node2D:
 
 
 func schwingen(delta: float) -> void:
-	position.x = move_toward(position.x, mitte_x, tempo_eilig * delta)
-	if position.x == mitte_x:
+	var neues_x: float = move_toward(position.x, mitte_x, tempo_eilig * delta)
+	position.x = neues_x
+	if neues_x == mitte_x:
 		schwingt = false
 		position.y = schwung_von_y
 		neues_ziel()
