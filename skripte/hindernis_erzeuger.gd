@@ -9,12 +9,17 @@ extends Node2D
 # Die kuerzeste und die laengste Pause zwischen zwei Hindernissen, in Sekunden.
 @export var pause_kurz: float = 6.0
 @export var pause_lang: float = 10.0
+# Dieselbe Pause ganz oben bei 100 Flugkraft. Ab der Haelfte wird sie gleitend kuerzer, bis hierhin.
+@export var pause_kurz_oben: float = 4.0
+@export var pause_lang_oben: float = 6.0
 # Wie weit links oder rechts von der Kanone die Spalte hoechstens liegt, in Pixeln. Das Bild reicht 720 zu jeder Seite.
 @export var spielraum: float = 700.0
 # Wie weit links oder rechts von der Kanone das innere Drittel des Bildes reicht, in Pixeln (1440 / 3 / 2 = 240).
 @export var mitte: float = 240.0
 # Wie oft die Spalte im inneren Drittel liegt. 0.7 heisst: in 7 von 10 Faellen, sonst irgendwo im Bild.
 @export var anteil_mitte: float = 0.7
+# Derselbe Anteil ganz oben bei 100 Flugkraft. Ab der Haelfte steigt er gleitend bis hierhin, die Hindernisse treffen oefter den Faecher.
+@export var anteil_mitte_oben: float = 0.9
 # Die Warnzeit in Sekunden: ganz unten, an der Spitze und ganz oben bei 100 Flugkraft.
 # Bis zur Spitze waechst sie (der Faecher wird breiter), danach wird es wieder knapper.
 @export var warnzeit_unten: float = 6.0
@@ -38,7 +43,7 @@ func _process(delta: float) -> void:
 		return
 	var hindernis: Node2D = hindernis_szene.instantiate()
 	var abstand: float = randf_range(-spielraum, spielraum)
-	if randf() < anteil_mitte:
+	if randf() < lerpf(anteil_mitte, anteil_mitte_oben, anteil_oben()):
 		abstand = randf_range(-mitte, mitte)
 	hindernis.position.x = kanone.position.x + abstand
 	hindernis.kanone = kanone
@@ -46,12 +51,18 @@ func _process(delta: float) -> void:
 	hindernis.warnzeit = warnzeit_hier()
 	hindernis.volle_warnzeit = warnzeit_spitze
 	add_child(hindernis)
-	naechstes_in = randf_range(pause_kurz, pause_lang)
+	var kurz: float = lerpf(pause_kurz, pause_kurz_oben, anteil_oben())
+	var lang: float = lerpf(pause_lang, pause_lang_oben, anteil_oben())
+	naechstes_in = randf_range(kurz, lang)
 
 
 func warnzeit_hier() -> float:
 	var hoehe: float = -kanone.position.y
 	if hoehe < hoehe_spitze:
 		return lerpf(warnzeit_unten, warnzeit_spitze, clampf(hoehe / hoehe_spitze, 0.0, 1.0))
-	var anteil: float = (hoehe - hoehe_spitze) / (hoehe_ende - hoehe_spitze)
-	return lerpf(warnzeit_spitze, warnzeit_ende, clampf(anteil, 0.0, 1.0))
+	return lerpf(warnzeit_spitze, warnzeit_ende, anteil_oben())
+
+
+func anteil_oben() -> float:
+	var hoehe: float = -kanone.position.y
+	return clampf((hoehe - hoehe_spitze) / (hoehe_ende - hoehe_spitze), 0.0, 1.0)

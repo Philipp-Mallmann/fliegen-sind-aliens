@@ -3451,3 +3451,69 @@ In `platz`. `nummer % 2` ist der Rest beim Teilen durch 2: 0 bei geraden, 1 bei 
 
 </details>
 
+## Spass-Test, Runde 13 - ab der Haelfte haeufigere und mittigere Hindernisse
+
+Weil der Faecher jetzt mittiger und enger haengt, wichen die Hindernisse zu leicht aus. Die erste Haelfte bleibt mit Absicht entspannt. Ab 50 Flugkraft wird es gleitend schwerer bis 100.
+
+### `skripte/hindernis_erzeuger.gd` - geaendert
+
+```gdscript
+@export var pause_kurz_oben: float = 4.0
+@export var pause_lang_oben: float = 6.0
+@export var anteil_mitte_oben: float = 0.9
+```
+Neu. Die Werte ganz oben bei 100 Flugkraft: Pause 4 bis 6 Sekunden statt 6 bis 10, und 9 von 10 Spalten im inneren Drittel statt 7 von 10.
+
+```gdscript
+func anteil_oben() -> float:
+	var hoehe: float = -kanone.position.y
+	return clampf((hoehe - hoehe_spitze) / (hoehe_ende - hoehe_spitze), 0.0, 1.0)
+```
+Neu, aus `warnzeit_hier` herausgezogen, weil jetzt drei Stellen sie brauchen. Unter der Haelfte (15000 px) kommt 0 heraus, bei 100 Flugkraft (30000 px) 1, dazwischen gleitend. `clampf` haelt die Zahl zwischen 0 und 1.
+
+```gdscript
+	if randf() < lerpf(anteil_mitte, anteil_mitte_oben, anteil_oben()):
+```
+Statt `randf() < anteil_mitte`. Unten 0.7, ab der Haelfte gleitend bis 0.9.
+
+```gdscript
+	var kurz: float = lerpf(pause_kurz, pause_kurz_oben, anteil_oben())
+	var lang: float = lerpf(pause_lang, pause_lang_oben, anteil_oben())
+	naechstes_in = randf_range(kurz, lang)
+```
+Statt `randf_range(pause_kurz, pause_lang)`. Die Grenzen der Pause gleiten ab der Haelfte von 6-10 auf 4-6 Sekunden.
+
+```gdscript
+	return lerpf(warnzeit_spitze, warnzeit_ende, anteil_oben())
+```
+In `warnzeit_hier`, dieselbe Rechnung wie vorher, nur ueber die neue Funktion. Die Warnzeit bleibt also: 6 s unten, 9 s bei der Haelfte, 5 s bei 100.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS.
+- Probe mit je 2000 Hindernissen:
+
+| Flugkraft | im inneren Drittel | Pause | Warnzeit |
+|-----------|--------------------|-------|----------|
+| 0 | 80 % | 6-10 s (Mittel 8) | 6 s |
+| 25 | 78 % | 6-10 s | 7,5 s |
+| 50 | 81 % | 6-10 s | 9 s |
+| 75 | 86 % | 5-8 s (Mittel 6,5) | 7 s |
+| 100 | 93 % | 4-6 s (Mittel 5) | 5 s |
+
+(Ueber 70 % bzw. 90 %, weil auch die freien Wuerfe manchmal innen landen.) Wie schwer es sich anfuehlt, entscheidest du.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Was ist `anteil_oben()` bei 25 Flugkraft, und was bei 80?
+2. Wie lang ist die Pause bei 75 Flugkraft hoechstens?
+3. Warum ist `anteil_oben` eine eigene Funktion geworden?
+
+<details><summary>Antworten</summary>
+
+1. Bei 25: 7500 px, unter der Haelfte, also 0. Bei 80: (24000 - 15000) / 15000 = 0,6.
+2. `lerpf(10, 6, 0.5)` = 8 Sekunden.
+3. Pause, Anteil in der Mitte und Warnzeit brauchen dieselbe Zahl. In einer Funktion steht die Rechnung einmal, statt dreimal.
+
+</details>
+
