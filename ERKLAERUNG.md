@@ -4561,3 +4561,53 @@ Geaendert: Die Funktion bekommt jetzt die Szene statt der Zone. So kann sie auch
 3. `zonen.aktuelle()` ist nicht mehr `letzte_zone`, und die neue Zone beginnt hoeher. Dann fliegt alles aus `einmalig` herein.
 
 </details>
+
+## Spass-Test, Runde 14 - Nachtrag: Knopf "Neustart"
+
+Nur zum Testen, kommt mit dem Sprung-Werkzeug vor der Abgabe wieder heraus. Neu starten geht jetzt auf vier Wegen: Knopf oben rechts mit der Maus, derselbe Knopf mit dem Finger, Taste R, Taste 0. Das geht jederzeit, auch nach "Im All!".
+
+### `skripte/test_sprung.gd` - geaendert
+
+```gdscript
+@export var knopf: Button
+```
+Neu. Der Knopf "Neustart" aus der Szene.
+
+```gdscript
+func _ready() -> void:
+	knopf.pressed.connect(neustart)
+```
+Neu. Ein `Button` sendet das Signal `pressed`, wenn man ihn mit der Maus anklickt. Es wird mit der Funktion `neustart` verbunden.
+
+```gdscript
+func _process(_delta: float) -> void:
+	if Input.is_action_just_pressed("neustart"):
+		neustart()
+```
+Neu. Die Aktion `neustart` ist in `project.godot` neu angelegt, mit der Taste R. Die Touch-Taste auf dem Knopf loest dieselbe Aktion aus. So gehen Tastatur und Finger ueber eine Zeile.
+
+```gdscript
+func neustart() -> void:
+	get_tree().reload_current_scene()
+```
+Neu, als eigene Funktion, weil drei Stellen sie brauchen. Die Szene wird neu geladen, alles ist wie beim Start: Flugkraft 0, Kanone am Boden, neuer Schwarm, man kann fahren und schiessen.
+
+```gdscript
+	if taste.keycode == KEY_0:
+		neustart()
+		return
+```
+Geaendert: Die Taste 0 ruft jetzt dieselbe Funktion auf.
+
+### `project.godot` und `szenen/spiel.tscn` - geaendert
+
+- `project.godot`: neue Aktion `neustart` mit der Taste R (wie `links`, `rechts`, `schiessen`).
+- `spiel.tscn`: In `Bedienung` der neue `Button` namens `Neustart`, oben rechts. `focus_mode = 0` heisst: Der Knopf nimmt nie den Tastatur-Fokus. Sonst wuerde die Leertaste nach einem Klick den Knopf druecken statt zu schiessen. Sein Kind `TasteNeustart` ist ein `TouchScreenButton` mit der Aktion `neustart`, sichtbar nur auf Touchscreens. Ein `Button` reagiert in diesem Projekt nicht auf Finger, weil Fingertipps nicht als Mausklick zaehlen (`emulate_mouse_from_touch=false`, Abschnitt 2). Darum liegt fuer den Finger eine Touch-Taste darueber.
+- `TestSprung` hat den Knopf eingetragen. Der Hinweis oben links nennt jetzt "0 oder R = Neustart".
+- Nebenwirkung: Ein Mausklick auf den Knopf ist auch ein Schuss (linke Maustaste). Das stoert nicht, weil gleich danach neu geladen wird.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS.
+- Probe ohne Bildschirm: Nach dem Sieg (Flugkraft 100, Kanone steht, "Im All!" sichtbar) Knopf ausgeloest: Flugkraft 0, Kanone bei y 0 und laeuft wieder, "Im All!" weg, 8 Fliegen im Schwarm, Kanone faehrt (228 px in 1 s). Dasselbe ueber die Aktion `neustart` und ueber Taste 0.
+- Nicht geprueft: ein echter Mausklick und ein echter Fingertipp auf den Knopf (in der Probe wurde das Signal bzw. die Aktion direkt ausgeloest).

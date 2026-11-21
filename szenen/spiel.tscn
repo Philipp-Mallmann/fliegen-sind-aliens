@@ -482,8 +482,24 @@ offset_top = 55.0
 offset_right = 700.0
 offset_bottom = 90.0
 theme_override_font_sizes/font_size = 22
-text = "Test: Tasten 1 bis 4 springen in eine Zone, 0 = Boden"
+text = "Test: Tasten 1 bis 4 springen in eine Zone, 0 oder R = Neustart"
 
-[node name="TestSprung" type="Node" parent="." node_paths=PackedStringArray("zonen")]
+[node name="Neustart" type="Button" parent="Bedienung"]
+offset_left = 1220.0
+offset_top = 10.0
+offset_right = 1420.0
+offset_bottom = 70.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 32
+text = "Neustart"
+
+[node name="TasteNeustart" type="TouchScreenButton" parent="Bedienung/Neustart"]
+scale = Vector2(1, 0.3)
+texture_normal = SubResource("GradientTexture2D_taste")
+action = "neustart"
+visibility_mode = 1
+
+[node name="TestSprung" type="Node" parent="." node_paths=PackedStringArray("zonen", "knopf")]
 script = ExtResource("24_sprung")
 zonen = NodePath("../Zonen")
+knopf = NodePath("../Bedienung/Neustart")
