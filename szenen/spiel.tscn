@@ -449,28 +449,22 @@ fliegen = Array[PackedScene]([ExtResource("3_fliege"), ExtResource("17_schnell")
 
 [node name="Scheue" type="Node" parent="Zonen"]
 script = ExtResource("23_zone")
-ab_flugkraft = 20.0
-fliegen = Array[PackedScene]([ExtResource("18_scheu")])
+ab_flugkraft = 25.0
+fliegen = Array[PackedScene]([ExtResource("18_scheu"), ExtResource("17_schnell")])
 farbe = Color(0.7, 1, 0.7, 1)
 
 [node name="Koeder" type="Node" parent="Zonen"]
 script = ExtResource("23_zone")
-ab_flugkraft = 40.0
-fliegen = Array[PackedScene]([ExtResource("19_koeder")])
+ab_flugkraft = 50.0
+fliegen = Array[PackedScene]([ExtResource("19_koeder"), ExtResource("3_fliege")])
 mindestens = 3
 farbe = Color(1, 0.85, 0.6, 1)
 
-[node name="Teleport" type="Node" parent="Zonen"]
-script = ExtResource("23_zone")
-ab_flugkraft = 60.0
-fliegen = Array[PackedScene]([ExtResource("20_teleport")])
-mindestens = 3
-farbe = Color(0.7, 0.8, 1, 1)
-
 [node name="Boss" type="Node" parent="Zonen"]
 script = ExtResource("23_zone")
-ab_flugkraft = 80.0
-fliegen = Array[PackedScene]([ExtResource("21_boss"), ExtResource("17_schnell"), ExtResource("17_schnell")])
+ab_flugkraft = 75.0
+fliegen = Array[PackedScene]([ExtResource("20_teleport")])
+einmalig = Array[PackedScene]([ExtResource("21_boss")])
 mindestens = 3
 farbe = Color(1, 0.7, 0.9, 1)
 
@@ -488,7 +482,7 @@ offset_top = 55.0
 offset_right = 700.0
 offset_bottom = 90.0
 theme_override_font_sizes/font_size = 22
-text = "Test: Tasten 1 bis 5 springen in eine Zone, 0 = Boden"
+text = "Test: Tasten 1 bis 4 springen in eine Zone, 0 = Boden"
 
 [node name="TestSprung" type="Node" parent="." node_paths=PackedStringArray("zonen")]
 script = ExtResource("24_sprung")

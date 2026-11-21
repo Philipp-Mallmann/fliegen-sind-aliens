@@ -22,6 +22,8 @@ var steckt: bool = false
 var aufgespiesste: Array[Node2D] = []
 # Der Punkt, an dem der Faden der Nadel festhaengt: erst die Muendung der Kanone, im Faecher die rechte Hand.
 var anker: Node2D = null
+# Die Kanone, die die Nadel geschossen hat. Solange die Nadel fliegt, bleibt sie genau ueber ihr. Setzt kanone.gd.
+var kanone: Node2D = null
 # true heisst: Die Nadel haengt mit ihren Fliegen fertig im Faecher. Erst dann kann ein Hindernis sie treffen.
 var haengt: bool = false
 
@@ -30,6 +32,7 @@ func _process(delta: float) -> void:
 	if steckt:
 		faden_spannen()
 		return
+	position.x = kanone.position.x
 	position.y -= tempo * delta
 	geflogen += tempo * delta
 	var getroffene: Node2D = fliege_an_der_spitze()

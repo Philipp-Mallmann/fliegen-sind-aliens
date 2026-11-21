@@ -4,13 +4,13 @@ extends "res://skripte/fliege.gd"
 # Jeder Treffer laesst sie ein Stueck absacken. Wie oft man treffen muss, steht in "leben" (fliege.gd).
 
 # Wie schnell sie steigt, in Pixeln pro Sekunde.
-@export var steigtempo: float = 75.0
+@export var steigtempo: float = 150.0
 # Wie weit sie hoch und runter wippt, in Pixeln.
 @export var wipp_hoehe: float = 20.0
 # Wie schnell sie wippt.
 @export var wipp_tempo: float = 2.0
 # Wie weit sie bei einem Treffer absackt, in Pixeln.
-@export var absacken: float = 200.0
+@export var absacken: float = 100.0
 # Wie schnell sie dabei sinkt, in Pixeln pro Sekunde.
 @export var sacktempo: float = 600.0
 

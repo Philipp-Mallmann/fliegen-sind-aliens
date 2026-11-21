@@ -6,8 +6,8 @@
 [node name="Fliege" type="Node2D" groups=["fliegen"]]
 z_index = 1
 script = ExtResource("1_fliege")
-tempo_langsam = 190.0
-tempo_schnell = 230.0
+tempo_langsam = 255.0
+tempo_schnell = 285.0
 flugkraft = 3
 
 [node name="Fluegel" type="ColorRect" parent="."]

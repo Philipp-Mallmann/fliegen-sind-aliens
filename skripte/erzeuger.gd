@@ -36,9 +36,12 @@ extends Node2D
 
 # true heisst: Am Boden schwirrt noch der Schwarm vom Anfang, es fliegt nichts nach.
 var schwarm: bool = true
+# Die Zone, in der man zuletzt war. Daran merkt der Erzeuger, dass man eine neue betritt.
+var letzte_zone: Node = null
 
 
 func _ready() -> void:
+	letzte_zone = zonen.get_child(0)
 	for szene in schwarm_szenen:
 		for nummer in randi_range(1, 2):
 			var fliege: Node2D = szene.instantiate()
@@ -59,8 +62,13 @@ func _process(_delta: float) -> void:
 	if kanone.steigt:
 		return
 	var zone: Node = zonen.aktuelle()
+	if zone != letzte_zone:
+		if zone.ab_flugkraft > letzte_zone.ab_flugkraft:
+			for szene in zone.einmalig:
+				hereinfliegen(szene)
+		letzte_zone = zone
 	if freie_in_der_naehe() < zone.mindestens:
-		hereinfliegen(zone)
+		hereinfliegen(zone.fliegen.pick_random())
 
 
 # Wird beim ersten Fang aufgerufen (verbunden in spiel.gd): Der Schwarm flieht auf dem kuerzesten Weg aus dem Bild.
@@ -80,11 +88,10 @@ func schwarm_aufloesen(_dazu: int) -> void:
 			fliege.flucht = Vector2.RIGHT
 
 
-func hereinfliegen(zone: Node) -> void:
+func hereinfliegen(szene: PackedScene) -> void:
 	var seite: float = 1.0
 	if randf() < 0.5:
 		seite = -1.0
-	var szene: PackedScene = zone.fliegen.pick_random()
 	var fliege: Node2D = szene.instantiate()
 	fliege.kanone = kanone
 	fliege.position.x = kanone.position.x + seite * einflug_x

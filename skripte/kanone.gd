@@ -1,7 +1,7 @@
 extends Node2D
 
 # Hoechstes Tempo der Kanone, in Pixeln pro Sekunde.
-@export var tempo: float = 281.0
+@export var tempo: float = 300.0
 # Wie schnell die Kanone anfaehrt und abbremst, in Pixeln pro Sekunde pro Sekunde.
 @export var beschleunigung: float = 600.0
 # Welcher Teil des Tempos waehrend Uebergabe und Steigen bleibt. 0 heisst: Man lenkt dann gar nicht, 0.5 hiesse halb so schnell.
@@ -47,6 +47,7 @@ func schiessen(delta: float) -> void:
 		var nadel: Node2D = nadel_szene.instantiate()
 		nadel.position = $Arm/Muendung.global_position
 		nadel.anker = $Arm/Muendung
+		nadel.kanone = self
 		get_parent().add_child(nadel)
 		nadel.getroffen.connect($Uebergabe.starten)
 		nachladen_noch = nachladezeit

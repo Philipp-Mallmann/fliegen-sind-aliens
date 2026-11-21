@@ -4374,3 +4374,190 @@ Die Zonen sind eine Testaufteilung. Du aenderst sie im Editor am Knoten `Zonen`:
 3. `leben` ist 1, also nicht mehr groesser als 1: Die Nadel ruft `aufspiessen` statt `stecken_in`. Der Boss wird Kind der Nadel und gilt als gefangen, die Faeden der zwei alten Nadeln loesen sich. Ist keine Fliege mehr darueber, bleibt die Nadel stecken und sendet `getroffen`. Die Uebergabe sendet `gefangen` mit 15, `spiel.gd` zaehlt und steigt, der Arm bringt Nadel und Boss in den Faecher.
 
 </details>
+
+## Spass-Test, Runde 14 - Nadel bleibt ueber der Kanone, Teleport reagiert, Boss steiler, vier Zonen
+
+### `skripte/nadel.gd` - geaendert
+
+```gdscript
+var kanone: Node2D = null
+```
+Neu. Die Kanone, die die Nadel geschossen hat.
+
+```gdscript
+	position.x = kanone.position.x
+	position.y -= tempo * delta
+```
+In `_process`. Die erste Zeile ist neu: Solange die Nadel fliegt, steht sie seitlich genau dort, wo die Kanone ist. Faehrt die Kanone zur Seite, faehrt die Nadel mit. Die Zeile steht hinter `if steckt: ... return`, eine steckende Nadel bleibt also, wo sie getroffen hat. Vorher flog die Nadel an der Stelle hoch, an der sie abgeschossen wurde (so entschieden am 06.11., jetzt geaendert).
+
+### `skripte/kanone.gd` - geaendert
+
+```gdscript
+@export var tempo: float = 300.0
+```
+281 -> 300.
+
+```gdscript
+		nadel.kanone = self
+```
+In `schiessen`. Die Kanone traegt sich selbst in die neue Nadel ein. `self` ist der Knoten, an dem das Skript haengt.
+
+### `skripte/fliege_teleport.gd` - neu geschrieben
+
+Vorher sprang sie nach einer zufaelligen Pause. Jetzt springt sie, wenn die Kanone unter ihr ist, dreimal hintereinander, und braucht dann eine Pause.
+
+```gdscript
+@export var ausloese_weite: float = 120.0
+@export var spruenge: int = 3
+@export var erholzeit: float = 2.5
+@export var flacker_zeit: float = 0.2
+@export var sprung_nah: float = 200.0
+@export var sprung_weit: float = 350.0
+```
+Neu oder geaendert: wie nah die Kanone seitlich sein muss (120 px), wie viele Spruenge sie hat (3), wie lange sie sich danach erholt (2,5 s). Das Flackern ist kuerzer (0,2 statt 0,3 s), der Sprung weiter (200 bis 350 statt 150 bis 300). `pause_kurz` und `pause_lang` sind weg. `strecke`, `flacker_takt` und `flacker_blass` sind unveraendert.
+
+```gdscript
+var uebrig: int = 0
+var erholt_in: float = 0.0
+var flackert_noch: float = 0.0
+```
+Wie viele Spruenge sie noch hat, wie lange die Erholung noch dauert, und wie lange sie noch flackert, bevor sie springt.
+
+```gdscript
+func losfliegen() -> void:
+	uebrig = spruenge
+```
+Am Start hat sie alle Spruenge.
+
+```gdscript
+func fliegen(delta: float) -> void:
+	position.x += richtung * tempo * delta
+	if position.x > mitte_x + strecke:
+		richtung = -1.0
+	if position.x < mitte_x - strecke:
+		richtung = 1.0
+	modulate.a = 1.0
+```
+Hin und her wie bisher, und zuerst voll sichtbar.
+
+```gdscript
+	if uebrig == 0:
+		erholt_in -= delta
+		if erholt_in <= 0.0:
+			uebrig = spruenge
+		return
+```
+Hat sie keinen Sprung mehr, zaehlt die Erholung herunter. Ist sie um, hat sie wieder alle Spruenge. `return`: In der Erholung passiert sonst nichts, das ist das Fenster zum Fangen.
+
+```gdscript
+	if flackert_noch > 0.0:
+		flackert_noch -= delta
+		if fmod(flackert_noch, flacker_takt) < flacker_takt / 2.0:
+			modulate.a = flacker_blass
+		if flackert_noch <= 0.0:
+			springen()
+		return
+```
+Flackert sie gerade, zaehlt das Flackern herunter. In jeder ersten Haelfte des Takts ist sie blass. Ist es um, springt sie.
+
+```gdscript
+	if absf(position.x - kanone.position.x) < ausloese_weite:
+		flackert_noch = flacker_zeit
+```
+Sonst: Ist die Kanone seitlich naeher als 120 px, beginnt das Flackern.
+
+```gdscript
+func springen() -> void:
+	...
+	uebrig -= 1
+	if uebrig == 0:
+		erholt_in = erholzeit
+```
+Der Sprung selbst ist wie bisher. Neu: Ein Sprung ist verbraucht. War es der letzte, beginnt die Erholung.
+
+### `skripte/fliege_boss.gd` - geaendert
+
+```gdscript
+@export var steigtempo: float = 150.0
+@export var absacken: float = 100.0
+```
+Steigen 75 -> 150 (doppelt so steil), Absacken 200 -> 100 (halb so tief).
+
+### `skripte/zone.gd` - geaendert
+
+```gdscript
+@export var einmalig: Array[PackedScene] = []
+```
+Neu. Szenen, die genau einmal hereinfliegen, wenn man die Zone von unten betritt. In der Zone `Boss` steht hier der Boss.
+
+### `skripte/erzeuger.gd` - geaendert
+
+```gdscript
+var letzte_zone: Node = null
+```
+Neu. Die Zone, in der man zuletzt war.
+
+```gdscript
+	letzte_zone = zonen.get_child(0)
+```
+In `_ready`. Am Anfang ist das die unterste Zone.
+
+```gdscript
+	var zone: Node = zonen.aktuelle()
+	if zone != letzte_zone:
+		if zone.ab_flugkraft > letzte_zone.ab_flugkraft:
+			for szene in zone.einmalig:
+				hereinfliegen(szene)
+		letzte_zone = zone
+	if freie_in_der_naehe() < zone.mindestens:
+		hereinfliegen(zone.fliegen.pick_random())
+```
+In `_process`. Neu ist der mittlere Block: Ist man in einer anderen Zone als zuletzt, und liegt die neue hoeher, fliegt jede Szene aus `einmalig` einmal herein. Dann merkt sich der Erzeuger die neue Zone. Faellt man hinunter und steigt wieder hinein, kommt der Boss noch einmal. Der Block steht hinter `if kanone.steigt: return`, der Boss kommt also erst, wenn das Steigen fertig ist.
+
+```gdscript
+func hereinfliegen(szene: PackedScene) -> void:
+```
+Geaendert: Die Funktion bekommt jetzt die Szene statt der Zone. So kann sie auch den Boss hereinbringen. Die Zeile `var szene: PackedScene = zone.fliegen.pick_random()` ist darum aus der Funktion in den Aufruf gewandert.
+
+### Szenen - geaendert
+
+- `szenen/fliege_scheu.tscn`: Tempo 190-230 -> 255-285 (85 bis 95 Prozent der Kanone).
+- `szenen/spiel.tscn`: vier Zonen statt fuenf, in jeder zwei Arten. Der Hinweis oben links sagt "Tasten 1 bis 4".
+
+| Zone | ab Flugkraft | Fliegen | einmalig | mindestens |
+|------|--------------|---------|----------|------------|
+| Anfang | 0 | normal, schnell | | 4 |
+| Scheue | 25 | scheu, schnell | | 4 |
+| Koeder | 50 | koeder, normal | | 3 |
+| Boss | 75 | teleport | boss | 3 |
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS (6 Skripte).
+- Probe ohne Bildschirm (Wegwerfskript ausserhalb des Spielordners):
+
+| Was | Gemessen |
+|-----|----------|
+| Nadel | Kanone faehrt 300 px/s, Nadel 0,68 s im Flug, seitlicher Abstand zur Kanone hoechstens 0,0 px |
+| Scheue | 262 px/s gegen 300, bei 359 px Abstand eingeholt nach 8,5 s (vorher 212 gegen 281: 3,1 s) |
+| Teleport, Kanone weit weg | 5 s lang kein Sprung |
+| Teleport, verfolgt | je drei Spruenge (231 bis 352 px), dann 2,5 s keiner |
+| Boss ohne Treffer | nach 2,6 s am oberen Rand, erst 112 px im Bild (vorher 5,2 s, 486 px) |
+| Boss, ein Treffer | nach 0,5 s 25 px tiefer als vorher (100 Absacken, 75 schon wieder gestiegen) |
+| Zonen | Anfang: normal, schnell. Scheue: scheu, schnell. Koeder: in 10 Starts 14 Koeder und 16 normale. Boss: Teleport und in 30 s genau ein Boss (drei Laeufe). Nach Fall und neuem Betreten ein neuer Boss |
+
+- Nicht gemessen: wie es sich spielt. Der Boss ist nach diesen Zahlen sehr knapp. Am Handy und im Browser nicht geprueft.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum faehrt eine Nadel, die in einer Fliege steckt, nicht mehr mit der Kanone mit?
+2. Wann kann man eine Teleport-Fliege fangen?
+3. Woran merkt der Erzeuger, dass der Boss kommen soll?
+
+<details><summary>Antworten</summary>
+
+1. Die neue Zeile steht hinter `if steckt: ... return`. Fuer eine steckende Nadel wird sie nie erreicht.
+2. In der Erholung nach dem dritten Sprung (2,5 s), oder wenn man sie trifft, ohne naeher als 120 px zu kommen und laenger als 0,2 s darunter zu sein.
+3. `zonen.aktuelle()` ist nicht mehr `letzte_zone`, und die neue Zone beginnt hoeher. Dann fliegt alles aus `einmalig` herein.
+
+</details>
