@@ -456,7 +456,7 @@ farbe = Color(0.7, 1, 0.7, 1)
 [node name="Koeder" type="Node" parent="Zonen"]
 script = ExtResource("23_zone")
 ab_flugkraft = 50.0
-fliegen = Array[PackedScene]([ExtResource("19_koeder"), ExtResource("3_fliege")])
+fliegen = Array[PackedScene]([ExtResource("19_koeder")])
 mindestens = 3
 farbe = Color(1, 0.85, 0.6, 1)
 

@@ -4668,3 +4668,21 @@ Merksatz: Kommazahlen nie mit `==` vergleichen, nachdem sie in `position` gestec
 
 - Verify PASS, Schnellcheck PASS.
 - Nachgestellt: 60 einzelne Ausweichmanoever, je eine Fliege und ein Hindernis. Vorher standen 20 von 60 Fliegen zwei Sekunden nach dem Klotz unbewegt (`schwingt` blieb `true`). Nachher 0 von 60.
+
+## Spass-Test, Runde 16 - Koeder-Fliege allein in ihrer Zone
+
+### `szenen/spiel.tscn` - geaendert
+
+Am Knoten `Zonen/Koeder` steht in `fliegen` nur noch die Koeder-Fliege. Die normale Fliege ist dort raus. Kein Code geaendert.
+
+| Zone | ab Flugkraft | Fliegen |
+|------|--------------|---------|
+| Anfang | 0 | normal, schnell |
+| Scheue | 25 | scheu, schnell |
+| Koeder | 50 | koeder |
+| Boss | 75 | teleport, einmal der Boss |
+
+### So wurde es angeschaut
+
+- Verify PASS.
+- Probe: siehe `game_spec.md`, Changelog vom 21.11.
