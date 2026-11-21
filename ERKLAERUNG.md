@@ -4611,3 +4611,30 @@ Geaendert: Die Taste 0 ruft jetzt dieselbe Funktion auf.
 - Verify PASS, Schnellcheck PASS.
 - Probe ohne Bildschirm: Nach dem Sieg (Flugkraft 100, Kanone steht, "Im All!" sichtbar) Knopf ausgeloest: Flugkraft 0, Kanone bei y 0 und laeuft wieder, "Im All!" weg, 8 Fliegen im Schwarm, Kanone faehrt (228 px in 1 s). Dasselbe ueber die Aktion `neustart` und ueber Taste 0.
 - Nicht geprueft: ein echter Mausklick und ein echter Fingertipp auf den Knopf (in der Probe wurde das Signal bzw. die Aktion direkt ausgeloest).
+
+## Spass-Test, Runde 15 - schnelle Fliege auf dem geraden Stueck doppelt so schnell
+
+### `skripte/fliege_schnell.gd` - geaendert
+
+```gdscript
+@export var faktor_gerade: float = 2.0
+```
+Neu. Auf dem geraden Stueck fliegt sie so viel schneller als in der Schleife. Ihr `tempo` bleibt 400 bis 720, gerade sind das jetzt 800 bis 1440 px/s.
+
+```gdscript
+	if not wendet:
+		position += Vector2.from_angle(winkel) * tempo * faktor_gerade * delta
+```
+Die Bewegungszeile stand vorher einmal ganz oben in `fliegen` und galt immer. Jetzt gibt es sie zweimal: Diese hier gilt auf dem geraden Stueck, mit `faktor_gerade` multipliziert.
+
+```gdscript
+	position += Vector2.from_angle(winkel) * tempo * delta
+	var schritt: float = tempo / schleife * delta
+```
+Und diese gilt in der Schleife, mit dem einfachen Tempo wie bisher. Sie steht hinter dem `return` des geraden Stuecks, wird also nur waehrend der Wende erreicht. Die Schleife sieht darum aus wie vorher und dauert gleich lang. Die Fliege ist jetzt nicht mehr ueberall gleich schnell: Sie bremst in die Schleife hinein auf die Haelfte und schiesst danach wieder los.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS.
+- Probe ohne Bildschirm: bei Tempo 484 gerade 967 px/s, in der Schleife 484 px/s, landet 6,7 px neben der Linie (den Rest rastet `position.y = grund_y` ein), 6 Wenden in 10 s.
+- Nicht gemessen: wie es sich spielt.
