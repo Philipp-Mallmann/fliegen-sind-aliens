@@ -34,6 +34,9 @@ func _process(delta: float) -> void:
 	geflogen += tempo * delta
 	var getroffene: Node2D = fliege_an_der_spitze()
 	if getroffene != null:
+		if getroffene.leben > 1:
+			stecken_in(getroffene)
+			return
 		aufspiessen(getroffene)
 	if not aufgespiesste.is_empty():
 		if geflogen >= reichweite or not noch_eine_darueber():
@@ -45,6 +48,8 @@ func _process(delta: float) -> void:
 
 func trifft(kandidat: Node2D, nur_darueber: bool) -> bool:
 	if kandidat.gefangen:
+		return false
+	if kandidat.leben > 1 and not aufgespiesste.is_empty():
 		return false
 	var halb: float = kandidat.halbe_groesse * trefferzugabe
 	var seitlich: float = absf(kandidat.global_position.x - global_position.x)
@@ -82,10 +87,32 @@ func aufspiessen(getroffene: Node2D) -> void:
 	getroffene.reparent(self)
 	getroffene.position = Vector2.ZERO
 	getroffene.rotation = 0.0
+	getroffene.modulate.a = 1.0
 	getroffene.get_node("Loch").visible = true
+	for alte in getroffene.steckende:
+		alte.faden_loesen()
 	var fleck: Node2D = blutfleck_szene.instantiate()
 	get_parent().add_child(fleck)
 	fleck.global_position = global_position
+
+
+# Die Fliege braucht noch mehr Treffer (Boss): Die Nadel bleibt in ihr stecken und fliegt mit ihr mit. Gefangen ist sie noch nicht.
+func stecken_in(grosse: Node2D) -> void:
+	steckt = true
+	grosse.leben -= 1
+	grosse.steckende.append(self)
+	grosse.angeschossen()
+	$TonTreffer.play()
+	var fleck: Node2D = blutfleck_szene.instantiate()
+	get_parent().add_child(fleck)
+	fleck.global_position = global_position
+	reparent(grosse)
+
+
+# Der Faden geht ab: Er haengt nirgends mehr fest und wird nicht mehr gezeichnet.
+func faden_loesen() -> void:
+	anker = null
+	$Faden.clear_points()
 
 
 func stecken_bleiben() -> void:

@@ -1,0 +1,55 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://skripte/fliege_boss.gd" id="1_fliege"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/summen.ogg" id="2_summen"]
+
+[node name="Fliege" type="Node2D" groups=["fliegen"]]
+z_index = 1
+script = ExtResource("1_fliege")
+tempo_langsam = 110.0
+tempo_schnell = 130.0
+flugkraft = 15
+halbe_groesse = 150.0
+leben = 3
+flieht = false
+
+[node name="Fluegel" type="ColorRect" parent="."]
+offset_left = -120.0
+offset_top = -150.0
+offset_right = 120.0
+offset_bottom = -75.0
+mouse_filter = 2
+color = Color(0.6, 0.6, 0.6, 1)
+
+[node name="Koerper" type="ColorRect" parent="."]
+offset_left = -150.0
+offset_top = -75.0
+offset_right = 150.0
+offset_bottom = 150.0
+mouse_filter = 2
+color = Color(0.1, 0.1, 0.1, 1)
+
+[node name="Art" type="Label" parent="."]
+offset_left = -150.0
+offset_top = -75.0
+offset_right = 150.0
+offset_bottom = 150.0
+theme_override_font_sizes/font_size = 72
+text = "BOSS"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Summen" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("2_summen")
+volume_db = -20.0
+autoplay = true
+max_distance = 760.0
+
+[node name="Loch" type="ColorRect" parent="."]
+visible = false
+offset_left = -8.0
+offset_top = -8.0
+offset_right = 8.0
+offset_bottom = 8.0
+mouse_filter = 2
+color = Color(0.55, 0.05, 0.05, 1)

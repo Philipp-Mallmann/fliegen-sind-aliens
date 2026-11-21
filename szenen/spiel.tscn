@@ -1,8 +1,8 @@
-[gd_scene load_steps=26 format=3]
+[gd_scene load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://skripte/kanone.gd" id="1_kanone"]
 [ext_resource type="PackedScene" path="res://szenen/nadel.tscn" id="2_nadel"]
-[ext_resource type="PackedScene" path="res://szenen/fliege.tscn" id="3_fliege"]
+[ext_resource type="PackedScene" path="res://szenen/fliege_normal.tscn" id="3_fliege"]
 [ext_resource type="Script" path="res://skripte/uebergabe.gd" id="4_uebergabe"]
 [ext_resource type="Script" path="res://skripte/spiel.gd" id="5_spiel"]
 [ext_resource type="Script" path="res://skripte/erzeuger.gd" id="6_erzeuger"]
@@ -16,6 +16,14 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/sieg.ogg" id="14_sieg"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/klotz.wav" id="15_klotz"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/matsch.wav" id="16_matsch"]
+[ext_resource type="PackedScene" path="res://szenen/fliege_schnell.tscn" id="17_schnell"]
+[ext_resource type="PackedScene" path="res://szenen/fliege_scheu.tscn" id="18_scheu"]
+[ext_resource type="PackedScene" path="res://szenen/fliege_koeder.tscn" id="19_koeder"]
+[ext_resource type="PackedScene" path="res://szenen/fliege_teleport.tscn" id="20_teleport"]
+[ext_resource type="PackedScene" path="res://szenen/fliege_boss.tscn" id="21_boss"]
+[ext_resource type="Script" path="res://skripte/zonen.gd" id="22_zonen"]
+[ext_resource type="Script" path="res://skripte/zone.gd" id="23_zone"]
+[ext_resource type="Script" path="res://skripte/test_sprung.gd" id="24_sprung"]
 
 [sub_resource type="Gradient" id="Gradient_taste"]
 colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
@@ -229,10 +237,11 @@ theme_override_font_sizes/font_size = 48
 text = "7"
 horizontal_alignment = 1
 
-[node name="Erzeuger" type="Node2D" parent="." node_paths=PackedStringArray("kanone")]
+[node name="Erzeuger" type="Node2D" parent="." node_paths=PackedStringArray("kanone", "zonen")]
 script = ExtResource("6_erzeuger")
-fliege_szene = ExtResource("3_fliege")
 kanone = NodePath("../Kanone")
+zonen = NodePath("../Zonen")
+schwarm_szenen = Array[PackedScene]([ExtResource("3_fliege"), ExtResource("17_schnell"), ExtResource("18_scheu"), ExtResource("19_koeder"), ExtResource("20_teleport")])
 
 [node name="Hindernisse" type="Node2D" parent="." node_paths=PackedStringArray("kanone", "faecher")]
 script = ExtResource("8_hindernisse")
@@ -427,3 +436,60 @@ max_polyphony = 3
 stream = ExtResource("16_matsch")
 volume_db = -11.0
 max_polyphony = 4
+
+[node name="Zonen" type="Node" parent="." node_paths=PackedStringArray("kanone", "hintergrund", "anzeige")]
+script = ExtResource("22_zonen")
+kanone = NodePath("../Kanone")
+hintergrund = NodePath("../Hintergrund")
+anzeige = NodePath("../Bedienung/Zone")
+
+[node name="Anfang" type="Node" parent="Zonen"]
+script = ExtResource("23_zone")
+fliegen = Array[PackedScene]([ExtResource("3_fliege"), ExtResource("17_schnell")])
+
+[node name="Scheue" type="Node" parent="Zonen"]
+script = ExtResource("23_zone")
+ab_flugkraft = 20.0
+fliegen = Array[PackedScene]([ExtResource("18_scheu")])
+farbe = Color(0.7, 1, 0.7, 1)
+
+[node name="Koeder" type="Node" parent="Zonen"]
+script = ExtResource("23_zone")
+ab_flugkraft = 40.0
+fliegen = Array[PackedScene]([ExtResource("19_koeder")])
+mindestens = 3
+farbe = Color(1, 0.85, 0.6, 1)
+
+[node name="Teleport" type="Node" parent="Zonen"]
+script = ExtResource("23_zone")
+ab_flugkraft = 60.0
+fliegen = Array[PackedScene]([ExtResource("20_teleport")])
+mindestens = 3
+farbe = Color(0.7, 0.8, 1, 1)
+
+[node name="Boss" type="Node" parent="Zonen"]
+script = ExtResource("23_zone")
+ab_flugkraft = 80.0
+fliegen = Array[PackedScene]([ExtResource("21_boss"), ExtResource("17_schnell"), ExtResource("17_schnell")])
+mindestens = 3
+farbe = Color(1, 0.7, 0.9, 1)
+
+[node name="Zone" type="Label" parent="Bedienung"]
+offset_left = 20.0
+offset_top = 10.0
+offset_right = 700.0
+offset_bottom = 60.0
+theme_override_font_sizes/font_size = 32
+text = "Zone"
+
+[node name="TestHinweis" type="Label" parent="Bedienung"]
+offset_left = 20.0
+offset_top = 55.0
+offset_right = 700.0
+offset_bottom = 90.0
+theme_override_font_sizes/font_size = 22
+text = "Test: Tasten 1 bis 5 springen in eine Zone, 0 = Boden"
+
+[node name="TestSprung" type="Node" parent="." node_paths=PackedStringArray("zonen")]
+script = ExtResource("24_sprung")
+zonen = NodePath("../Zonen")

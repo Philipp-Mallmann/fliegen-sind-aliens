@@ -3517,3 +3517,860 @@ In `warnzeit_hier`, dieselbe Rechnung wie vorher, nur ueber die neue Funktion. D
 
 </details>
 
+## Abschnitt 9 - Hoehenzonen und sechs Fliegenarten
+
+Was neu ist, in einem Absatz: Es gibt jetzt sechs Arten von Fliegen. Jede Art hat ein eigenes kurzes Skript und eine eigene Szene. Am Boden schwirrt zum Start ein kleiner Schwarm aus allen Arten ausser dem Boss. Darueber gibt es fuenf Test-Zonen, die an der Hoehe der Kanone haengen, in jeder fliegt eine andere Art herein. Mit den Zifferntasten springt man zum Testen in eine Zone. Die Kanone faehrt ein Achtel schneller. Die Hindernisse sind unveraendert.
+
+### Ein neuer Gedanke: `extends` mit einem eigenen Skript
+
+Bisher stand in jedem Skript oben `extends Node2D`. Das heisst: "Dieses Skript ist ein Node2D und kann alles, was ein Node2D kann, dazu kommt, was hier steht."
+
+Neu ist diese Zeile in den Skripten der Arten:
+
+```gdscript
+extends "res://skripte/fliege.gd"
+```
+
+Das heisst: "Dieses Skript ist eine Fliege und kann alles, was in `fliege.gd` steht, dazu kommt, was hier steht." Man nennt das Vererbung. In `fliege.gd` steht alles, was jede Fliege braucht: Tempo, Flugkraft, Groesse, gefangen sein, fliehen, summen. In `fliege_normal.gd`, `fliege_schnell.gd` und so weiter steht nur noch, wie diese eine Art fliegt.
+
+Dazu gehoert ein zweiter Gedanke: ueberschreiben. In `fliege.gd` gibt es drei leere Funktionen (`losfliegen`, `fliegen`, `angeschossen`). Schreibt eine Art eine Funktion mit demselben Namen, dann gilt fuer diese Art ihre eigene Fassung. `fliege.gd` ruft `fliegen(delta)` auf, und je nach Art laeuft dann ein anderer Code.
+
+Warum so: Vorher stand alles in einer `fliege.gd`, und der Erzeuger hat die Unterschiede von aussen eingestellt. Mit sechs Arten waere das ein langes Skript mit vielen "wenn Art gleich ..."-Stellen geworden. So ist jede Art fuer sich lesbar.
+
+### `skripte/fliege.gd` - neu geschrieben (das Gemeinsame)
+
+```gdscript
+extends Node2D
+```
+Unveraendert. Die Fliege ist ein Node2D.
+
+```gdscript
+@export var tempo_langsam: float = 100.0
+@export var tempo_schnell: float = 180.0
+```
+Neu. Zwischen diesen beiden Werten wuerfelt jede Fliege ihr Tempo. Vorher standen die Werte im Erzeuger. Jetzt stehen sie an der Art selbst, im Inspector der jeweiligen Szene (die schnelle hat dort 400 und 720).
+
+```gdscript
+@export var flugkraft: int = 2
+@export var halbe_groesse: float = 50.0
+```
+Unveraendert.
+
+```gdscript
+@export var leben: int = 1
+```
+Neu. Wie oft man die Fliege treffen muss. Bei allen 1, nur in der Szene des Bosses steht 3.
+
+```gdscript
+@export var flieht: bool = true
+```
+Neu. Der Erzeuger laesst Fliegen fliehen, die zu tief oder zu hoch im Bild sind. Der Boss steigt absichtlich nach oben, bei ihm steht darum `false`.
+
+```gdscript
+@export var tonhoehe_tief: float = 0.8
+@export var tonhoehe_hoch: float = 1.4
+```
+Unveraendert.
+
+```gdscript
+var tempo: float = 0.0
+```
+Geaendert: war ein `@export`, ist jetzt eine normale Variable. Sie wird beim Start ausgewuerfelt.
+
+```gdscript
+var kanone: Node2D = null
+```
+Neu. Die scheue und die Koeder-Fliege muessen wissen, wo die Kanone ist. Der Erzeuger traegt sie ein.
+
+```gdscript
+var mitte_x: float = 0.0
+var richtung: float = 1.0
+var gefangen: bool = false
+```
+Unveraendert.
+
+```gdscript
+var flucht: Vector2 = Vector2.ZERO
+```
+Geaendert: war eine Zahl (1 oder -1), ist jetzt ein `Vector2`, also eine Richtung mit x und y. So kann eine Fliege auch nach oben fliehen. `Vector2.ZERO` ist (0, 0) und heisst: Sie flieht nicht.
+
+```gdscript
+var grund_y: float = 0.0
+var zeit: float = 0.0
+```
+Unveraendert.
+
+```gdscript
+var steckende: Array[Node2D] = []
+```
+Neu. Eine Liste der Nadeln, die im Boss stecken, solange er noch nicht gefangen ist. Bei allen anderen bleibt sie leer.
+
+```gdscript
+func _ready() -> void:
+	tempo = randf_range(tempo_langsam, tempo_schnell)
+	grund_y = position.y
+	if mitte_x < position.x:
+		richtung = -1.0
+	$Summen.pitch_scale = randf_range(tonhoehe_tief, tonhoehe_hoch)
+	losfliegen()
+```
+`_ready` laeuft einmal, wenn die Fliege ins Spiel kommt. Neu sind drei Dinge: Das Tempo wird ausgewuerfelt. Liegt die Mitte links von der Fliege, fliegt sie zuerst nach links (sie kommt ja von rechts herein). Und am Ende wird `losfliegen()` aufgerufen, damit eine Art dort ihre eigenen Startwerte setzen kann.
+
+```gdscript
+func _process(delta: float) -> void:
+	if gefangen:
+		return
+	zeit += delta
+	if flucht != Vector2.ZERO:
+		position += flucht * tempo * delta
+		return
+	fliegen(delta)
+```
+Laeuft in jedem Bild. Gefangen: nichts tun. Sonst die Zeit weiterzaehlen. Flieht die Fliege, geht sie in ihrer Fluchtrichtung mit ihrem Tempo weiter (`flucht` ist (1, 0), (-1, 0) oder (0, -1), mal Tempo mal Zeit ergibt die Strecke). Sonst fliegt sie so, wie ihre Art es in `fliegen` festlegt. Ein Unterschied zu vorher: Eine fliehende Fliege dreht und wippt nicht mehr, sie fliegt gerade hinaus. Das Drehen und Wippen steht jetzt in `fliegen` der normalen Fliege, und `fliegen` wird bei der Flucht nicht aufgerufen.
+
+```gdscript
+func losfliegen() -> void:
+	pass
+
+func fliegen(_delta: float) -> void:
+	pass
+
+func angeschossen() -> void:
+	pass
+```
+Die drei leeren Funktionen. `pass` heisst: nichts tun. Sie stehen hier, damit `fliege.gd` sie aufrufen kann, auch wenn eine Art sie nicht ueberschreibt. Der Unterstrich vor `_delta` sagt Godot: Der Wert wird hier absichtlich nicht benutzt.
+
+Weggefallen sind `strecke`, `drehtempo`, `wipp_hoehe`, `wipp_tempo` und das Hin-und-her-Fliegen. Das steht jetzt in `fliege_normal.gd`.
+
+### `skripte/fliege_normal.gd` - neu
+
+```gdscript
+extends "res://skripte/fliege.gd"
+```
+Die normale Fliege ist eine Fliege, siehe oben.
+
+```gdscript
+@export var strecke: float = 300.0
+@export var drehtempo: float = 6.28
+@export var wipp_hoehe: float = 50.0
+@export var wipp_tempo: float = 4.0
+```
+Wie bisher, nur stehen die Werte jetzt hier statt im Erzeuger. 6.28 ist eine ganze Umdrehung pro Sekunde (2 mal Pi). Das Wippen ist doppelt so stark wie vorher (50 statt 25 px).
+
+```gdscript
+@export var langsam_anteil: float = 0.5
+@export var tempo_wechsel: float = 1.5
+```
+Neu. Die Fliege wird zwischendurch langsamer, hoechstens bis auf die Haelfte ihres Tempos. `tempo_wechsel` sagt, wie schnell das schwankt.
+
+```gdscript
+func fliegen(delta: float) -> void:
+	rotation += drehtempo * delta
+	position.y = grund_y + sin(zeit * wipp_tempo) * wipp_hoehe
+```
+Drehen und Wippen wie bisher. `sin` schwingt gleichmaessig zwischen -1 und 1, mal 50 ergibt 50 px hoch und 50 px runter.
+
+```gdscript
+	var welle: float = (sin(zeit * tempo_wechsel) + 1.0) / 2.0
+```
+Neu. `sin` liefert -1 bis 1. Plus 1 ergibt 0 bis 2, geteilt durch 2 ergibt 0 bis 1. `welle` wandert also langsam zwischen 0 und 1 hin und her.
+
+```gdscript
+	var jetzt: float = tempo * lerpf(langsam_anteil, 1.0, welle)
+```
+`lerpf(a, b, t)` liefert einen Wert zwischen a und b: bei t = 0 genau a, bei t = 1 genau b. Hier: zwischen 0.5 und 1. Das Tempo in diesem Bild liegt also zwischen dem halben und dem vollen Tempo.
+
+```gdscript
+	position.x += richtung * jetzt * delta
+	if position.x > mitte_x + strecke:
+		richtung = -1.0
+	if position.x < mitte_x - strecke:
+		richtung = 1.0
+```
+Wie bisher: seitlich fliegen und am Ende der Strecke umdrehen.
+
+### `skripte/fliege_schnell.gd` - neu
+
+Die schnelle Fliege fliegt gerade und immer gleich schnell. Am Ende der Strecke fliegt sie eine Schleife, wie eine halbe liegende Acht, und kommt auf derselben Linie zurueck.
+
+Der Trick: Die Fliege merkt sich einen Winkel, in den sie fliegt. In jedem Bild geht sie ein Stueck in diese Richtung, immer gleich weit. Zum Wenden wird nur der Winkel gedreht. Darum bleibt das Tempo von selbst gleich.
+
+```gdscript
+@export var strecke: float = 300.0
+@export var schleife: float = 60.0
+```
+Wie weit sie fliegt, bevor sie wendet, und der Radius des Kreises in der Schleife.
+
+```gdscript
+const ERSTES_STUECK: float = PI / 3.0
+const WENDE_GANZ: float = TAU + PI / 3.0
+```
+`const` ist ein fester Wert, der sich nie aendert. `PI` ist ein halber Kreis im Bogenmass, `TAU` ein ganzer. `PI / 3` ist ein Sechstel Kreis (60 Grad). Die Schleife besteht aus drei Stuecken: ein Sechstel Kreis nach oben lenken, fuenf Sechstel Kreis nach unten herum, ein Sechstel wieder nach oben. Zusammen sieben Sechstel, das ist `TAU + PI / 3`. Mit genau diesen Winkeln landet sie wieder auf ihrer Linie (ausgerechnet, und in der Probe gemessen: 4,5 px daneben, den Rest rastet die Zeile `position.y = grund_y` ein).
+
+```gdscript
+var winkel: float = 0.0
+var wendet: bool = false
+var gelenkt: float = 0.0
+```
+Die Flugrichtung als Winkel (0 ist rechts, `PI` ist links), ob sie gerade wendet, und wie viel von der Schleife sie schon gelenkt hat.
+
+```gdscript
+func losfliegen() -> void:
+	if richtung < 0.0:
+		winkel = PI
+```
+Ueberschreibt die leere Funktion aus `fliege.gd`. Fliegt sie zuerst nach links, zeigt der Winkel nach links.
+
+```gdscript
+func fliegen(delta: float) -> void:
+	position += Vector2.from_angle(winkel) * tempo * delta
+```
+`Vector2.from_angle(winkel)` macht aus einem Winkel eine Richtung mit der Laenge 1. Mal Tempo mal Zeit ist der Schritt in diesem Bild. Das ist die einzige Zeile, die die Fliege bewegt, darum ist sie immer gleich schnell.
+
+```gdscript
+	if not wendet:
+		var rechts_draussen: bool = richtung > 0.0 and position.x > mitte_x + strecke
+		var links_draussen: bool = richtung < 0.0 and position.x < mitte_x - strecke
+		if rechts_draussen or links_draussen:
+			wendet = true
+			gelenkt = 0.0
+		return
+```
+Solange sie geradeaus fliegt: Ist sie ueber das Ende der Strecke hinaus, beginnt die Wende. `return` beendet die Funktion fuer dieses Bild.
+
+```gdscript
+	var schritt: float = tempo / schleife * delta
+	gelenkt += schritt
+```
+Wie viel sie in diesem Bild lenkt. Auf einem Kreis gilt: Winkel pro Sekunde = Tempo geteilt durch Radius. Ein kleiner Radius heisst enge Kurve.
+
+```gdscript
+	if gelenkt < ERSTES_STUECK or gelenkt > TAU:
+		winkel -= schritt * richtung
+	else:
+		winkel += schritt * richtung
+```
+Im ersten und im letzten Stueck lenkt sie nach oben, dazwischen nach unten herum. In Godot zeigt y nach unten, darum heisst "Winkel kleiner" bei einer Fliege nach rechts: nach oben. `* richtung` spiegelt das fuer die Fliege, die nach links fliegt.
+
+```gdscript
+	rotation = richtung * TAU * gelenkt / WENDE_GANZ
+```
+Sie dreht sich waehrend der Wende einmal ganz um sich selbst. `gelenkt / WENDE_GANZ` geht von 0 bis 1, mal `TAU` ist eine volle Umdrehung. Am Ende steht sie wieder aufrecht.
+
+```gdscript
+	if gelenkt >= WENDE_GANZ:
+		wendet = false
+		richtung = -richtung
+		rotation = 0.0
+		position.y = grund_y
+		winkel = 0.0
+		if richtung < 0.0:
+			winkel = PI
+```
+Wende fertig: Richtung umkehren, aufrecht stellen, genau auf die Linie setzen und den Winkel genau nach rechts oder links stellen. So sammeln sich keine kleinen Rechenfehler an.
+
+### `skripte/fliege_scheu.gd` - neu
+
+Die scheue Fliege will immer einen bestimmten Abstand zur Kanone haben. Faehrt die Kanone auf sie zu, weicht sie zurueck. Sie ist langsamer als die Kanone (190 bis 230 gegen 281), man holt sie also ein.
+
+```gdscript
+@export var abstand_nah: float = 200.0
+@export var abstand_weit: float = 450.0
+@export var wipp_hoehe: float = 15.0
+@export var wipp_tempo: float = 6.0
+var abstand: float = 0.0
+```
+Jede Fliege wuerfelt ihren Wunschabstand zwischen 200 und 450 px. Sonst staenden alle scheuen Fliegen genau uebereinander.
+
+```gdscript
+func losfliegen() -> void:
+	abstand = randf_range(abstand_nah, abstand_weit)
+```
+Einmal am Start auswuerfeln.
+
+```gdscript
+func fliegen(delta: float) -> void:
+	position.y = grund_y + sin(zeit * wipp_tempo) * wipp_hoehe
+```
+Leichtes, schnelles Wippen.
+
+```gdscript
+	var seite: float = 1.0
+	if position.x < kanone.position.x:
+		seite = -1.0
+```
+Auf welcher Seite der Kanone ist die Fliege? 1 heisst rechts, -1 links.
+
+```gdscript
+	var wunsch_x: float = kanone.position.x + seite * abstand
+	position.x = move_toward(position.x, wunsch_x, tempo * delta)
+```
+Ihr Wunschplatz liegt auf ihrer Seite, `abstand` Pixel neben der Kanone. `move_toward(von, nach, schritt)` geht von einem Wert auf einen anderen zu, aber hoechstens `schritt` weit. Die Fliege geht also mit ihrem Tempo auf den Wunschplatz zu. Faehrt die Kanone naeher, wandert der Wunschplatz weg, und die Fliege hinterher. Faehrt die Kanone unter ihr durch, wechselt die Seite, und sie weicht in die andere Richtung aus.
+
+### `skripte/fliege_koeder.gd` - neu
+
+Die Koeder-Fliege pendelt auf kleinem Raum. Wird ein Hindernis angekuendigt, schwingt sie im Bogen unter die Warnung und zappelt dort. Wer sie will, muss mit dem Faecher unter die Warnung. Kurz bevor der Klotz faellt, weicht sie zur Seite aus.
+
+```gdscript
+@export var pendelweite: float = 144.0
+@export var pendelweite_warnung: float = 100.0
+@export var hoehen: float = 40.0
+@export var faktor_warnung: float = 3.0
+@export var tempo_eilig: float = 900.0
+@export var bogen: float = 80.0
+@export var ausweich_zeit: float = 0.25
+@export var ausweich_weite: float = 230.0
+@export var sichtweite: float = 720.0
+```
+Die Werte, alle im Inspector aenderbar. Die Kommentare im Skript sagen, was jeder ist. Wichtig: 144 ist ein Zehntel der Bildbreite. 230 ist so gewaehlt, dass sie knapp neben dem Klotz landet (halbe Spalte 100, halbe Fliege 50, halbes Pendeln 72: 230 - 72 = 158, das sind 8 px Luft).
+
+```gdscript
+var ziel: Vector2 = Vector2.ZERO
+var seite: float = 1.0
+var unter_warnung: bool = false
+var schwingt: bool = false
+var schwung_von_x: float = 0.0
+var schwung_von_y: float = 0.0
+```
+Der Punkt, zu dem sie gerade pendelt, auf welcher Seite der liegt, ob sie unter einer Warnung ist, ob sie gerade im Bogen schwingt, und wo der Schwung angefangen hat.
+
+```gdscript
+func losfliegen() -> void:
+	neues_ziel()
+```
+Am Start den ersten Pendelpunkt bestimmen.
+
+```gdscript
+func fliegen(delta: float) -> void:
+	nach_warnung_sehen()
+	if schwingt:
+		schwingen(delta)
+		return
+```
+In jedem Bild zuerst nachsehen, ob es eine Warnung gibt. Schwingt sie gerade, macht `schwingen` die Bewegung.
+
+```gdscript
+	var jetzt: float = tempo
+	if unter_warnung:
+		jetzt = tempo * faktor_warnung
+	position = position.move_toward(ziel, jetzt * delta)
+```
+Sonst pendelt sie: auf den Punkt `ziel` zu, unter einer Warnung dreimal so schnell. `position.move_toward(ziel, schritt)` ist dasselbe wie `move_toward` oben, nur fuer einen Punkt mit x und y.
+
+```gdscript
+	if position == ziel:
+		seite = -seite
+		neues_ziel()
+```
+Angekommen: die Seite wechseln und den naechsten Punkt bestimmen. `==` klappt hier, weil `move_toward` am Ende genau auf dem Ziel landet.
+
+```gdscript
+func nach_warnung_sehen() -> void:
+	var warnung: Node2D = warnung_im_bild()
+	if warnung == null:
+		unter_warnung = false
+		return
+```
+Gibt es keine Warnung, ist nichts zu tun.
+
+```gdscript
+	var wohin: float = warnung.position.x
+	var rest: float = warnung.warnzeit - warnung.gewarnt
+	unter_warnung = rest >= ausweich_zeit
+```
+`wohin` ist die Mitte der Spalte. `rest` ist, wie lange die Warnung noch laeuft (beide Werte stehen in `hindernis.gd`). Solange noch mindestens 0,25 s uebrig sind, bleibt sie darunter.
+
+```gdscript
+	if not unter_warnung:
+		if position.x < warnung.position.x:
+			wohin -= ausweich_weite
+		else:
+			wohin += ausweich_weite
+```
+In den letzten 0,25 s weicht sie aus: 230 px neben die Mitte, auf die Seite, auf der sie gerade ist.
+
+```gdscript
+	if absf(wohin - mitte_x) > 1.0:
+		mitte_x = wohin
+		schwingt = true
+		schwung_von_x = position.x
+		schwung_von_y = position.y
+```
+Liegt das neue Ziel woanders als ihre jetzige Mitte, beginnt ein Schwung dorthin. `absf` ist der Betrag (ohne Vorzeichen). Der Vergleich mit 1 statt mit 0 verhindert, dass winzige Rechenunterschiede einen neuen Schwung ausloesen.
+
+```gdscript
+func warnung_im_bild() -> Node2D:
+	for hindernis in get_tree().get_nodes_in_group("hindernisse"):
+		var warnt_noch: bool = hindernis.gewarnt < hindernis.warnzeit
+		var seitlich: float = absf(hindernis.position.x - kanone.position.x)
+		if warnt_noch and seitlich <= sichtweite:
+			return hindernis
+	return null
+```
+Geht alle Hindernisse durch (sie sind jetzt in der Gruppe `hindernisse`, siehe Szene). Das erste, das noch warnt und im Bild liegt (hoechstens 720 px neben der Kanone), wird zurueckgegeben. Gibt es keins: `null`.
+
+```gdscript
+func schwingen(delta: float) -> void:
+	position.x = move_toward(position.x, mitte_x, tempo_eilig * delta)
+	if position.x == mitte_x:
+		schwingt = false
+		position.y = schwung_von_y
+		neues_ziel()
+		return
+```
+Seitlich mit 900 px/s auf die neue Mitte zu. Angekommen: Schwung vorbei, zurueck auf die Hoehe vom Anfang, neuen Pendelpunkt bestimmen.
+
+```gdscript
+	var anteil: float = (position.x - schwung_von_x) / (mitte_x - schwung_von_x)
+	position.y = schwung_von_y + sin(anteil * PI) * bogen
+```
+Der Bogen. `anteil` ist, wie viel vom Weg geschafft ist: 0 am Anfang, 1 am Ziel. `sin(anteil * PI)` ist am Anfang 0, in der Mitte 1 und am Ende wieder 0. Mal 80 heisst: In der Mitte des Wegs haengt sie 80 px tiefer, wie ein Pendel. (Geteilt wird nie durch 0, weil ein Schwung nur beginnt, wenn Ziel und Start mehr als 1 px auseinander liegen.)
+
+```gdscript
+func neues_ziel() -> void:
+	var weite: float = pendelweite
+	if unter_warnung:
+		weite = pendelweite_warnung
+	ziel = Vector2(mitte_x + seite * weite / 2.0, grund_y + randf_range(-hoehen, hoehen))
+```
+Der naechste Pendelpunkt: eine halbe Pendelweite links oder rechts der Mitte, und in der Hoehe zufaellig bis zu 40 px ueber oder unter der Grundhoehe. So fliegt sie mal etwas hoeher, mal etwas tiefer.
+
+### `skripte/fliege_teleport.gd` - neu
+
+```gdscript
+@export var strecke: float = 150.0
+@export var pause_kurz: float = 1.5
+@export var pause_lang: float = 3.0
+@export var flacker_zeit: float = 0.3
+@export var flacker_takt: float = 0.1
+@export var flacker_blass: float = 0.25
+@export var sprung_nah: float = 150.0
+@export var sprung_weit: float = 300.0
+var sprung_in: float = 0.0
+```
+Die Werte: Strecke, Pause zwischen zwei Spruengen, wie lange und wie schnell sie vorher flackert, wie blass sie dabei wird, und wie weit sie springt. `sprung_in` zaehlt die Sekunden bis zum naechsten Sprung herunter.
+
+```gdscript
+func losfliegen() -> void:
+	sprung_in = randf_range(pause_kurz, pause_lang)
+```
+Die erste Pause auswuerfeln.
+
+```gdscript
+func fliegen(delta: float) -> void:
+	position.x += richtung * tempo * delta
+	if position.x > mitte_x + strecke:
+		richtung = -1.0
+	if position.x < mitte_x - strecke:
+		richtung = 1.0
+```
+Hin und her wie die Fliege aus Abschnitt 3.
+
+```gdscript
+	sprung_in -= delta
+	modulate.a = 1.0
+	if sprung_in < flacker_zeit and fmod(sprung_in, flacker_takt) < flacker_takt / 2.0:
+		modulate.a = flacker_blass
+```
+Herunterzaehlen. `modulate.a` ist die Deckkraft: 1 ist voll sichtbar. In den letzten 0,3 s flackert sie: `fmod` ist der Rest beim Teilen, hier laeuft er immer wieder von 0 bis 0,1. In der ersten Haelfte davon ist sie blass, in der zweiten voll. Das ist die Ankuendigung: Wer das Flackern sieht, weiss, dass sie gleich springt.
+
+```gdscript
+	if sprung_in <= 0.0:
+		springen()
+
+func springen() -> void:
+	var weit: float = randf_range(sprung_nah, sprung_weit)
+	if randf() < 0.5:
+		weit = -weit
+	position.x += weit
+	mitte_x += weit
+	modulate.a = 1.0
+	sprung_in = randf_range(pause_kurz, pause_lang)
+```
+Der Sprung: 150 bis 300 px, in der Haelfte der Faelle nach links. Auch die Mitte springt mit, damit sie um die neue Stelle weiterfliegt. Danach wieder voll sichtbar, und die naechste Pause wird ausgewuerfelt.
+
+### `skripte/fliege_boss.gd` - neu
+
+```gdscript
+@export var steigtempo: float = 75.0
+@export var wipp_hoehe: float = 20.0
+@export var wipp_tempo: float = 2.0
+@export var absacken: float = 200.0
+@export var sacktempo: float = 600.0
+var sack_rest: float = 0.0
+```
+Wie schnell er steigt, wie er wippt, wie weit er bei einem Treffer absackt und wie schnell. `sack_rest` ist, wie viele Pixel er noch absacken muss. Dass er 3 Treffer braucht, 15 Flugkraft gibt und 300 x 300 gross ist, steht im Inspector der Szene (`leben`, `flugkraft`, `halbe_groesse` aus `fliege.gd`).
+
+```gdscript
+func fliegen(delta: float) -> void:
+	position.x += richtung * tempo * delta
+	grund_y -= steigtempo * delta
+```
+Er fliegt seitlich durch und seine Grundhoehe steigt dabei (kleineres y ist weiter oben).
+
+```gdscript
+	var stueck: float = minf(sack_rest, sacktempo * delta)
+	sack_rest -= stueck
+	grund_y += stueck
+```
+Das Absacken, auf mehrere Bilder verteilt, damit er nicht springt. `minf` nimmt den kleineren Wert: In jedem Bild sinkt er hoechstens `sacktempo * delta`, aber nie mehr, als noch uebrig ist.
+
+```gdscript
+	position.y = grund_y + sin(zeit * wipp_tempo) * wipp_hoehe
+```
+Leichtes, langsames Wippen um die Grundhoehe.
+
+```gdscript
+func angeschossen() -> void:
+	sack_rest += absacken
+```
+Ueberschreibt die leere Funktion aus `fliege.gd`. Die Nadel ruft sie bei einem Treffer auf, dann sackt er 200 px ab.
+
+### `skripte/nadel.gd` - geaendert (Boss)
+
+```gdscript
+	if getroffene != null:
+		if getroffene.leben > 1:
+			stecken_in(getroffene)
+			return
+		aufspiessen(getroffene)
+```
+In `_process`. Neu sind die drei mittleren Zeilen. Braucht die getroffene Fliege noch mehr als einen Treffer, bleibt die Nadel nur in ihr stecken. Beim letzten noetigen Treffer (`leben` ist 1) wird sie wie jede Fliege aufgespiesst und gefangen.
+
+```gdscript
+	if kandidat.leben > 1 and not aufgespiesste.is_empty():
+		return false
+```
+In `trifft`. Eine Nadel, die schon Fliegen traegt, trifft den Boss nicht. Sonst haette man einen Spiess, der im Boss steckt und trotzdem schon gefangene Fliegen traegt.
+
+```gdscript
+	getroffene.modulate.a = 1.0
+```
+In `aufspiessen`. Eine Teleport-Fliege kann im Moment des Treffers gerade blass sein. Gefangen soll sie voll sichtbar sein.
+
+```gdscript
+	for alte in getroffene.steckende:
+		alte.faden_loesen()
+```
+In `aufspiessen`. Wird der Boss gefangen, loesen sich die Faeden der Nadeln, die schon in ihm steckten. Nur die letzte Nadel haelt ihn.
+
+```gdscript
+func stecken_in(grosse: Node2D) -> void:
+	steckt = true
+	grosse.leben -= 1
+	grosse.steckende.append(self)
+	grosse.angeschossen()
+	$TonTreffer.play()
+	var fleck: Node2D = blutfleck_szene.instantiate()
+	get_parent().add_child(fleck)
+	fleck.global_position = global_position
+	reparent(grosse)
+```
+Neu. Die Nadel fliegt nicht mehr (`steckt`). Der Boss verliert ein Leben, merkt sich die Nadel in seiner Liste und sackt ab. Treffer-Ton und Blutfleck wie bei jedem Treffer. `reparent(grosse)` macht die Nadel zum Kind des Bosses, sie bewegt sich ab jetzt mit ihm. `self` ist die Nadel selbst. Der Faden bleibt an der Muendung, weil `_process` fuer eine steckende Nadel weiter `faden_spannen` aufruft. Fliegt der Boss aus dem Bild, loescht ihn der Erzeuger, und mit ihm seine Kinder, also auch die Nadeln und Faeden.
+
+```gdscript
+func faden_loesen() -> void:
+	anker = null
+	$Faden.clear_points()
+```
+Neu. Ohne Anker spannt `faden_spannen` nichts mehr, und `clear_points` loescht die Linie.
+
+### `skripte/zone.gd` - neu
+
+```gdscript
+extends Node
+
+@export var ab_flugkraft: float = 0.0
+@export var fliegen: Array[PackedScene] = []
+@export var mindestens: int = 4
+@export var farbe: Color = Color.WHITE
+```
+Dieses Skript rechnet nichts. Es gibt einem Knoten vier Felder im Inspector: ab welcher Hoehe (in Flugkraft) die Zone beginnt, welche Fliegen-Szenen dort hereinfliegen, wie viele freie Fliegen mindestens da sein sollen, und die Farbe des Hintergrunds. `Array[PackedScene]` ist eine Liste von Szenen. Steht eine Szene zweimal in der Liste, wird sie doppelt so oft ausgewuerfelt.
+
+### `skripte/zonen.gd` - neu
+
+```gdscript
+extends Node
+
+@export var kanone: Node2D
+@export var hintergrund: Node2D
+@export var anzeige: Label
+```
+Der Knoten `Zonen` kennt die Kanone, den Hintergrund und das Schild oben links. Seine Kinder sind die Zonen, von unten nach oben.
+
+```gdscript
+func _process(_delta: float) -> void:
+	var zone: Node = aktuelle()
+	hintergrund.modulate = zone.farbe
+	anzeige.text = "Zone: " + str(zone.name)
+```
+In jedem Bild: die aktuelle Zone holen, den Hintergrund in ihrer Farbe toenen (`modulate` multipliziert die Farbe von allem, was darunter haengt) und ihren Namen auf das Schild schreiben. `zone.name` ist der Name des Knotens, `str` macht daraus Text.
+
+```gdscript
+func aktuelle() -> Node:
+	var hoehe: float = -kanone.position.y / get_parent().hoehe_je_flugkraft
+	var gefunden: Node = get_child(0)
+	for zone in get_children():
+		if hoehe >= zone.ab_flugkraft:
+			gefunden = zone
+	return gefunden
+```
+Die Hoehe der Kanone in Flugkraft: y ist nach oben negativ, darum das Minus, geteilt durch 300 (`hoehe_je_flugkraft` steht in `spiel.gd`, `get_parent()` ist der Knoten `Spiel`). Dann alle Zonen von unten nach oben durchgehen. Jede, deren Anfang schon erreicht ist, ersetzt die vorige. Uebrig bleibt die hoechste erreichte Zone. Weil die Zone an der Hoehe haengt und nicht am Zaehler, wechselt sie beim Absturz erst, wenn man wirklich unten ist.
+
+### `skripte/erzeuger.gd` - neu geschrieben
+
+Weggefallen: `fliege_szene`, `tempo_langsam`, `tempo_schnell`, `anteil_schnell`, `flugkraft_normal`, `flugkraft_schnell`, `faktor_schnell`, `drehungen_normal`, `wippen_normal`, `mindestens`. Diese Werte stehen jetzt an den Arten und an den Zonen.
+
+```gdscript
+@export var kanone: Node2D
+@export var zonen: Node
+@export var schwarm_szenen: Array[PackedScene] = []
+@export var schwarm_breite: float = 500.0
+@export var breite: float = 400.0
+```
+Neu sind `zonen` (der Knoten mit den Zonen), `schwarm_szenen` (die fuenf Arten fuer den Schwarm am Boden) und `schwarm_breite`.
+
+```gdscript
+@export var naehe: float = 1000.0
+@export var einflug_x: float = 900.0
+@export var einflug_oben: float = 750.0
+@export var einflug_unten: float = 560.0
+@export var flucht_unten: float = 520.0
+@export var flucht_oben: float = 790.0
+```
+Unveraendert.
+
+```gdscript
+@export var rand_seitlich: float = 847.0
+@export var rand_oben: float = 1082.0
+```
+Neu. Wie weit der Bildrand am Boden von der Kanone weg ist (dort ist herausgezoomt). Daran misst der Schwarm, welcher Rand am naechsten ist.
+
+```gdscript
+@export var loeschen_seitlich: float = 1100.0
+@export var loeschen_unten: float = 300.0
+@export var loeschen_oben: float = 1400.0
+```
+`loeschen_oben` ist neu: Fliegen, die nach oben geflohen sind, und der entkommene Boss werden 1400 px ueber der Kanone geloescht.
+
+```gdscript
+var schwarm: bool = true
+```
+Neu. Solange der Schwarm vom Anfang da ist, fliegt nichts nach.
+
+```gdscript
+func _ready() -> void:
+	for szene in schwarm_szenen:
+		for nummer in randi_range(1, 2):
+			var fliege: Node2D = szene.instantiate()
+			fliege.kanone = kanone
+			fliege.position.x = kanone.position.x + randf_range(-schwarm_breite, schwarm_breite)
+			fliege.position.y = kanone.position.y - randf_range(einflug_unten, einflug_oben)
+			fliege.mitte_x = fliege.position.x
+			add_child(fliege)
+```
+Der Schwarm. Zwei Schleifen ineinander: Die aeussere geht die fuenf Szenen durch. Die innere laeuft einmal oder zweimal (`randi_range(1, 2)` wuerfelt 1 oder 2, `for nummer in 2` laeuft zweimal). Jede Fliege bekommt die Kanone, einen zufaelligen Platz bis 500 px neben der Kanone und 560 bis 750 px ueber ihr, und ihre Mitte ist dort, wo sie startet. Es sind also 5 bis 10 Fliegen.
+
+```gdscript
+func _process(_delta: float) -> void:
+	aufraeumen()
+	if schwarm:
+		if get_child_count() == 0:
+			schwarm = false
+		return
+	fliehen_lassen()
+	if kanone.steigt:
+		return
+	var zone: Node = zonen.aktuelle()
+	if freie_in_der_naehe() < zone.mindestens:
+		hereinfliegen(zone)
+```
+Solange der Schwarm da ist, wird nur aufgeraeumt. Ist keine Fliege mehr uebrig (zum Beispiel alle zermatscht), endet der Schwarm von selbst, sonst gaebe es nie wieder Fliegen. Danach wie bisher, mit zwei Aenderungen: Waehrend die Kanone steigt, fliegt nichts herein (vorher entstand in jedem Bild des Steigens eine Fliege, die sofort wieder floh). Und wie viele Fliegen da sein sollen und welche kommen, sagt die aktuelle Zone.
+
+```gdscript
+func schwarm_aufloesen(_dazu: int) -> void:
+	if not schwarm:
+		return
+	schwarm = false
+	for fliege in get_children():
+		var nach_links: float = fliege.position.x - (kanone.position.x - rand_seitlich)
+		var nach_rechts: float = (kanone.position.x + rand_seitlich) - fliege.position.x
+		var nach_oben: float = fliege.position.y - (kanone.position.y - rand_oben)
+		if nach_oben < nach_links and nach_oben < nach_rechts:
+			fliege.flucht = Vector2.UP
+		elif nach_links < nach_rechts:
+			fliege.flucht = Vector2.LEFT
+		else:
+			fliege.flucht = Vector2.RIGHT
+```
+Wird beim ersten Fang aufgerufen. Das Signal `gefangen` der Uebergabe schickt die Flugkraft mit, die hier nicht gebraucht wird, darum `_dazu`. Fuer jede Fliege werden drei Strecken ausgerechnet: bis zum linken, zum rechten und zum oberen Bildrand. Sie flieht zum naechsten. `Vector2.UP` ist (0, -1), `LEFT` ist (-1, 0), `RIGHT` ist (1, 0). `elif` heisst "sonst, wenn".
+
+```gdscript
+func hereinfliegen(zone: Node) -> void:
+	var seite: float = 1.0
+	if randf() < 0.5:
+		seite = -1.0
+	var szene: PackedScene = zone.fliegen.pick_random()
+	var fliege: Node2D = szene.instantiate()
+	fliege.kanone = kanone
+	fliege.position.x = kanone.position.x + seite * einflug_x
+	fliege.position.y = kanone.position.y - randf_range(einflug_unten, einflug_oben)
+	fliege.mitte_x = kanone.position.x + randf_range(-breite, breite)
+	add_child(fliege)
+```
+Wie bisher, aber die Szene kommt aus der Liste der Zone: `pick_random()` nimmt zufaellig einen Eintrag. Tempo und Flugkraft setzt der Erzeuger nicht mehr, die bringt die Art selbst mit.
+
+```gdscript
+func fliehen_lassen() -> void:
+	for fliege in get_children():
+		if fliege.flucht != Vector2.ZERO or not fliege.flieht:
+			continue
+		var ueber: float = kanone.position.y - fliege.grund_y
+		if ueber < flucht_unten or ueber > flucht_oben:
+			if fliege.position.x < kanone.position.x:
+				fliege.flucht = Vector2.LEFT
+			else:
+				fliege.flucht = Vector2.RIGHT
+```
+Drei Aenderungen: Arten mit `flieht = false` (der Boss) werden uebersprungen. Gemessen wird die Grundhoehe `grund_y` statt der Position, sonst wuerde das staerkere Wippen oder die Schleife eine Fliege aus dem ruhigen Band tragen und sie floehe grundlos. Und die Flucht ist jetzt eine Richtung (`Vector2.LEFT`) statt einer Zahl.
+
+```gdscript
+func freie_in_der_naehe() -> int:
+	...
+		if fliege.flucht == Vector2.ZERO and seitlich <= naehe:
+```
+Nur der Vergleich hat sich geaendert (`Vector2.ZERO` statt `0.0`).
+
+```gdscript
+func aufraeumen() -> void:
+	for fliege in get_children():
+		var zu_tief: bool = fliege.position.y > kanone.position.y + loeschen_unten
+		var zu_hoch: bool = fliege.position.y < kanone.position.y - loeschen_oben
+		var zu_weit: bool = absf(fliege.position.x - kanone.position.x) > loeschen_seitlich
+		if zu_tief or zu_hoch or zu_weit:
+			fliege.queue_free()
+```
+Neu ist `zu_hoch`.
+
+### `skripte/spiel.gd` - geaendert
+
+```gdscript
+	$Kanone/Uebergabe.gefangen.connect($Erzeuger.schwarm_aufloesen)
+```
+In `_ready`. Dasselbe Signal, das die Flugkraft zaehlt, loest jetzt auch den Schwarm auf. Ein Signal kann mit mehreren Funktionen verbunden sein.
+
+```gdscript
+func springen(auf: int) -> void:
+	flugkraft = auf
+	$Erzeuger.schwarm_aufloesen(0)
+	fliege_zaehlen(0)
+```
+Neu, nur zum Testen. Setzt den Zaehler auf einen Wert, loest den Schwarm auf und ruft `fliege_zaehlen(0)` auf: "0 dazu". Diese Funktion faehrt die Kanone schon auf die Hoehe, die zum Zaehler passt, und stellt die Kamera auf Luft. So muss das hier nicht noch einmal geschrieben werden. Achtung: Der Faecher bleibt dabei, wie er ist. Der Zaehler stimmt nach einem Sprung also nicht mit den haengenden Fliegen ueberein. Und Taste 1 (Sprung auf 0) zeigt die Kamera der Luft, nicht die des Bodens. Den echten Start am Boden gibt Taste 0.
+
+### `skripte/test_sprung.gd` - neu (kommt vor der Abgabe wieder heraus)
+
+```gdscript
+extends Node
+
+@export var zonen: Node
+```
+Der Knoten mit den Zonen.
+
+```gdscript
+func _unhandled_key_input(taste: InputEvent) -> void:
+```
+Diese Funktion ruft Godot bei jedem Tastendruck auf, den sonst niemand verbraucht hat. `taste` beschreibt den Tastendruck.
+
+```gdscript
+	if not taste.pressed or taste.echo:
+		return
+```
+Nur das Herunterdruecken zaehlt, nicht das Loslassen. `echo` ist die Wiederholung, wenn man eine Taste haelt.
+
+```gdscript
+	if taste.keycode == KEY_0:
+		get_tree().reload_current_scene()
+		return
+```
+Die 0 laedt die Szene neu, man steht wieder am Boden mit einem neuen Schwarm.
+
+```gdscript
+	var nummer: int = taste.keycode - KEY_1
+	if nummer >= 0 and nummer < zonen.get_child_count():
+		var zone: Node = zonen.get_child(nummer)
+		get_parent().springen(int(zone.ab_flugkraft))
+```
+Jede Taste hat eine Nummer (`keycode`), und die Ziffern liegen hintereinander. Taste 1 minus `KEY_1` ist 0, Taste 2 ergibt 1 und so weiter. Gibt es eine Zone mit dieser Nummer, springt das Spiel an ihren Anfang. `int(...)` macht aus der Kommazahl eine ganze Zahl. Kommt eine sechste Zone dazu, geht die Taste 6 von selbst.
+
+### `skripte/kanone.gd` - geaendert
+
+```gdscript
+@export var tempo: float = 281.0
+```
+250 -> 281, ein Achtel schneller (250 x 1,125 = 281,25).
+
+### Szenen - geaendert
+
+- `szenen/fliege.tscn` heisst jetzt `szenen/fliege_normal.tscn`. Dazu fuenf neue: `fliege_schnell.tscn`, `fliege_scheu.tscn`, `fliege_koeder.tscn`, `fliege_teleport.tscn`, `fliege_boss.tscn`. Alle sind gleich gebaut: `Fluegel`, `Koerper`, `Summen`, `Loch`, dazu neu ein `Label` namens `Art` mit einem Buchstaben (N, S, SCH, K, T, BOSS), damit man die grauen Kaesten unterscheidet. Jede Szene haengt am Skript ihrer Art, und im Inspector stehen ihre Werte:
+
+| Szene | Tempo | Flugkraft | Sonst |
+|-------|-------|-----------|-------|
+| normal | 100-180 | 2 | |
+| schnell | 400-720 | 5 | |
+| scheu | 190-230 | 3 | |
+| koeder | 120-160 | 4 | |
+| teleport | 100-180 | 8 | |
+| boss | 110-130 | 15 | `halbe_groesse` 150, `leben` 3, `flieht` aus |
+
+- `Fluegel` und `Koerper` haben in allen Fliegen-Szenen `mouse_filter = 2`. Das heisst: Die grauen Flaechen fangen keine Mausklicks ab, ein Klick auf eine Fliege schiesst wie ueberall sonst.
+- Zu jedem neuen Skript hat Godot eine Datei `.gd.uid` angelegt (eine feste Kennnummer des Skripts, wie in den Abschnitten davor). Die schreibt Godot selbst, darin steht kein Code.
+- `szenen/hindernis.tscn`: Der Knoten `Hindernis` ist in der Gruppe `hindernisse`. So findet die Koeder-Fliege alle Hindernisse.
+- `szenen/spiel.tscn`: Am `Erzeuger` sind `zonen` und `schwarm_szenen` (fuenf Szenen) eingetragen. Neu: Knoten `Zonen` (`zonen.gd`) mit fuenf Kindern (`zone.gd`). Neu in `Bedienung`: die Labels `Zone` und `TestHinweis`. Neu: Knoten `TestSprung` (`test_sprung.gd`).
+
+| Zone | ab Flugkraft | Fliegen | mindestens | Farbe |
+|------|--------------|---------|------------|-------|
+| Anfang | 0 | normal, schnell | 4 | unveraendert |
+| Scheue | 20 | scheu | 4 | gruenlich |
+| Koeder | 40 | koeder | 3 | orange |
+| Teleport | 60 | teleport | 3 | blaeulich |
+| Boss | 80 | boss, schnell, schnell | 3 | rosa |
+
+Die Zonen sind eine Testaufteilung. Du aenderst sie im Editor am Knoten `Zonen`: Zone anklicken, Werte im Inspector. Eine neue Zone ist ein neuer Kindknoten mit `zone.gd`. Die Kinder muessen von unten nach oben sortiert sein.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS fuer alle 14 Skripte.
+- Probe ohne Bildschirm, 60 Bilder pro Sekunde fest (Wegwerfskript ausserhalb des Spielordners, geloescht):
+
+| Was | Gemessen |
+|-----|----------|
+| Schwarm, 5 Starts | 5 bis 8 Fliegen, je Art 1 oder 2, kein Boss |
+| Erster Fang | Schwarm aufgeloest, alle uebrigen fliehen. In 20 Starts: 125 nach oben, 10 nach links, 15 nach rechts (der obere Rand ist meist der naechste) |
+| Schnelle | Tempo 719, gemessen in jedem Bild 719 px/s, auch in der Schleife. Schleife 55 px ueber bis 65 px unter der Linie, 178 px ueber das Streckenende hinaus, landet 4,5 px neben der Linie |
+| Normale | Tempo 102: seitlich 51 bis 102 px/s, wippt 50 px hoch und runter |
+| Scheue | haelt 241 px (ihr Wunsch), weicht mit 212 px/s vor der Kanone (281 px/s), eingeholt nach 3,1 s |
+| Koeder | Warnung 700 px entfernt: nach 0,63 s darunter, zappelt in der Spalte, Bogen 63 px tief, steht beim Fall 230 px neben der Mitte, lebt danach |
+| Teleport | in 15 s fuenf Spruenge (212 bis 263 px), davor 9 blasse Bilder |
+| Boss ohne Treffer | nach 5,2 s am oberen Rand, 486 px im Bild (ein Drittel sind 480) |
+| Boss, Treffer 1 und 2 | Leben 3 -> 2 -> 1, Nadel steckt als Kind im Boss, er liegt danach 150 px tiefer, Flugkraft bleibt 0 |
+| Boss, Treffer 3 | gefangen, Flugkraft 15, haengt im Faecher, die zwei alten Faeden sind weg |
+| Boss entkommt mit Nadel | nach 8,1 s geloescht, Nadel mit ihm, Flugkraft unveraendert |
+| Sprung in jede Zone | Name und Farbe stimmen, es fliegen nur die Arten der Zone, in Zone Boss kam in drei von vier Laeufen in 30 s mindestens ein Boss |
+
+- Bilder mit Fenster angesehen: Schwarm am Boden mit Buchstaben, Schleife als Spur (Tropfenform), drei Koeder-Fliegen in der gelben Spalte, Boss mit zwei Nadeln und zwei Faeden zur Muendung, gefangener Boss im Faecher.
+- Gesehen, nicht geaendert: Der gefangene Boss ragt oben halb aus dem Bild, der Faecher rechnet seine Groesse nicht ein (Abschnitt 10).
+- Nicht gemessen: wie sich die Arten spielen, ob die Zahlen stimmen. Das entscheidest du. Am Handy nicht geprueft (die Sprungtasten gibt es nur auf der Tastatur).
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum bleibt die schnelle Fliege in der Schleife gleich schnell?
+2. Die Koeder-Fliege ruft `warnung.gewarnt` ab. In welchem Skript steht diese Variable, und woher weiss die Fliege, welche Hindernisse es gibt?
+3. Was passiert der Reihe nach, wenn die dritte Nadel den Boss trifft?
+
+<details><summary>Antworten</summary>
+
+1. Bewegt wird sie nur in einer Zeile: Richtung mal `tempo` mal `delta`. Zum Wenden aendert sich nur der Winkel, nie das Tempo.
+2. In `hindernis.gd`. Die Hindernisse sind in der Gruppe `hindernisse`, und `get_tree().get_nodes_in_group("hindernisse")` liefert alle.
+3. `leben` ist 1, also nicht mehr groesser als 1: Die Nadel ruft `aufspiessen` statt `stecken_in`. Der Boss wird Kind der Nadel und gilt als gefangen, die Faeden der zwei alten Nadeln loesen sich. Ist keine Fliege mehr darueber, bleibt die Nadel stecken und sendet `getroffen`. Die Uebergabe sendet `gefangen` mit 15, `spiel.gd` zaehlt und steigt, der Arm bringt Nadel und Boss in den Faecher.
+
+</details>

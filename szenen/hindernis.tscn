@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" path="res://szenen/blutfleck.tscn" id="2_blutfleck"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/warnung.wav" id="3_warnung"]
 
-[node name="Hindernis" type="Node2D"]
+[node name="Hindernis" type="Node2D" groups=["hindernisse"]]
 script = ExtResource("1_hindernis")
 matsch_szene = ExtResource("2_blutfleck")
 

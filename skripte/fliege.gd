@@ -1,53 +1,72 @@
 extends Node2D
 
-# Wie schnell die Fliege seitlich fliegt, in Pixeln pro Sekunde.
-@export var tempo: float = 150.0
-# Wie weit die Fliege von ihrer Mitte nach links und nach rechts fliegt, in Pixeln.
-@export var strecke: float = 300.0
+# Das Gemeinsame aller Fliegen. Jede Art hat ein eigenes Skript, das auf diesem aufbaut (extends)
+# und nur ihre eigene Flugweise dazuschreibt.
+
+# Das langsamste und das schnellste Tempo dieser Art, in Pixeln pro Sekunde. Jede Fliege wuerfelt ihr eigenes dazwischen.
+@export var tempo_langsam: float = 100.0
+@export var tempo_schnell: float = 180.0
 # Wie viel Flugkraft die Fliege gibt, wenn sie gefangen ist.
 @export var flugkraft: int = 2
 # Die halbe Breite und die halbe Hoehe der Fliege, in Pixeln. 50 heisst: Die Fliege ist 100 mal 100 gross.
 @export var halbe_groesse: float = 50.0
-# Wie schnell sich die Fliege um sich selbst dreht, im Bogenmass pro Sekunde. 0 heisst: gar nicht.
-@export var drehtempo: float = 0.0
-# Wie weit die Fliege hoch und runter wippt, in Pixeln. 0 heisst: gar nicht.
-@export var wipp_hoehe: float = 0.0
-# Wie schnell sie wippt. 4 heisst: ein Auf und Ab dauert etwa 1,6 Sekunden.
-@export var wipp_tempo: float = 4.0
+# Wie oft man die Fliege treffen muss, bis sie gefangen ist. Nur der Boss braucht mehr als 1.
+@export var leben: int = 1
+# true heisst: Der Erzeuger laesst sie fliehen, wenn sie zu tief oder zu hoch im Bild ist. Der Boss flieht nie.
+@export var flieht: bool = true
 # Wie tief und wie hoch das Summen hoechstens klingt. 1 ist die Tonhoehe der Datei. Jede Fliege wuerfelt ihre eigene.
 @export var tonhoehe_tief: float = 0.8
 @export var tonhoehe_hoch: float = 1.4
 
-# Um diese Stelle fliegt die Fliege hin und her. Setzt der Erzeuger, bevor die Fliege ins Spiel kommt.
+# Das Tempo dieser einen Fliege. Wird beim Start ausgewuerfelt.
+var tempo: float = 0.0
+# Die Kanone. Manche Arten richten sich nach ihr. Setzt der Erzeuger, bevor die Fliege ins Spiel kommt.
+var kanone: Node2D = null
+# Um diese Stelle herum haelt sich die Fliege auf. Setzt der Erzeuger, bevor die Fliege ins Spiel kommt.
 var mitte_x: float = 0.0
 # 1 heisst nach rechts, -1 heisst nach links.
 var richtung: float = 1.0
 # true heisst: Die Fliege haengt an der Nadel und fliegt nicht mehr.
 var gefangen: bool = false
-# 0 heisst: Die Fliege fliegt hin und her. 1 oder -1 heisst: Sie flieht nach rechts oder links aus dem Bild. Setzt der Erzeuger.
-var flucht: float = 0.0
-# Die Hoehe, um die die Fliege wippt.
+# In diese Richtung flieht die Fliege aus dem Bild. Vector2.ZERO heisst: Sie flieht nicht. Setzt der Erzeuger.
+var flucht: Vector2 = Vector2.ZERO
+# Die Hoehe, auf der die Fliege zu Hause ist. Um sie herum wippt oder kreist sie.
 var grund_y: float = 0.0
-# Wie viele Sekunden die Fliege schon fliegt. Daraus wird das Wippen berechnet.
+# Wie viele Sekunden die Fliege schon fliegt.
 var zeit: float = 0.0
+# Die Nadeln, die in der Fliege stecken, solange sie noch nicht gefangen ist. Nur beim Boss.
+var steckende: Array[Node2D] = []
 
 
 func _ready() -> void:
+	tempo = randf_range(tempo_langsam, tempo_schnell)
 	grund_y = position.y
+	if mitte_x < position.x:
+		richtung = -1.0
 	$Summen.pitch_scale = randf_range(tonhoehe_tief, tonhoehe_hoch)
+	losfliegen()
 
 
 func _process(delta: float) -> void:
 	if gefangen:
 		return
 	zeit += delta
-	rotation += drehtempo * delta
-	position.y = grund_y + sin(zeit * wipp_tempo) * wipp_hoehe
-	if flucht != 0.0:
-		position.x += flucht * tempo * delta
+	if flucht != Vector2.ZERO:
+		position += flucht * tempo * delta
 		return
-	position.x += richtung * tempo * delta
-	if position.x > mitte_x + strecke:
-		richtung = -1.0
-	if position.x < mitte_x - strecke:
-		richtung = 1.0
+	fliegen(delta)
+
+
+# Wird einmal aufgerufen, wenn die Fliege ins Spiel kommt. Hier leer, eine Art kann sie ueberschreiben.
+func losfliegen() -> void:
+	pass
+
+
+# Wird in jedem Bild aufgerufen, solange die Fliege frei ist und nicht flieht. Hier leer, jede Art ueberschreibt sie.
+func fliegen(_delta: float) -> void:
+	pass
+
+
+# Wird aufgerufen, wenn eine Nadel die Fliege trifft, sie aber noch nicht gefangen ist. Hier leer, der Boss ueberschreibt sie.
+func angeschossen() -> void:
+	pass

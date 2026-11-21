@@ -1,7 +1,7 @@
 extends Node2D
 
 # Hoechstes Tempo der Kanone, in Pixeln pro Sekunde.
-@export var tempo: float = 250.0
+@export var tempo: float = 281.0
 # Wie schnell die Kanone anfaehrt und abbremst, in Pixeln pro Sekunde pro Sekunde.
 @export var beschleunigung: float = 600.0
 # Welcher Teil des Tempos waehrend Uebergabe und Steigen bleibt. 0 heisst: Man lenkt dann gar nicht, 0.5 hiesse halb so schnell.

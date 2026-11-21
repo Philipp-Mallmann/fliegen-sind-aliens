@@ -36,6 +36,7 @@ var wackel_zeit: float = 0.0
 
 func _ready() -> void:
 	$Kanone/Uebergabe.gefangen.connect(fliege_zaehlen)
+	$Kanone/Uebergabe.gefangen.connect($Erzeuger.schwarm_aufloesen)
 	$Kanone/Faecher.verloren.connect(fliege_verlieren)
 	$Kanone/Aufstehen.animation_finished.connect(neustart)
 	$Kanone/RechteHand/Leiste.max_value = ziel
@@ -77,6 +78,13 @@ func fliege_zaehlen(dazu: int) -> void:
 		$Hindernisse.set_process(false)
 		for hindernis in $Hindernisse.get_children():
 			hindernis.queue_free()
+
+
+# Nur zum Testen (test_sprung.gd): setzt die Flugkraft auf einen Wert und faehrt dorthin, als haette man gerade gefangen.
+func springen(auf: int) -> void:
+	flugkraft = auf
+	$Erzeuger.schwarm_aufloesen(0)
+	fliege_zaehlen(0)
 
 
 func fliege_verlieren(weg: int) -> void:
