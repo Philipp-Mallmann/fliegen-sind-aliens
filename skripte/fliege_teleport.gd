@@ -2,6 +2,8 @@ extends "res://skripte/fliege.gd"
 
 # Die Teleport-Fliege: fliegt hin und her. Kommt die Kanone unter sie, flackert sie kurz und springt zur Seite.
 # Das kann sie ein paarmal hintereinander, dann muss sie sich erholen. In dieser Pause kann man sie fangen.
+# Wie viele Spruenge sie noch hat, sieht man am Schimmer um sie herum und hoert man an ihrem Summen:
+# Mit jedem Sprung wird beides schwaecher. Ist es ganz weg, erholt sie sich, und es waechst langsam wieder an.
 
 # Wie weit die Fliege von ihrer Mitte nach links und nach rechts fliegt, in Pixeln.
 @export var strecke: float = 150.0
@@ -20,6 +22,11 @@ extends "res://skripte/fliege.gd"
 # Wie weit sie mindestens und hoechstens springt, in Pixeln.
 @export var sprung_nah: float = 200.0
 @export var sprung_weit: float = 350.0
+# Wie laut das Summen mit allen Spruengen ist und wie laut ohne, in Dezibel.
+@export var summen_voll: float = -20.0
+@export var summen_leer: float = -32.0
+# Wie tief das Summen ohne Spruenge klingt, als Anteil ihrer eigenen Tonhoehe. 0.6 heisst: deutlich tiefer.
+@export var tonhoehe_leer: float = 0.6
 
 # Wie viele Spruenge sie noch hat. 0 heisst: Sie erholt sich gerade.
 var uebrig: int = 0
@@ -27,10 +34,13 @@ var uebrig: int = 0
 var erholt_in: float = 0.0
 # Wie viele Sekunden sie noch flackert, bevor sie springt. 0 oder weniger heisst: Sie flackert nicht.
 var flackert_noch: float = 0.0
+# Ihre eigene Tonhoehe, wie sie beim Start ausgewuerfelt wurde. Davon geht das tiefere Summen aus.
+var eigene_tonhoehe: float = 1.0
 
 
 func losfliegen() -> void:
 	uebrig = spruenge
+	eigene_tonhoehe = $Summen.pitch_scale
 
 
 func fliegen(delta: float) -> void:
@@ -40,6 +50,10 @@ func fliegen(delta: float) -> void:
 	if position.x < mitte_x - strecke:
 		richtung = 1.0
 	modulate.a = 1.0
+	var ladung: float = ladung_jetzt()
+	$Schimmer.modulate.a = ladung
+	$Summen.volume_db = lerpf(summen_leer, summen_voll, ladung)
+	$Summen.pitch_scale = eigene_tonhoehe * lerpf(tonhoehe_leer, 1.0, ladung)
 	if uebrig == 0:
 		erholt_in -= delta
 		if erholt_in <= 0.0:
@@ -66,3 +80,11 @@ func springen() -> void:
 	uebrig -= 1
 	if uebrig == 0:
 		erholt_in = erholzeit
+
+
+# Wie viel Sprungkraft sie gerade hat: 1 heisst alle Spruenge, 0 heisst keiner.
+# Waehrend der Erholung waechst sie gleitend von 0 bis 1.
+func ladung_jetzt() -> float:
+	if uebrig == 0:
+		return 1.0 - erholt_in / erholzeit
+	return float(uebrig) / float(spruenge)

@@ -4743,3 +4743,50 @@ Steht in `warnzeit_hier` hinter der Zeile fuer die erste Haelfte, gilt also erst
 
 - Verify PASS, Schnellcheck PASS fuer beide Skripte.
 - Nicht gemessen: wie es sich spielt. Dafuer der Draft auf itch.
+
+## Spass-Test, Runde 18 - Teleport-Fliege zeigt ihre Spruenge mit Schimmer und Summen
+
+### `szenen/fliege_teleport.tscn` - geaendert
+
+Neuer erster Kindknoten `Schimmer` (`Sprite2D`). Sein Bild ist eine `GradientTexture2D`, 240 x 240 Pixel, mit `fill = 1`: Das heisst kreisfoermig, von der Mitte (`fill_from` 0.5, 0.5) bis zum Rand (`fill_to` 0.5, 0). Der Verlauf geht von hellem Tuerkis (Deckkraft 0.8) zu voellig durchsichtig. So entsteht ein weicher Lichthof. Weil er der erste Kindknoten ist, wird er zuerst gemalt und liegt damit hinter Fluegel und Koerper.
+
+### `skripte/fliege_teleport.gd` - geaendert
+
+```gdscript
+@export var summen_voll: float = -20.0
+@export var summen_leer: float = -32.0
+@export var tonhoehe_leer: float = 0.6
+```
+Neu. Mit allen Spruengen summt sie so laut wie bisher (-20 dB). Ohne Spruenge ist sie 12 dB leiser und klingt tiefer, nur noch 0.6 ihrer eigenen Tonhoehe.
+
+```gdscript
+var eigene_tonhoehe: float = 1.0
+```
+Neu. `fliege.gd` wuerfelt in `_ready` fuer jede Fliege eine eigene Tonhoehe aus. Die wird hier gemerkt, sonst wuerde das Tieferwerden sie ueberschreiben.
+
+```gdscript
+	eigene_tonhoehe = $Summen.pitch_scale
+```
+In `losfliegen`. Das laeuft am Ende von `_ready`, die Tonhoehe ist dann schon ausgewuerfelt.
+
+```gdscript
+	var ladung: float = ladung_jetzt()
+	$Schimmer.modulate.a = ladung
+	$Summen.volume_db = lerpf(summen_leer, summen_voll, ladung)
+	$Summen.pitch_scale = eigene_tonhoehe * lerpf(tonhoehe_leer, 1.0, ladung)
+```
+In `fliegen`, also in jedem Bild. `ladung` ist eine Zahl von 0 bis 1. Der Schimmer bekommt sie direkt als Deckkraft. Lautstaerke und Tonhoehe werden mit `lerpf` zwischen dem Wert fuer leer und dem fuer voll gemischt.
+
+```gdscript
+func ladung_jetzt() -> float:
+	if uebrig == 0:
+		return 1.0 - erholt_in / erholzeit
+	return float(uebrig) / float(spruenge)
+```
+Neu. Hat sie noch Spruenge, ist die Ladung `uebrig` geteilt durch `spruenge`: 3 von 3 ist 1, 2 von 3 ist 0.67, 1 von 3 ist 0.33. Das `float(...)` ist noetig, weil beide ganze Zahlen sind und `2 / 3` sonst 0 ergibt. Erholt sie sich, zaehlt `erholt_in` von 2,5 auf 0 herunter. `erholt_in / erholzeit` geht also von 1 nach 0, und `1.0 - ...` davon waechst von 0 nach 1. Schimmer und Summen kommen so in 2,5 Sekunden gleitend zurueck.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS.
+- Probe ohne Bildschirm (Kanone immer genau unter der Fliege): Schimmer 1,00 -> 0,67 -> 0,33 -> 0, Summen -20 -> -24 -> -28 -> -32 dB. Danach in 2,5 s gleitend zurueck auf 1,00, dann springt sie wieder.
+- Nicht angeschaut: wie der Schimmer aussieht und wie das Summen klingt. Gefangen behaelt sie den Schimmer, den sie gerade hatte, auch am Faden.
