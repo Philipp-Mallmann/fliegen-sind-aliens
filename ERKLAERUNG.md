@@ -4686,3 +4686,60 @@ Am Knoten `Zonen/Koeder` steht in `fliegen` nur noch die Koeder-Fliege. Die norm
 
 - Verify PASS.
 - Probe: siehe `game_spec.md`, Changelog vom 21.11.
+
+## Spass-Test, Runde 17 - weniger Punkte, normale Fliege mit Bremse, knappe Hindernisse oben
+
+### `szenen/fliege_scheu.tscn`, `fliege_schnell.tscn`, `fliege_teleport.tscn` - geaendert
+
+Nur der Wert `flugkraft` im Inspector. Kein Code geaendert.
+
+| Fliege | vorher | jetzt |
+|--------|--------|-------|
+| normal | 2 | 2 |
+| scheu | 3 | 1 |
+| schnell | 5 | 4 |
+| koeder | 4 | 4 |
+| teleport | 8 | 7 |
+| boss | 15 | 15 |
+
+Die Zonen bleiben bei 0, 25, 50 und 75. Weil die Fliegen weniger geben, braucht man in den Zonen mehr Faenge.
+
+### `skripte/fliege_normal.gd` - geaendert
+
+```gdscript
+@export var drehtempo: float = 12.56
+```
+Vorher 6.28, also eine Umdrehung pro Sekunde. Jetzt zwei.
+
+```gdscript
+@export var bremse_alle: float = 2.0
+@export var bremse_dauer: float = 0.5
+@export var bremse_anteil: float = 0.5
+```
+Neu. Alle 2 Sekunden bremst die Fliege fuer eine halbe Sekunde auf die Haelfte ab. Das kommt zum bisherigen langsamen Schwanken dazu, ersetzt es nicht.
+
+```gdscript
+	if fmod(zeit, bremse_alle) > bremse_alle - bremse_dauer:
+		jetzt = jetzt * bremse_anteil
+```
+`fmod(zeit, 2.0)` ist der Rest beim Teilen durch 2: Er zaehlt von 0 bis 2 hoch und faengt dann wieder bei 0 an. Ist er groesser als 1,5, steckt die Fliege in der letzten halben Sekunde dieser 2 Sekunden. Dann wird ihr Tempo von gerade eben noch einmal halbiert.
+
+### `skripte/hindernis_erzeuger.gd` - geaendert
+
+```gdscript
+@export var knapp_anteil_oben: float = 0.5
+@export var knapp_kurz: float = 3.0
+@export var knapp_lang: float = 4.0
+```
+Neu. Ab der Haelfte kommen knappe Hindernisse dazu, mit nur 3 bis 4 Sekunden Warnzeit. Ganz oben bei 100 Flugkraft ist es jedes zweite.
+
+```gdscript
+	if randf() < knapp_anteil_oben * anteil_oben():
+		return randf_range(knapp_kurz, knapp_lang)
+```
+Steht in `warnzeit_hier` hinter der Zeile fuer die erste Haelfte, gilt also erst ab der Haelfte. `anteil_oben()` ist an der Haelfte 0 und oben 1. Mal 0.5 heisst: An der Haelfte ist keins knapp, bei 75 Flugkraft jedes vierte, oben jedes zweite. Trifft der Wurf nicht, gilt die Warnzeit von vorher (9 Sekunden an der Haelfte, gleitend bis 5 oben).
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS fuer beide Skripte.
+- Nicht gemessen: wie es sich spielt. Dafuer der Draft auf itch.

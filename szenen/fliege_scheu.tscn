@@ -8,7 +8,7 @@ z_index = 1
 script = ExtResource("1_fliege")
 tempo_langsam = 255.0
 tempo_schnell = 285.0
-flugkraft = 3
+flugkraft = 1
 
 [node name="Fluegel" type="ColorRect" parent="."]
 offset_left = -40.0

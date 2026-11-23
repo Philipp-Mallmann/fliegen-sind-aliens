@@ -28,6 +28,12 @@ extends Node2D
 # Wo die Spitze liegt und wo das Ende, in Pixeln Hoehe. 15000 ist die Haelfte, 30000 sind 100 Flugkraft (100 x 300 px).
 @export var hoehe_spitze: float = 15000.0
 @export var hoehe_ende: float = 30000.0
+# Ab der Haelfte kommen zusaetzlich knappe Hindernisse. So oft ganz oben bei 100 Flugkraft: 0.5 heisst jedes zweite.
+# An der Haelfte ist es keins, dazwischen gleitend mehr.
+@export var knapp_anteil_oben: float = 0.5
+# Die Warnzeit eines knappen Hindernisses liegt zwischen diesen beiden, in Sekunden.
+@export var knapp_kurz: float = 3.0
+@export var knapp_lang: float = 4.0
 
 # Wie viele Sekunden es noch bis zum naechsten Hindernis dauert.
 var naechstes_in: float = 0.0
@@ -60,6 +66,8 @@ func warnzeit_hier() -> float:
 	var hoehe: float = -kanone.position.y
 	if hoehe < hoehe_spitze:
 		return lerpf(warnzeit_unten, warnzeit_spitze, clampf(hoehe / hoehe_spitze, 0.0, 1.0))
+	if randf() < knapp_anteil_oben * anteil_oben():
+		return randf_range(knapp_kurz, knapp_lang)
 	return lerpf(warnzeit_spitze, warnzeit_ende, anteil_oben())
 
 
