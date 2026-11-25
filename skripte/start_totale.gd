@@ -39,6 +39,13 @@ var nachladen_noch: float = 0.0
 var erste_nadel: Node2D = null
 
 
+# Setzt den Arm an den Koerper. Zwei Marker sagen, wo: Schulterpunkt liegt auf dem Koerper an der Schulter,
+# Drehpunkt liegt auf dem Arm an der Stelle, um die er sich dreht. Beide verschiebt man im Editor.
+func _ready() -> void:
+	$Schulter.position = $Schulterpunkt.position
+	$Schulter/Armbild.position = -$Schulter/Armbild/Drehpunkt.position
+
+
 func _input(ereignis: InputEvent) -> void:
 	if ereignis is InputEventMouseMotion:
 		maus_zielt = true
@@ -72,10 +79,10 @@ func schiessen(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("schiessen"):
 		var nadel: Node2D = nadel_szene.instantiate()
-		nadel.position = $Schulter/Spitze.global_position
+		nadel.position = $Schulter/Armbild/Spitze.global_position
 		nadel.rotation = $Schulter.global_rotation
 		nadel.richtung = Vector2.UP.rotated($Schulter.global_rotation)
-		nadel.anker = $Schulter/Spitze
+		nadel.anker = $Schulter/Armbild/Spitze
 		kanone.get_parent().add_child(nadel)
 		nadel.getroffen.connect(erster_treffer)
 		nachladen_noch = nachladezeit

@@ -516,37 +516,44 @@ offset_right = 66.0
 offset_bottom = -858.0
 color = Color(0.7, 0.7, 0.7, 1)
 
+[node name="Schulterpunkt" type="Marker2D" parent="Kanone/Figur"]
+position = Vector2(130, -812)
+
 [node name="Schulter" type="Node2D" parent="Kanone/Figur"]
 position = Vector2(130, -812)
 
-[node name="Arm" type="ColorRect" parent="Kanone/Figur/Schulter"]
+[node name="Armbild" type="Node2D" parent="Kanone/Figur/Schulter"]
+
+[node name="Drehpunkt" type="Marker2D" parent="Kanone/Figur/Schulter/Armbild"]
+
+[node name="Arm" type="ColorRect" parent="Kanone/Figur/Schulter/Armbild"]
 offset_left = -30.0
 offset_top = -400.0
 offset_right = 30.0
 color = Color(0.55, 0.55, 0.55, 1)
 
-[node name="Faust" type="ColorRect" parent="Kanone/Figur/Schulter"]
+[node name="Faust" type="ColorRect" parent="Kanone/Figur/Schulter/Armbild"]
 offset_left = -60.0
 offset_top = -435.0
 offset_right = 60.0
 offset_bottom = -395.0
 color = Color(0.6, 0.6, 0.6, 1)
 
-[node name="Koerper" type="ColorRect" parent="Kanone/Figur/Schulter"]
+[node name="Koerper" type="ColorRect" parent="Kanone/Figur/Schulter/Armbild"]
 offset_left = -40.0
 offset_top = -460.0
 offset_right = 40.0
 offset_bottom = -400.0
 color = Color(0.75, 0.75, 0.75, 1)
 
-[node name="Rohr" type="ColorRect" parent="Kanone/Figur/Schulter"]
+[node name="Rohr" type="ColorRect" parent="Kanone/Figur/Schulter/Armbild"]
 offset_left = -8.0
 offset_top = -540.0
 offset_right = 8.0
 offset_bottom = -460.0
 color = Color(0.75, 0.75, 0.75, 1)
 
-[node name="Spitze" type="Marker2D" parent="Kanone/Figur/Schulter"]
+[node name="Spitze" type="Marker2D" parent="Kanone/Figur/Schulter/Armbild"]
 position = Vector2(0, -540)
 
 [node name="Einstellungsfliege" type="Node2D" parent="."]

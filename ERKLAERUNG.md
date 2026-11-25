@@ -5400,3 +5400,37 @@ Nach dem Aufstehen laedt `neustart` die Szene neu wie bisher. Weil die Szene jet
 1. Warum zeigt die Kanonenspitze nicht mehr genau auf den Mauszeiger, wenn man die Figur mit den Pfeiltasten kippt? Welche Zeile muesste man aendern, damit sie es doch tut?
 2. Woran erkennt die Nadel, dass sie aus der Totale kommt, und an welchen zwei Stellen in `nadel.gd` macht das einen Unterschied?
 3. Warum zeigt der Regler nach einem Absturz noch die eingestellte Lautstaerke, obwohl die ganze Szene neu geladen wurde?
+
+## Abschnitt 13, Nachtrag - zwei Marker fuer den Arm
+
+Wozu: Wenn die Bilder kommen, muss der Arm genau an der Schulter des Koerpers sitzen und sich um die richtige Stelle drehen. Beides stellt man jetzt im Editor mit zwei Markern ein, ohne Zahlen im Code.
+
+### `szenen/spiel.tscn` - geaendert
+
+- Neu `Kanone/Figur/Schulterpunkt` (Marker2D) an (130, -812). Er liegt auf dem Koerper und sagt: Hier sitzt die Schulter.
+- Neu `Kanone/Figur/Schulter/Armbild` (Node2D). Alles, was zum Arm gehoert, liegt jetzt darin: `Arm`, `Faust`, `Koerper`, `Rohr`, `Spitze`. Vorher lagen sie direkt in `Schulter`.
+- Neu `Kanone/Figur/Schulter/Armbild/Drehpunkt` (Marker2D) an (0, 0). Er liegt auf dem Arm und sagt: Um diese Stelle dreht sich der Arm.
+
+Mit dem Armbild verschiebt man im Editor nur noch die beiden Marker: `Schulterpunkt` auf die Schulter im Koerperbild, `Drehpunkt` auf das Schultergelenk im Armbild.
+
+### `skripte/start_totale.gd` - geaendert
+
+```gdscript
+func _ready() -> void:
+	$Schulter.position = $Schulterpunkt.position
+	$Schulter/Armbild.position = -$Schulter/Armbild/Drehpunkt.position
+```
+Neu. `_ready` laeuft einmal beim Start. Erste Zeile: Der Knoten `Schulter`, der sich dreht, springt auf den `Schulterpunkt` des Koerpers. Zweite Zeile: Das Armbild wird um den Weg zum `Drehpunkt` zurueckgeschoben, darum das Minus. Liegt der `Drehpunkt` zum Beispiel 40 Pixel rechts im Armbild, rutscht das Armbild 40 Pixel nach links. Danach liegt der `Drehpunkt` genau auf dem Nullpunkt von `Schulter`, und um den Nullpunkt dreht Godot einen Knoten.
+
+```gdscript
+		nadel.position = $Schulter/Armbild/Spitze.global_position
+		nadel.anker = $Schulter/Armbild/Spitze
+```
+In `schiessen`. Nur der Pfad ist laenger, weil `Spitze` jetzt im `Armbild` liegt.
+
+Zu beachten: Damit man den Tausch gegen die Kanone des Spiels nach dem Einstieg nicht sieht, muss die Faust bei senkrechtem Arm genau auf der Kanone liegen. Mit den jetzigen Werten tut sie das (Schulterpunkt 812 ueber den Fuessen, Faust 400 ueber dem Drehpunkt, Figur 1212 unter der Kanone).
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS.
+- Probe ohne Bildschirm: Mit den Markern an ihren Startwerten liegt die Spitze an derselben Stelle wie vorher. Drehpunkt um (40, 0) verschoben: Das Armbild liegt bei (-40, 0).
