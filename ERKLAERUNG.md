@@ -4790,3 +4790,21 @@ Neu. Hat sie noch Spruenge, ist die Ladung `uebrig` geteilt durch `spruenge`: 3 
 - Verify PASS, Schnellcheck PASS.
 - Probe ohne Bildschirm (Kanone immer genau unter der Fliege): Schimmer 1,00 -> 0,67 -> 0,33 -> 0, Summen -20 -> -24 -> -28 -> -32 dB. Danach in 2,5 s gleitend zurueck auf 1,00, dann springt sie wieder.
 - Nicht angeschaut: wie der Schimmer aussieht und wie das Summen klingt. Gefangen behaelt sie den Schimmer, den sie gerade hatte, auch am Faden.
+
+## Spass-Test, Runde 19 - Teleport-Fliege: nur die Tonhoehe aendert sich
+
+### `skripte/fliege_teleport.gd` - geaendert
+
+Weg sind diese drei Zeilen aus Runde 18:
+
+```gdscript
+@export var summen_voll: float = -20.0
+@export var summen_leer: float = -32.0
+	$Summen.volume_db = lerpf(summen_leer, summen_voll, ladung)
+```
+Die Fliege summt jetzt immer gleich laut, mit den -20 dB aus der Szene. Mit der Ladung aendert sich nur noch die Tonhoehe: 3 Spruenge die eigene, 2 Spruenge x0,87, 1 Sprung x0,73, keiner x0,6 (am tiefsten). Die Kommentarzeilen oben im Skript sagen jetzt dasselbe.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS.
+- Nicht angehoert.

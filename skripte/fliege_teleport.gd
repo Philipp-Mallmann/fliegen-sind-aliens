@@ -3,7 +3,8 @@ extends "res://skripte/fliege.gd"
 # Die Teleport-Fliege: fliegt hin und her. Kommt die Kanone unter sie, flackert sie kurz und springt zur Seite.
 # Das kann sie ein paarmal hintereinander, dann muss sie sich erholen. In dieser Pause kann man sie fangen.
 # Wie viele Spruenge sie noch hat, sieht man am Schimmer um sie herum und hoert man an ihrem Summen:
-# Mit jedem Sprung wird beides schwaecher. Ist es ganz weg, erholt sie sich, und es waechst langsam wieder an.
+# Mit jedem Sprung wird der Schimmer schwaecher und das Summen tiefer.
+# Ist der Schimmer ganz weg, erholt sie sich, und beides kommt langsam zurueck.
 
 # Wie weit die Fliege von ihrer Mitte nach links und nach rechts fliegt, in Pixeln.
 @export var strecke: float = 150.0
@@ -22,9 +23,6 @@ extends "res://skripte/fliege.gd"
 # Wie weit sie mindestens und hoechstens springt, in Pixeln.
 @export var sprung_nah: float = 200.0
 @export var sprung_weit: float = 350.0
-# Wie laut das Summen mit allen Spruengen ist und wie laut ohne, in Dezibel.
-@export var summen_voll: float = -20.0
-@export var summen_leer: float = -32.0
 # Wie tief das Summen ohne Spruenge klingt, als Anteil ihrer eigenen Tonhoehe. 0.6 heisst: deutlich tiefer.
 @export var tonhoehe_leer: float = 0.6
 
@@ -52,7 +50,6 @@ func fliegen(delta: float) -> void:
 	modulate.a = 1.0
 	var ladung: float = ladung_jetzt()
 	$Schimmer.modulate.a = ladung
-	$Summen.volume_db = lerpf(summen_leer, summen_voll, ladung)
 	$Summen.pitch_scale = eigene_tonhoehe * lerpf(tonhoehe_leer, 1.0, ladung)
 	if uebrig == 0:
 		erholt_in -= delta
