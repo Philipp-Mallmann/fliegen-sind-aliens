@@ -5434,3 +5434,152 @@ Zu beachten: Damit man den Tausch gegen die Kanone des Spiels nach dem Einstieg 
 
 - Verify PASS, Schnellcheck PASS.
 - Probe ohne Bildschirm: Mit den Markern an ihren Startwerten liegt die Spitze an derselben Stelle wie vorher. Drehpunkt um (40, 0) verschoben: Das Armbild liegt bei (-40, 0).
+
+## Musik - Schleife, Ende im All, leise in der Totale, gedaempft in den Einstellungen
+
+Was neu ist, in einem Absatz: Es gibt Musik. Ein Stueck laeuft in einer Endlosschleife. In der Totale ist es ganz leise, mit dem Spielstart wird es laut, nach einem Absturz auf 0 wieder leise. Bei "Im All!" setzt ein eigenes Ende ein und die Schleife verklingt. Solange die Wand mit den Einstellungen oben ist, klingt die Musik dumpf.
+
+### Die zwei Tondateien
+
+Geliefert wurden zwei Stuecke. Sie sind bis Sekunde 115,2 gleich, das zweite geht danach 51 Sekunden weiter und hat das Ende. Gemessen: Ein Schlag dauert 0,8 Sekunden, 115,2 Sekunden sind genau 144 Schlaege, also 36 Takte. Darum laesst sich das Stueck dort ohne Stolpern an den Anfang haengen.
+
+Daraus sind zwei neue Dateien geschnitten, die gelieferten bleiben unveraendert:
+
+- `assets/audio/musik/musik_schleife.ogg`: das erste Stueck von 0 bis 115,2 Sekunden.
+- `assets/audio/musik/musik_ende.ogg`: das zweite Stueck ab 115,2 Sekunden bis zum Schluss (52,3 Sekunden).
+
+In `musik_schleife.ogg.import` steht `loop=true`. Das sagt Godot: Am Ende der Datei geht es am Anfang weiter. Man stellt das im Editor im Reiter "Import" der Datei ein (Haken bei "Loop", dann "Reimport").
+
+### `skripte/musik.gd` - neu
+
+```gdscript
+extends Node
+```
+Die Musik braucht keinen Platz im Bild, darum ein einfacher `Node`. Er hat zwei Kinder, beide `AudioStreamPlayer`: `Schleife` und `Ende`.
+
+```gdscript
+@export var laut_db: float = -12.0
+@export var leise_db: float = -30.0
+```
+Die Lautstaerke im Spiel und in der Totale, in Dezibel. 0 waere die volle Lautstaerke der Datei. Jede 6 Dezibel weniger halbieren den Pegel etwa, -30 ist also sehr leise.
+
+```gdscript
+@export var blenddauer: float = 1.5
+@export var ende_blenddauer: float = 0.5
+```
+So lange dauert der Wechsel zwischen leise und laut, und so schnell verklingt die Schleife, wenn das Ende einsetzt.
+
+```gdscript
+var blende: Tween = null
+```
+Der Wechsel der Lautstaerke, der gerade laeuft.
+
+```gdscript
+func _ready() -> void:
+	$Schleife.volume_db = leise_db
+	$Schleife.play()
+```
+Beim Start: leise stellen und abspielen. Das Spiel beginnt in der Totale.
+
+```gdscript
+func laut() -> void:
+	blenden(laut_db)
+
+
+func leise() -> void:
+	blenden(leise_db)
+```
+Zwei kurze Funktionen mit sprechenden Namen. `spiel.gd` ruft sie auf.
+
+```gdscript
+func blenden(ziel_db: float) -> void:
+	if blende != null:
+		blende.kill()
+	blende = create_tween()
+	blende.tween_property($Schleife, "volume_db", ziel_db, blenddauer)
+```
+Laeuft noch ein Wechsel, wird er abgebrochen. Dann faehrt ein neuer Tween die Lautstaerke der Schleife in 1,5 Sekunden auf den Zielwert. Dasselbe Muster wie bei der Kamerafahrt in `spiel.gd`.
+
+```gdscript
+func ende_spielen() -> void:
+	$Ende.volume_db = laut_db
+	$Ende.play()
+```
+Das Ende spielt sofort, so laut wie die Musik im Spiel.
+
+```gdscript
+	if blende != null:
+		blende.kill()
+	blende = create_tween()
+	blende.tween_property($Schleife, "volume_db", -60.0, ende_blenddauer)
+	blende.tween_callback($Schleife.stop)
+```
+Gleichzeitig wird die Schleife in einer halben Sekunde auf -60 Dezibel gefahren, das ist unhoerbar, und danach angehalten. Fuer diese halbe Sekunde hoert man beide uebereinander. Das Ende setzt sofort ein, nicht erst am naechsten Takt.
+
+### `default_bus_layout.tres` - geaendert
+
+Der Bus `Musik` hat jetzt einen Effekt: `AudioEffectLowPassFilter` mit `cutoff_hz = 600.0`. Ein Tiefpass laesst nur die tiefen Toene durch, hier alles unter etwa 600 Hertz. Die Musik klingt damit dumpf, wie durch eine Wand. `bus/1/effect/0/enabled = false` heisst: Der Effekt ist beim Start aus.
+
+### `skripte/einstellungen.gd` - geaendert
+
+```gdscript
+	musik_daempfen(true)
+```
+In `oeffnen`: Sobald die Wand hochfaehrt, ist der Daempfer an.
+
+```gdscript
+	musik_daempfen(false)
+```
+In `zu`: Ist die Wand wieder unten, ist er aus.
+
+```gdscript
+func musik_daempfen(an: bool) -> void:
+	AudioServer.set_bus_effect_enabled(AudioServer.get_bus_index("Musik"), 0, an)
+```
+Neu. `set_bus_effect_enabled` schaltet einen Effekt auf einem Bus ein oder aus. Die drei Angaben: die Nummer des Busses `Musik`, die Nummer des Effekts auf diesem Bus (0 ist der erste, es gibt nur den einen) und an oder aus.
+
+```gdscript
+func _exit_tree() -> void:
+	musik_daempfen(false)
+```
+Neu. `_exit_tree` ruft Godot, wenn ein Knoten aus dem Spiel verschwindet, zum Beispiel beim Neustart der Szene. Der Daempfer gehoert zur Tonanlage und nicht zur Szene, er uebersteht einen Neustart. Wer bei offener Wand neu startet (Taste R), haette sonst fuer immer dumpfe Musik.
+
+### `skripte/spiel.gd` - geaendert
+
+```gdscript
+	$Musik.laut()
+```
+In `losgehen`: Mit dem Spielstart wird die Musik laut.
+
+```gdscript
+		$Musik.leise()
+```
+In `fliege_verlieren`, im Zweig fuer den Absturz auf 0: Waehrend des Falls zurueck in die Totale wird sie wieder leise.
+
+```gdscript
+		$Musik.ende_spielen()
+```
+In `fliege_zaehlen`, beim Sieg: Das Ende setzt ein.
+
+### `szenen/spiel.tscn` - geaendert
+
+Neu der Knoten `Musik` mit `musik.gd` und den zwei Tonspielern `Schleife` und `Ende`. Beide haben `bus = &"Musik"`. Damit stellt der Regler "Musik" auf der Wand jetzt wirklich die Musik.
+
+### Was man wissen muss
+
+- Nach dem Aufstehen laedt die Szene neu, die Musik beginnt dann von vorn.
+- Im Browser startet Ton erst nach dem ersten Klick oder Tipp. Bis dahin ist es still.
+- Nach dem Ende im All bleibt es still.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS.
+- Die gelieferten Dateien haben vor und nach dem Schneiden dieselbe Pruefsumme.
+- Probe mit Fenster, Pegel auf dem Bus `Musik` gemessen: Totale -32,1 dB, im Spiel -14,4 dB (18 dB Unterschied, wie eingestellt). Mit Daempfer jeweils 1,5 dB weniger Spitze. Schleife: 1,6 Sekunden nach Sekunde 114,4 spielt sie weiter und steht bei 0,8. Im All: Schleife aus, Ende laeuft mit -14,4 dB. Nach dem Ende spielt nichts mehr.
+- Nicht angehoert: ob der Uebergang der Schleife sauber klingt, ob leise und laut passen, wie dumpf der Daempfer wirkt, wie der Einsatz des Endes klingt.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum wird in der Totale die Lautstaerke des Tonspielers geaendert und nicht die des Busses `Musik`?
+2. Was passiert, wenn man `_exit_tree` in `einstellungen.gd` loescht und bei offener Wand die Taste R drueckt?
+3. Warum darf die Schleife genau 115,2 Sekunden lang sein und nicht 116?

@@ -22,6 +22,7 @@ func oeffnen() -> void:
 		return
 	figur.wand_offen = true
 	fliege.visible = false
+	musik_daempfen(true)
 	$Wand.position.y = wiesenkante
 	$Wand.visible = true
 	var fahrt: Tween = create_tween()
@@ -38,6 +39,18 @@ func zu() -> void:
 	$Wand.visible = false
 	fliege.visible = true
 	figur.wand_offen = false
+	musik_daempfen(false)
+
+
+# Schaltet den Daempfer auf dem Tonkanal Musik ein oder aus. Mit Daempfer klingt die Musik dumpf, wie durch eine Wand.
+func musik_daempfen(an: bool) -> void:
+	AudioServer.set_bus_effect_enabled(AudioServer.get_bus_index("Musik"), 0, an)
+
+
+# Wird gerufen, wenn die Szene verschwindet, zum Beispiel beim Neustart. Der Daempfer gehoert zur Tonanlage, nicht zur Szene.
+# Ohne diese Zeile bliebe er an, wenn man bei offener Wand neu startet.
+func _exit_tree() -> void:
+	musik_daempfen(false)
 
 
 func _input(ereignis: InputEvent) -> void:

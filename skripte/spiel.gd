@@ -70,6 +70,7 @@ func losgehen() -> void:
 	$Kanone/RechteHand.visible = true
 	$Kanone.set_process(true)
 	$Hindernisse.set_process(true)
+	$Musik.laut()
 
 
 # Wird von der Figur gerufen, wenn die Einstiegs-Sequenz nach dem ersten Treffer vorbei ist. Mit dabei: die Nadel mit der Fliege.
@@ -95,6 +96,7 @@ func fliege_zaehlen(dazu: int) -> void:
 	if flugkraft >= ziel:
 		$Bedienung/Sieg.visible = true
 		$Ton/Sieg.play()
+		$Musik.ende_spielen()
 		$Kanone.set_process(false)
 		$Hindernisse.set_process(false)
 		for hindernis in $Hindernisse.get_children():
@@ -125,6 +127,7 @@ func fliege_verlieren(weg: int) -> void:
 	if flugkraft <= 0:
 		steigen.tween_callback(aufstehen)
 		kamera_fahren(zoom_totale, versatz_totale, strecke / falltempo)
+		$Musik.leise()
 	else:
 		steigen.tween_callback(entsperren)
 

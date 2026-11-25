@@ -1,4 +1,4 @@
-[gd_scene load_steps=39 format=3]
+[gd_scene load_steps=42 format=3]
 
 [ext_resource type="Script" path="res://skripte/kanone.gd" id="1_kanone"]
 [ext_resource type="PackedScene" path="res://szenen/nadel.tscn" id="2_nadel"]
@@ -29,6 +29,9 @@
 [ext_resource type="Script" path="res://skripte/einstellungsfliege.gd" id="27_efliege"]
 [ext_resource type="Script" path="res://skripte/einstellungen.gd" id="28_einstellungen"]
 [ext_resource type="PackedScene" path="res://szenen/regler.tscn" id="29_regler"]
+[ext_resource type="Script" path="res://skripte/musik.gd" id="30_musik"]
+[ext_resource type="AudioStream" path="res://assets/audio/musik/musik_schleife.ogg" id="31_schleife"]
+[ext_resource type="AudioStream" path="res://assets/audio/musik/musik_ende.ogg" id="32_ende"]
 
 [sub_resource type="Gradient" id="Gradient_taste"]
 colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
@@ -640,3 +643,14 @@ offset_right = 1120.0
 offset_bottom = 860.0
 theme_override_font_sizes/font_size = 32
 text = "Zurueck: die Fliege oben an der Kante antippen"
+
+[node name="Musik" type="Node" parent="."]
+script = ExtResource("30_musik")
+
+[node name="Schleife" type="AudioStreamPlayer" parent="Musik"]
+stream = ExtResource("31_schleife")
+bus = &"Musik"
+
+[node name="Ende" type="AudioStreamPlayer" parent="Musik"]
+stream = ExtResource("32_ende")
+bus = &"Musik"
