@@ -14,10 +14,11 @@ extends Node2D
 @export var wackeln_aufprall: float = 28.0
 # Wie lange das Wackeln beim Aufprall dauert, in Sekunden.
 @export var aufprall_dauer: float = 0.4
-# Die Kamera am Boden: etwas herausgezoomt, die Kanone wirkt kleiner und man sieht den Boden.
-# 0.85 heisst: alles ist 85 Prozent so gross. -447 setzt die Kanone dabei auf dieselbe Bildhoehe wie vorher (380 / 0.85).
-@export var zoom_boden: float = 0.85
-@export var versatz_boden: float = -447.0
+# Die Kamera in der Totale am Boden: weit herausgezoomt, man sieht die ganze Figur auf der Wiese.
+# 0.43 heisst: alles ist 43 Prozent so gross, das Bild zeigt 2512 Pixel Hoehe. 584 schiebt die Bildmitte so weit
+# unter die Kanone, dass die Fuesse (1212 unter der Kanone) auf drei Vierteln der Bildhoehe stehen (1212 - 2512 / 4).
+@export var zoom_totale: float = 0.43
+@export var versatz_totale: float = 584.0
 # Die Kamera in der Luft: normale Groesse, die Kanone sitzt am unteren Bildrand (540 - 20 Pixel Rand).
 @export var zoom_luft: float = 1.0
 @export var versatz_luft: float = -520.0
@@ -36,12 +37,16 @@ var wackel_zeit: float = 0.0
 
 func _ready() -> void:
 	$Kanone/Uebergabe.gefangen.connect(fliege_zaehlen)
-	$Kanone/Uebergabe.gefangen.connect($Erzeuger.schwarm_aufloesen)
+	$Kanone/Figur.spielstart.connect(erster_fang)
 	$Kanone/Faecher.verloren.connect(fliege_verlieren)
 	$Kanone/Aufstehen.animation_finished.connect(neustart)
 	$Kanone/RechteHand/Leiste.max_value = ziel
-	$Kanone/Kamera.zoom = Vector2.ONE * zoom_boden
-	$Kanone/Kamera.offset.y = versatz_boden
+	$Kanone/Kamera.zoom = Vector2.ONE * zoom_totale
+	$Kanone/Kamera.offset.y = versatz_totale
+	$Kanone/Arm.visible = false
+	$Kanone/RechteHand.visible = false
+	$Kanone.set_process(false)
+	$Hindernisse.set_process(false)
 	anzeige_schreiben()
 
 
@@ -56,6 +61,22 @@ func _process(delta: float) -> void:
 func wackeln(staerke: float, dauer: float) -> void:
 	wackel_staerke = staerke
 	wackel_zeit = dauer
+
+
+# Das Ende der Totale: Die Figur gibt ab, ab jetzt faehrt und schiesst die Kanone, und die Hindernisse kommen.
+func losgehen() -> void:
+	$Kanone/Figur.ausschalten()
+	$Kanone/Arm.visible = true
+	$Kanone/RechteHand.visible = true
+	$Kanone.set_process(true)
+	$Hindernisse.set_process(true)
+
+
+# Wird von der Figur gerufen, wenn die Einstiegs-Sequenz nach dem ersten Treffer vorbei ist. Mit dabei: die Nadel mit der Fliege.
+func erster_fang(nadel: Node2D) -> void:
+	losgehen()
+	nadel.anker = $Kanone/Arm/Muendung
+	$Kanone/Uebergabe.starten(nadel)
 
 
 func fliege_zaehlen(dazu: int) -> void:
@@ -83,7 +104,8 @@ func fliege_zaehlen(dazu: int) -> void:
 # Nur zum Testen (test_sprung.gd): setzt die Flugkraft auf einen Wert und faehrt dorthin, als haette man gerade gefangen.
 func springen(auf: int) -> void:
 	flugkraft = auf
-	$Erzeuger.schwarm_aufloesen(0)
+	losgehen()
+	$Erzeuger.schwarm_aufloesen()
 	fliege_zaehlen(0)
 
 
@@ -102,13 +124,14 @@ func fliege_verlieren(weg: int) -> void:
 	wackeln(wackeln_fall, strecke / falltempo)
 	if flugkraft <= 0:
 		steigen.tween_callback(aufstehen)
-		kamera_fahren(zoom_boden, versatz_boden, strecke / falltempo)
+		kamera_fahren(zoom_totale, versatz_totale, strecke / falltempo)
 	else:
 		steigen.tween_callback(entsperren)
 
 
 func aufstehen() -> void:
 	$Kanone/Arm.visible = false
+	$Kanone/Figur.visible = false
 	$Kanone/Aufstehen.visible = true
 	$Kanone/Aufstehen.play("aufstehen")
 	$Bedienung/Absturz.visible = true
@@ -119,6 +142,7 @@ func aufstehen() -> void:
 func aufstehen_abbrechen() -> void:
 	$Kanone/Aufstehen.stop()
 	$Kanone/Aufstehen.visible = false
+	$Kanone/Figur.visible = true
 	$Kanone/Arm.visible = true
 	$Bedienung/Absturz.visible = false
 

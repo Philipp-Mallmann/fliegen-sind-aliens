@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=3]
+[gd_scene load_steps=39 format=3]
 
 [ext_resource type="Script" path="res://skripte/kanone.gd" id="1_kanone"]
 [ext_resource type="PackedScene" path="res://szenen/nadel.tscn" id="2_nadel"]
@@ -24,6 +24,11 @@
 [ext_resource type="Script" path="res://skripte/zonen.gd" id="22_zonen"]
 [ext_resource type="Script" path="res://skripte/zone.gd" id="23_zone"]
 [ext_resource type="Script" path="res://skripte/test_sprung.gd" id="24_sprung"]
+[ext_resource type="Script" path="res://skripte/start_totale.gd" id="25_totale"]
+[ext_resource type="Script" path="res://skripte/joystick.gd" id="26_joystick"]
+[ext_resource type="Script" path="res://skripte/einstellungsfliege.gd" id="27_efliege"]
+[ext_resource type="Script" path="res://skripte/einstellungen.gd" id="28_einstellungen"]
+[ext_resource type="PackedScene" path="res://szenen/regler.tscn" id="29_regler"]
 
 [sub_resource type="Gradient" id="Gradient_taste"]
 colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
@@ -84,7 +89,7 @@ script = ExtResource("5_spiel")
 [node name="Hintergrund" type="Parallax2D" parent="."]
 scroll_scale = Vector2(0.5, 0.5)
 repeat_size = Vector2(800, 800)
-repeat_times = 3
+repeat_times = 6
 
 [node name="Feld1" type="ColorRect" parent="Hintergrund"]
 offset_left = 0.0
@@ -103,12 +108,14 @@ mouse_filter = 2
 color = Color(0.34, 0.34, 0.34, 1)
 
 [node name="Boden" type="Parallax2D" parent="."]
+scroll_offset = Vector2(0, 1212)
 repeat_size = Vector2(1600, 0)
+repeat_times = 4
 
 [node name="Streifen" type="ColorRect" parent="Boden"]
 offset_right = 1600.0
-offset_bottom = 300.0
-color = Color(0.45, 0.45, 0.45, 1)
+offset_bottom = 1300.0
+color = Color(0.33, 0.5, 0.33, 1)
 
 [node name="Pfosten1" type="ColorRect" parent="Boden"]
 offset_top = -60.0
@@ -249,9 +256,10 @@ hindernis_szene = ExtResource("9_hindernis")
 kanone = NodePath("../Kanone")
 faecher = NodePath("../Kanone/Faecher")
 
-[node name="Kanone" type="Node2D" parent="."]
+[node name="Kanone" type="Node2D" parent="." node_paths=PackedStringArray("joystick")]
 script = ExtResource("1_kanone")
 nadel_szene = ExtResource("2_nadel")
+joystick = NodePath("../Bedienung/Joystick")
 
 [node name="Arm" type="Node2D" parent="Kanone"]
 
@@ -280,7 +288,8 @@ position = Vector2(0, -140)
 
 [node name="Aufstehen" type="AnimatedSprite2D" parent="Kanone"]
 visible = false
-position = Vector2(0, -100)
+position = Vector2(-130, 717)
+scale = Vector2(3.5, 4.95)
 sprite_frames = SubResource("SpriteFrames_aufstehen")
 animation = &"aufstehen"
 
@@ -320,53 +329,20 @@ griff = NodePath("../Griff")
 
 [node name="Bedienung" type="CanvasLayer" parent="."]
 
-[node name="TasteLinks" type="TouchScreenButton" parent="Bedienung"]
-position = Vector2(40, 880)
-scale = Vector2(0.85, 0.85)
-texture_normal = SubResource("GradientTexture2D_taste")
-action = "links"
-visibility_mode = 1
+[node name="Joystick" type="Node2D" parent="Bedienung"]
+position = Vector2(170, 910)
+script = ExtResource("26_joystick")
 
-[node name="Pfeil" type="Label" parent="Bedienung/TasteLinks"]
-offset_right = 200.0
-offset_bottom = 200.0
-theme_override_font_sizes/font_size = 120
-text = "<"
-horizontal_alignment = 1
-vertical_alignment = 1
+[node name="Grund" type="Sprite2D" parent="Bedienung/Joystick"]
+scale = Vector2(1.2, 1.2)
+texture = SubResource("GradientTexture2D_taste")
 
-[node name="TasteRechts" type="TouchScreenButton" parent="Bedienung"]
-position = Vector2(1230, 880)
-scale = Vector2(0.85, 0.85)
-texture_normal = SubResource("GradientTexture2D_taste")
-action = "rechts"
-visibility_mode = 1
-
-[node name="Pfeil" type="Label" parent="Bedienung/TasteRechts"]
-offset_right = 200.0
-offset_bottom = 200.0
-theme_override_font_sizes/font_size = 120
-text = ">"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="TasteSchussLinks" type="TouchScreenButton" parent="Bedienung"]
-position = Vector2(220, 880)
-scale = Vector2(0.85, 0.85)
-texture_normal = SubResource("GradientTexture2D_taste")
-action = "schiessen"
-visibility_mode = 1
-
-[node name="Wort" type="Label" parent="Bedienung/TasteSchussLinks"]
-offset_right = 200.0
-offset_bottom = 200.0
-theme_override_font_sizes/font_size = 48
-text = "Schuss"
-horizontal_alignment = 1
-vertical_alignment = 1
+[node name="Knopf" type="Sprite2D" parent="Bedienung/Joystick"]
+scale = Vector2(0.5, 0.5)
+texture = SubResource("GradientTexture2D_taste")
 
 [node name="TasteSchuss" type="TouchScreenButton" parent="Bedienung"]
-position = Vector2(1050, 880)
+position = Vector2(1230, 880)
 scale = Vector2(0.85, 0.85)
 texture_normal = SubResource("GradientTexture2D_taste")
 action = "schiessen"
@@ -403,39 +379,47 @@ vertical_alignment = 1
 [node name="TonSchuss" type="AudioStreamPlayer" parent="Kanone"]
 stream = ExtResource("10_schuss")
 volume_db = -12.0
+bus = &"Effekte"
 
 [node name="TonArm" type="AudioStreamPlayer" parent="Kanone/Uebergabe"]
 stream = ExtResource("11_arm")
 volume_db = -18.0
+bus = &"Effekte"
 
 [node name="Ton" type="Node" parent="."]
 
 [node name="Steigen" type="AudioStreamPlayer" parent="Ton"]
 stream = ExtResource("12_steigen")
 volume_db = -8.0
+bus = &"Effekte"
 
 [node name="Absturz" type="AudioStreamPlayer" parent="Ton"]
 stream = ExtResource("12_steigen")
 volume_db = -8.0
 pitch_scale = 0.6
+bus = &"Effekte"
 
 [node name="Aufstehen" type="AudioStreamPlayer" parent="Ton"]
 stream = ExtResource("13_aufstehen")
 volume_db = -14.0
+bus = &"Effekte"
 
 [node name="Sieg" type="AudioStreamPlayer" parent="Ton"]
 stream = ExtResource("14_sieg")
 volume_db = -6.0
+bus = &"Effekte"
 
 [node name="TonKlotz" type="AudioStreamPlayer" parent="Hindernisse"]
 stream = ExtResource("15_klotz")
 volume_db = -8.0
 max_polyphony = 3
+bus = &"Effekte"
 
 [node name="TonMatsch" type="AudioStreamPlayer" parent="Hindernisse"]
 stream = ExtResource("16_matsch")
 volume_db = -11.0
 max_polyphony = 4
+bus = &"Effekte"
 
 [node name="Zonen" type="Node" parent="." node_paths=PackedStringArray("kanone", "hintergrund", "anzeige")]
 script = ExtResource("22_zonen")
@@ -503,3 +487,149 @@ visibility_mode = 1
 script = ExtResource("24_sprung")
 zonen = NodePath("../Zonen")
 knopf = NodePath("../Bedienung/Neustart")
+
+[node name="Figur" type="Node2D" parent="Kanone" node_paths=PackedStringArray("kanone", "erzeuger", "joystick")]
+position = Vector2(-130, 1212)
+script = ExtResource("25_totale")
+nadel_szene = ExtResource("2_nadel")
+kanone = NodePath("..")
+erzeuger = NodePath("../../Erzeuger")
+joystick = NodePath("../../Bedienung/Joystick")
+
+[node name="Beine" type="ColorRect" parent="Kanone/Figur"]
+offset_left = -70.0
+offset_top = -470.0
+offset_right = 70.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Rumpf" type="ColorRect" parent="Kanone/Figur"]
+offset_left = -150.0
+offset_top = -850.0
+offset_right = 150.0
+offset_bottom = -470.0
+color = Color(0.6, 0.6, 0.6, 1)
+
+[node name="Kopf" type="ColorRect" parent="Kanone/Figur"]
+offset_left = -66.0
+offset_top = -990.0
+offset_right = 66.0
+offset_bottom = -858.0
+color = Color(0.7, 0.7, 0.7, 1)
+
+[node name="Schulter" type="Node2D" parent="Kanone/Figur"]
+position = Vector2(130, -812)
+
+[node name="Arm" type="ColorRect" parent="Kanone/Figur/Schulter"]
+offset_left = -30.0
+offset_top = -400.0
+offset_right = 30.0
+color = Color(0.55, 0.55, 0.55, 1)
+
+[node name="Faust" type="ColorRect" parent="Kanone/Figur/Schulter"]
+offset_left = -60.0
+offset_top = -435.0
+offset_right = 60.0
+offset_bottom = -395.0
+color = Color(0.6, 0.6, 0.6, 1)
+
+[node name="Koerper" type="ColorRect" parent="Kanone/Figur/Schulter"]
+offset_left = -40.0
+offset_top = -460.0
+offset_right = 40.0
+offset_bottom = -400.0
+color = Color(0.75, 0.75, 0.75, 1)
+
+[node name="Rohr" type="ColorRect" parent="Kanone/Figur/Schulter"]
+offset_left = -8.0
+offset_top = -540.0
+offset_right = 8.0
+offset_bottom = -460.0
+color = Color(0.75, 0.75, 0.75, 1)
+
+[node name="Spitze" type="Marker2D" parent="Kanone/Figur/Schulter"]
+position = Vector2(0, -540)
+
+[node name="Einstellungsfliege" type="Node2D" parent="."]
+position = Vector2(700, 1312)
+script = ExtResource("27_efliege")
+
+[node name="Form" type="ColorRect" parent="Einstellungsfliege"]
+offset_left = -100.0
+offset_top = -100.0
+offset_right = 100.0
+offset_bottom = 100.0
+color = Color(0.15, 0.15, 0.15, 1)
+
+[node name="Wort" type="Label" parent="Einstellungsfliege"]
+offset_left = -100.0
+offset_top = -100.0
+offset_right = 100.0
+offset_bottom = 100.0
+theme_override_font_sizes/font_size = 60
+text = "Einst."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Einstellungen" type="CanvasLayer" parent="." node_paths=PackedStringArray("fliege", "figur")]
+layer = 2
+script = ExtResource("28_einstellungen")
+fliege = NodePath("../Einstellungsfliege")
+figur = NodePath("../Kanone/Figur")
+
+[node name="Wand" type="ColorRect" parent="Einstellungen"]
+visible = false
+offset_top = 810.0
+offset_right = 1440.0
+offset_bottom = 1890.0
+mouse_filter = 2
+color = Color(0.33, 0.5, 0.33, 1)
+
+[node name="Fliege" type="ColorRect" parent="Einstellungen/Wand"]
+layout_mode = 0
+offset_left = 978.0
+offset_right = 1064.0
+offset_bottom = 86.0
+mouse_filter = 2
+color = Color(0.15, 0.15, 0.15, 1)
+
+[node name="Wort" type="Label" parent="Einstellungen/Wand/Fliege"]
+layout_mode = 0
+offset_right = 86.0
+offset_bottom = 86.0
+theme_override_font_sizes/font_size = 26
+text = "Einst."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Titel" type="Label" parent="Einstellungen/Wand"]
+layout_mode = 0
+offset_left = 320.0
+offset_top = 150.0
+offset_right = 1120.0
+offset_bottom = 250.0
+theme_override_font_sizes/font_size = 72
+text = "Einstellungen"
+
+[node name="Musik" parent="Einstellungen/Wand" instance=ExtResource("29_regler")]
+layout_mode = 0
+offset_left = 320.0
+offset_top = 330.0
+offset_right = 1120.0
+offset_bottom = 460.0
+bus = "Musik"
+
+[node name="Effekte" parent="Einstellungen/Wand" instance=ExtResource("29_regler")]
+layout_mode = 0
+offset_left = 320.0
+offset_top = 550.0
+offset_right = 1120.0
+offset_bottom = 680.0
+
+[node name="Hinweis" type="Label" parent="Einstellungen/Wand"]
+layout_mode = 0
+offset_left = 320.0
+offset_top = 800.0
+offset_right = 1120.0
+offset_bottom = 860.0
+theme_override_font_sizes/font_size = 32
+text = "Zurueck: die Fliege oben an der Kante antippen"

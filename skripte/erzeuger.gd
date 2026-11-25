@@ -7,14 +7,21 @@ extends Node2D
 # Die Fliegen-Szenen fuer den Schwarm am Boden: alle Arten ausser dem Boss.
 @export var schwarm_szenen: Array[PackedScene] = []
 # Wie weit links oder rechts von der Kanone eine Fliege des Schwarms hoechstens startet, in Pixeln.
-@export var schwarm_breite: float = 500.0
+# In der Totale sieht man 1675 zu jeder Seite.
+@export var schwarm_breite: float = 900.0
+# In welcher Hoehe ueber der Kanone der Schwarm fliegt, mindestens und hoechstens, in Pixeln.
+# Der obere Bildrand der Totale liegt 672 ueber der Kanone.
+@export var schwarm_unten: float = 250.0
+@export var schwarm_oben: float = 600.0
+# Um wie viel schneller der Schwarm flieht, als er sonst fliegt. 3 heisst: dreimal so schnell.
+@export var flucht_faktor: float = 3.0
 # Wie weit links oder rechts von der Kanone die Mitte einer neuen Fliege hoechstens liegt, in Pixeln.
 @export var breite: float = 400.0
 
 # Wie weit links und rechts von der Kanone eine Fliege noch mitzaehlt, in Pixeln.
 @export var naehe: float = 1000.0
 # Wie weit links oder rechts von der Kanone eine hereinfliegende Fliege startet, in Pixeln.
-# Der Bildrand liegt in der Luft 720 neben der Kanone, am Boden (herausgezoomt) 847. Dazu die halbe Fliege (50).
+# Der Bildrand liegt in der Luft 720 neben der Kanone. Dazu die halbe Fliege (50).
 # Muss groesser sein als breite + strecke der Fliege (400 + 300), sonst fliegt sie nicht herein.
 @export var einflug_x: float = 900.0
 # In welcher Hoehe ueber der Kanone eine hereinfliegende Fliege fliegt, hoechstens und mindestens, in Pixeln.
@@ -26,11 +33,9 @@ extends Node2D
 # Der obere Bildrand liegt in der Luft 1060 ueber der Kanone: Haelfte 520, Viertel 790.
 @export var flucht_unten: float = 520.0
 @export var flucht_oben: float = 790.0
-# Wie weit der Bildrand seitlich und oben von der Kanone entfernt ist, in Pixeln. Daran misst der Schwarm den kuerzesten Fluchtweg.
-@export var rand_seitlich: float = 847.0
-@export var rand_oben: float = 1082.0
 # Ab wie weit weg eine freie Fliege geloescht wird: seitlich, unter und ueber der Kanone, in Pixeln.
-@export var loeschen_seitlich: float = 1100.0
+# Seitlich mehr als der Bildrand der Totale (1675), sonst verschwindet der fliehende Schwarm sichtbar.
+@export var loeschen_seitlich: float = 1800.0
 @export var loeschen_unten: float = 300.0
 @export var loeschen_oben: float = 1400.0
 
@@ -47,7 +52,7 @@ func _ready() -> void:
 			var fliege: Node2D = szene.instantiate()
 			fliege.kanone = kanone
 			fliege.position.x = kanone.position.x + randf_range(-schwarm_breite, schwarm_breite)
-			fliege.position.y = kanone.position.y - randf_range(einflug_unten, einflug_oben)
+			fliege.position.y = kanone.position.y - randf_range(schwarm_unten, schwarm_oben)
 			fliege.mitte_x = fliege.position.x
 			add_child(fliege)
 
@@ -71,21 +76,14 @@ func _process(_delta: float) -> void:
 		hereinfliegen(zone.fliegen.pick_random())
 
 
-# Wird beim ersten Fang aufgerufen (verbunden in spiel.gd): Der Schwarm flieht auf dem kuerzesten Weg aus dem Bild.
-func schwarm_aufloesen(_dazu: int) -> void:
+# Wird beim ersten Treffer aufgerufen (start_totale.gd): Der Schwarm flieht von der Kanone weg, jede Fliege in ihre eigene Richtung.
+func schwarm_aufloesen() -> void:
 	if not schwarm:
 		return
 	schwarm = false
 	for fliege in get_children():
-		var nach_links: float = fliege.position.x - (kanone.position.x - rand_seitlich)
-		var nach_rechts: float = (kanone.position.x + rand_seitlich) - fliege.position.x
-		var nach_oben: float = fliege.position.y - (kanone.position.y - rand_oben)
-		if nach_oben < nach_links and nach_oben < nach_rechts:
-			fliege.flucht = Vector2.UP
-		elif nach_links < nach_rechts:
-			fliege.flucht = Vector2.LEFT
-		else:
-			fliege.flucht = Vector2.RIGHT
+		fliege.flucht = kanone.position.direction_to(fliege.position)
+		fliege.tempo *= flucht_faktor
 
 
 func hereinfliegen(szene: PackedScene) -> void:

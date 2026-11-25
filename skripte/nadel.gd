@@ -23,7 +23,10 @@ var aufgespiesste: Array[Node2D] = []
 # Der Punkt, an dem der Faden der Nadel festhaengt: erst die Muendung der Kanone, im Faecher die rechte Hand.
 var anker: Node2D = null
 # Die Kanone, die die Nadel geschossen hat. Solange die Nadel fliegt, bleibt sie genau ueber ihr. Setzt kanone.gd.
+# null heisst: Die Nadel kommt aus der Totale (start_totale.gd) und fliegt frei in ihre Richtung.
 var kanone: Node2D = null
+# In diese Richtung fliegt die Nadel. Im Spiel immer nach oben, in der Totale dorthin, wohin der Arm zeigt.
+var richtung: Vector2 = Vector2.UP
 # true heisst: Die Nadel haengt mit ihren Fliegen fertig im Faecher. Erst dann kann ein Hindernis sie treffen.
 var haengt: bool = false
 
@@ -32,8 +35,9 @@ func _process(delta: float) -> void:
 	if steckt:
 		faden_spannen()
 		return
-	position.x = kanone.position.x
-	position.y -= tempo * delta
+	if kanone != null:
+		position.x = kanone.position.x
+	position += richtung * tempo * delta
 	geflogen += tempo * delta
 	var getroffene: Node2D = fliege_an_der_spitze()
 	if getroffene != null:
@@ -42,7 +46,7 @@ func _process(delta: float) -> void:
 			return
 		aufspiessen(getroffene)
 	if not aufgespiesste.is_empty():
-		if geflogen >= reichweite or not noch_eine_darueber():
+		if geflogen >= reichweite or kanone == null or not noch_eine_darueber():
 			stecken_bleiben()
 	elif geflogen >= reichweite:
 		queue_free()

@@ -4808,3 +4808,595 @@ Die Fliege summt jetzt immer gleich laut, mit den -20 dB aus der Szene. Mit der 
 
 - Verify PASS, Schnellcheck PASS.
 - Nicht angehoert.
+
+## Abschnitt 13 - Totale als Start
+
+Was neu ist, in einem Absatz: Das Spiel beginnt weit herausgezoomt. Auf einer Wiese steht eine ganze Figur (noch aus grauen Rechtecken), die Kanone haelt sie in der Faust. Der Arm zielt auf den Mauszeiger, die Maustaste schiesst schraeg dorthin. Die Pfeiltasten kippen die Figur um ihre Fuesse. Trifft man eine Fliege, flieht der Schwarm, die Figur hebt eine Kopfhoehe ab und schwankt zwei Sekunden an der Fliege, dann zoomt das Bild auf die Kanone und das Spiel laeuft wie bisher. Stuerzt man auf 0 ab, faellt die Figur auf die Wiese, steht auf, und alles beginnt wieder in der Totale. Auf der Wiese sitzt eine Einstellungsfliege. Schiesst man sie an, faehrt die Wiese als gruene Wand hoch, darauf zwei Regler fuer die Lautstaerke. Am Handy gibt es statt der Pfeiltasten einen Joystick.
+
+Fuenf neue Skripte, jedes mit einer Aufgabe: `start_totale.gd` (die Figur), `joystick.gd`, `einstellungsfliege.gd`, `einstellungen.gd` (die Wand), `regler.gd` (ein Balken). Geaendert sind `nadel.gd`, `erzeuger.gd`, `kanone.gd` und `spiel.gd`.
+
+### Die Masse, einmal vorweg
+
+Der Zoom der Totale ist 0,43. Das heisst: Alles ist 43 Prozent so gross, das Bild zeigt 1080 / 0,43 = 2512 Pixel Hoehe und 1440 / 0,43 = 3349 Pixel Breite der Welt.
+
+Die Figur ist 990 Pixel gross. Das kommt aus der Vorgabe: unteres Viertel Wiese, darueber die Figur mit gestrecktem Arm, Kanone und vier Kopfhoehen Platz. Ueber der Wiese bleiben 810 Bildpixel, das sind 810 / 0,43 = 1884 Pixel Welt. Ein Mensch reicht mit gestrecktem Arm etwa 1,27 mal so hoch, wie er gross ist, der Kopf ist etwa ein 7,5tel. Also: 1,27 x Groesse + 100 fuer die Kanone + 4 Koepfe = 1884. Das ergibt eine Groesse von 990, einen Kopf von 132, die Schulter auf 812 und einen Arm von 400 bis zur Faust.
+
+Die Kanone des Spiels sitzt wie bisher auf Hoehe 0. Die Faust der Figur liegt genau dort, die Fuesse stehen darum 812 + 400 = 1212 Pixel tiefer. Die Wiese beginnt bei 1212.
+
+### `skripte/start_totale.gd` - neu
+
+Das Skript haengt am Knoten `Figur`. `Figur` ist ein Kind der Kanone und liegt mit seinem Nullpunkt an den Fuessen.
+
+```gdscript
+extends Node2D
+```
+Die Figur ist ein Node2D. Sie hat einen Platz und laesst sich drehen.
+
+```gdscript
+signal spielstart(nadel: Node2D)
+```
+Ein eigenes Signal. Die Figur sendet es, wenn die Einstiegs-Sequenz vorbei ist, und gibt die Nadel mit der ersten Fliege mit. `spiel.gd` hoert darauf.
+
+```gdscript
+@export var nadel_szene: PackedScene
+@export var kanone: Node2D
+@export var erzeuger: Node2D
+@export var joystick: Node2D
+```
+Vier Dinge, die die Figur von aussen braucht. Sie werden im Inspector eingetragen: die Szene der Nadel (dieselbe wie bei der Kanone), die Kanone, der Erzeuger der Fliegen und der Joystick.
+
+```gdscript
+@export var nachladezeit: float = 0.5
+```
+Wie die Kanone laedt auch die Figur nach jedem Schuss eine halbe Sekunde nach.
+
+```gdscript
+@export var kippwinkel: float = 20.0
+@export var kipptempo: float = 80.0
+```
+So weit kippt die Figur hoechstens (20 Grad nach jeder Seite) und so schnell (80 Grad pro Sekunde, sie braucht also eine Viertelsekunde bis ganz nach aussen).
+
+```gdscript
+@export var einstieg_dauer: float = 2.0
+@export var abheben: float = 132.0
+@export var schwanken: float = 8.0
+```
+Die Einstiegs-Sequenz: 2 Sekunden lang, die Figur hebt 132 Pixel ab (eine Kopfhoehe) und schwankt 8 Grad nach jeder Seite.
+
+```gdscript
+var aktiv: bool = true
+```
+Solange `aktiv` wahr ist, steuert man die Figur. Ab dem ersten Treffer ist es falsch.
+
+```gdscript
+var wand_offen: bool = false
+```
+Wahr, solange die Wand mit den Einstellungen oben ist. Das setzt `einstellungen.gd`. Die Figur wartet dann, sonst wuerde jeder Klick auf einen Regler auch schiessen.
+
+```gdscript
+var maus_zielt: bool = false
+```
+Erst wenn die Maus sich einmal bewegt hat, folgt der Arm ihr. Am Handy gibt es keine Maus, dort bliebe der Mauszeiger sonst auf einer zufaelligen Stelle stehen und der Arm zeigte dorthin.
+
+```gdscript
+var nachladen_noch: float = 0.0
+var erste_nadel: Node2D = null
+```
+Der Zaehler fuer das Nachladen, wie in `kanone.gd`. Und ein Platz fuer die Nadel, die als erste getroffen hat.
+
+```gdscript
+func _input(ereignis: InputEvent) -> void:
+	if ereignis is InputEventMouseMotion:
+		maus_zielt = true
+```
+`_input` ruft Godot bei jeder Eingabe auf: Tastendruck, Mausbewegung, Finger. `ereignis is InputEventMouseMotion` fragt: Ist das eine Mausbewegung? Wenn ja, zielt ab jetzt die Maus.
+
+```gdscript
+func _process(delta: float) -> void:
+	if not aktiv or wand_offen:
+		return
+	kippen(delta)
+	zielen()
+	schiessen(delta)
+```
+In jedem Bild: Ist die Figur nicht mehr dran oder ist die Wand oben, passiert nichts. Sonst drei Schritte nacheinander.
+
+```gdscript
+func kippen(delta: float) -> void:
+	var ziel: float = Input.get_axis("links", "rechts") * kippwinkel
+	rotation_degrees = move_toward(rotation_degrees, ziel, kipptempo * delta)
+```
+`Input.get_axis("links", "rechts")` gibt -1 fuer links, 1 fuer rechts und 0 fuer nichts. Mal 20 ist das der Winkel, zu dem die Figur will. `rotation_degrees` ist die Drehung der Figur in Grad. `move_toward` geht von der jetzigen Drehung ein Stueck in Richtung Ziel, hoechstens `kipptempo * delta` Grad in diesem Bild. Laesst man los, ist das Ziel 0 und die Figur richtet sich wieder auf. Gedreht wird um den Nullpunkt des Knotens, und der liegt an den Fuessen.
+
+```gdscript
+func zielen() -> void:
+	if joystick.richtung != Vector2.ZERO:
+		maus_zielt = false
+		$Schulter.rotation = wrapf(joystick.richtung.angle() + PI / 2.0, -PI, PI)
+```
+Zeigt der Joystick irgendwohin, gilt er, und die Maus ist abgemeldet. `angle()` gibt den Winkel eines Pfeils, gemessen von "nach rechts". Der Arm ist in der Szene aber nach oben gezeichnet, darum kommt eine Vierteldrehung dazu (`PI / 2.0`, das sind 90 Grad). `wrapf(..., -PI, PI)` haelt den Winkel zwischen -180 und +180 Grad. Ohne das wuerde der Arm sich in der Sequenz manchmal den langen Weg herum nach oben drehen.
+
+```gdscript
+	elif maus_zielt:
+		var zur_maus: Vector2 = get_global_mouse_position() - $Schulter.global_position
+		$Schulter.rotation = wrapf(zur_maus.angle() + PI / 2.0, -PI, PI)
+```
+Sonst zielt die Maus. `get_global_mouse_position()` ist die Stelle des Mauszeigers in der Welt. Minus die Stelle der Schulter ergibt den Pfeil von der Schulter zur Maus. Der Arm bekommt dessen Winkel. Schulter, Kanonenspitze und Mauszeiger liegen damit auf einer Linie.
+
+Wichtig: `rotation` ist die Drehung gegenueber dem Elternknoten, also gegenueber der Figur. Kippt die Figur, kippt der Arm mit, die Spitze zeigt dann um den Kippwinkel neben die Maus. Das ist so gewollt.
+
+```gdscript
+func schiessen(delta: float) -> void:
+	nachladen_noch -= delta
+	if nachladen_noch > 0.0:
+		return
+	if Input.is_action_just_pressed("schiessen"):
+```
+Wie in `kanone.gd`: herunterzaehlen, waehrend des Nachladens nichts tun, sonst auf die Aktion `schiessen` warten (Leertaste, W, linke Maustaste, am Handy die Schuss-Taste).
+
+```gdscript
+		var nadel: Node2D = nadel_szene.instantiate()
+		nadel.position = $Schulter/Spitze.global_position
+```
+Eine neue Nadel entsteht an der Kanonenspitze. `Spitze` ist ein Marker am Ende des Rohrs.
+
+```gdscript
+		nadel.rotation = $Schulter.global_rotation
+		nadel.richtung = Vector2.UP.rotated($Schulter.global_rotation)
+```
+`global_rotation` ist die Drehung des Arms in der Welt, also Kippen der Figur plus Drehung des Arms. Die Nadel wird genauso gedreht, damit sie in Flugrichtung zeigt. `Vector2.UP` ist der Pfeil nach oben, `rotated` dreht ihn um denselben Winkel. Das ist die Flugrichtung, sie kommt in die neue Variable `richtung` der Nadel.
+
+```gdscript
+		nadel.anker = $Schulter/Spitze
+		kanone.get_parent().add_child(nadel)
+```
+Der Faden der Nadel haengt an der Spitze. `kanone.get_parent()` ist der Knoten `Spiel`. Dort kommt die Nadel hinein, wie die Nadeln der Kanone auch. `nadel.kanone` bleibt leer, daran erkennt die Nadel, dass sie frei fliegt.
+
+```gdscript
+		nadel.getroffen.connect(erster_treffer)
+		nachladen_noch = nachladezeit
+		kanone.get_node("TonSchuss").play()
+```
+Trifft die Nadel, ruft sie `erster_treffer`. Dann beginnt das Nachladen, und der Schuss-Ton der Kanone spielt.
+
+```gdscript
+func erster_treffer(nadel: Node2D) -> void:
+	if not aktiv or wand_offen:
+		nadel.queue_free()
+		return
+```
+Trifft eine zweite Nadel, waehrend die Sequenz schon laeuft, wird sie samt ihrer Fliege geloescht. Es zaehlt nur der erste Treffer. Dasselbe gilt fuer eine Nadel, die noch unterwegs war und erst trifft, wenn die Wand schon oben ist. Sonst begaenne das Spiel hinter der Wand.
+
+```gdscript
+	aktiv = false
+	erste_nadel = nadel
+	kanone.steigt = true
+	erzeuger.schwarm_aufloesen()
+```
+Ab jetzt steuert man die Figur nicht mehr. Die Nadel wird gemerkt. `kanone.steigt = true` sagt dem Erzeuger, dass man gerade abhebt: Solange das wahr ist, schickt er keine neuen Fliegen ins Bild. Dann flieht der Schwarm.
+
+```gdscript
+	var viertel: float = einstieg_dauer / 4.0
+	var ablauf: Tween = create_tween()
+```
+Die Sequenz besteht aus vier gleich langen Stuecken von je einer halben Sekunde. Ein Tween fuehrt sie nacheinander aus.
+
+```gdscript
+	ablauf.tween_property(kanone, "position:y", -abheben, viertel)
+	ablauf.parallel().tween_property(self, "rotation_degrees", schwanken, viertel)
+```
+Erstes Stueck: Die Kanone steigt um 132 Pixel. Die Figur haengt an ihr und steigt mit. `parallel()` heisst: gleichzeitig mit dem Schritt davor. Gleichzeitig kippt die Figur 8 Grad nach rechts.
+
+```gdscript
+	ablauf.tween_property(self, "rotation_degrees", -schwanken, viertel)
+	ablauf.tween_property(self, "rotation_degrees", schwanken, viertel)
+```
+Zweites und drittes Stueck: nach links schwanken, wieder nach rechts.
+
+```gdscript
+	ablauf.tween_property(self, "rotation_degrees", 0.0, viertel)
+	ablauf.parallel().tween_property($Schulter, "rotation", 0.0, viertel)
+	ablauf.parallel().tween_property(nadel, "rotation", 0.0, viertel)
+```
+Viertes Stueck: Die Figur richtet sich auf, gleichzeitig dreht der Arm gerade nach oben und die Nadel mit der Fliege dreht sich aufrecht. Am Ende steht die Kanone in der Faust genau dort und genau so wie die Kanone des Spiels. Darum sieht man den Tausch der beiden nicht.
+
+```gdscript
+	ablauf.tween_callback(sequenz_fertig)
+
+
+func sequenz_fertig() -> void:
+	spielstart.emit(erste_nadel)
+```
+Ganz am Ende ruft der Tween `sequenz_fertig`, und die sendet das Signal mit der Nadel.
+
+```gdscript
+func ausschalten() -> void:
+	aktiv = false
+	rotation = 0.0
+	$Schulter.visible = false
+```
+Das ruft `spiel.gd` beim Spielstart. Die Figur steht gerade, ihr Arm mit der Kanone wird unsichtbar. Der Rest der Figur bleibt und haengt unter der Kanone, im Spiel liegt er unter dem Bildrand.
+
+### `skripte/joystick.gd` - neu
+
+```gdscript
+extends Node2D
+
+@export var radius: float = 120.0
+```
+So weit geht der Knopf hoechstens aus der Mitte.
+
+```gdscript
+var richtung: Vector2 = Vector2.ZERO
+var finger: int = -1
+```
+`richtung` ist das Ergebnis: ein Pfeil, wohin der Joystick zeigt. Losgelassen ist er `Vector2.ZERO`, ganz am Rand hat er die Laenge 1. Andere Skripte lesen nur diese eine Variable. `finger` merkt sich, welcher Finger den Joystick haelt. Jeder Finger auf dem Bildschirm hat eine Nummer, -1 heisst keiner.
+
+```gdscript
+func _ready() -> void:
+	visible = DisplayServer.is_touchscreen_available()
+```
+Den Joystick sieht man nur, wenn das Geraet einen Touchscreen hat.
+
+```gdscript
+func _input(ereignis: InputEvent) -> void:
+	if not visible:
+		return
+```
+Ohne Touchscreen tut das Skript nichts.
+
+```gdscript
+	if ereignis is InputEventScreenTouch:
+		if ereignis.pressed and finger == -1 and ereignis.position.distance_to(global_position) <= radius * 1.5:
+			finger = ereignis.index
+			auslenken(ereignis.position)
+```
+`InputEventScreenTouch` kommt, wenn ein Finger aufsetzt oder abhebt. Setzt er auf (`pressed`), haelt noch kein Finger den Joystick, und liegt die Stelle nah genug an der Mitte (bis zum Anderthalbfachen des Radius), dann gehoert der Joystick diesem Finger.
+
+```gdscript
+		elif not ereignis.pressed and ereignis.index == finger:
+			finger = -1
+			richtung = Vector2.ZERO
+			$Knopf.position = Vector2.ZERO
+```
+Hebt genau dieser Finger ab, ist der Joystick wieder frei, zeigt nirgendwohin, und der Knopf springt in die Mitte.
+
+```gdscript
+	if ereignis is InputEventScreenDrag and ereignis.index == finger:
+		auslenken(ereignis.position)
+```
+`InputEventScreenDrag` kommt, wenn ein Finger ueber den Bildschirm zieht. Ist es der Finger am Joystick, folgt der Knopf.
+
+```gdscript
+func auslenken(stelle: Vector2) -> void:
+	var weg: Vector2 = (stelle - global_position).limit_length(radius)
+	$Knopf.position = weg
+	richtung = weg / radius
+```
+`stelle - global_position` ist der Pfeil von der Mitte zum Finger. `limit_length(radius)` kuerzt ihn auf hoechstens 120 Pixel. Dorthin kommt der Knopf. Geteilt durch den Radius wird daraus ein Pfeil mit einer Laenge von 0 bis 1.
+
+### `skripte/einstellungsfliege.gd` - neu
+
+```gdscript
+extends Node2D
+
+signal angeschossen
+
+@export var halbe_groesse: float = 100.0
+```
+Die Fliege sitzt fest in der Welt. Sie hat ein Signal und eine Groesse: 100 nach jeder Seite, also 200 mal 200 Pixel.
+
+```gdscript
+func _process(_delta: float) -> void:
+	if not visible:
+		return
+```
+Ist sie unsichtbar (die Wand ist oben), prueft sie nichts.
+
+```gdscript
+	for nadel in get_tree().get_nodes_in_group("nadeln"):
+		var abstand: Vector2 = nadel.global_position - global_position
+		if absf(abstand.x) <= halbe_groesse and absf(abstand.y) <= halbe_groesse:
+			nadel.queue_free()
+			angeschossen.emit()
+```
+In jedem Bild geht sie alle Nadeln durch. Die Nadeln stehen dafuer in der Gruppe `nadeln` (neu in `nadel.tscn`). `abstand` ist der Pfeil von der Fliege zur Nadelspitze. Ist er seitlich und in der Hoehe hoechstens 100 lang, steckt die Spitze im Quadrat der Fliege. Dann verschwindet die Nadel, und die Fliege meldet den Treffer. Das ist dieselbe Rechnung wie beim Treffer einer normalen Fliege in `nadel.gd`, nur von der anderen Seite.
+
+### `skripte/einstellungen.gd` - neu
+
+Das Skript haengt an einem `CanvasLayer`. Was in einem CanvasLayer liegt, klebt am Bildschirm und bewegt sich nicht mit der Kamera, wie die Tasten in `Bedienung`.
+
+```gdscript
+extends CanvasLayer
+
+@export var fliege: Node2D
+@export var figur: Node2D
+@export var fahrdauer: float = 0.6
+@export var wiesenkante: float = 810.0
+```
+Die Einstellungsfliege und die Figur werden im Inspector eingetragen. Die Wand braucht 0,6 Sekunden fuer ihren Weg. 810 ist die Bildhoehe, auf der in der Totale die Oberkante der Wiese liegt (drei Viertel von 1080).
+
+```gdscript
+func _ready() -> void:
+	fliege.angeschossen.connect(oeffnen)
+```
+Meldet die Fliege einen Treffer, wird `oeffnen` gerufen.
+
+```gdscript
+func oeffnen() -> void:
+	if figur.wand_offen:
+		return
+	figur.wand_offen = true
+	fliege.visible = false
+```
+Ist die Wand schon oben, passiert nichts. Sonst: Die Figur wartet ab jetzt, die Fliege auf der Wiese wird unsichtbar. Auf der Wand ist dieselbe Fliege noch einmal gezeichnet, an derselben Stelle im Bild.
+
+```gdscript
+	$Wand.position.y = wiesenkante
+	$Wand.visible = true
+	var fahrt: Tween = create_tween()
+	fahrt.tween_property($Wand, "position:y", 0.0, fahrdauer)
+```
+Die Wand ist ein gruenes Rechteck in der Farbe der Wiese, so gross wie das Bild. Sie startet mit ihrer Oberkante genau auf der Wiesenkante und faehrt in 0,6 Sekunden bis ganz nach oben. Es sieht aus, als stiege die Wiese.
+
+```gdscript
+func schliessen() -> void:
+	var fahrt: Tween = create_tween()
+	fahrt.tween_property($Wand, "position:y", wiesenkante, fahrdauer)
+	fahrt.tween_callback(zu)
+```
+Der Rueckweg: wieder herunter bis zur Wiesenkante, danach `zu`.
+
+```gdscript
+func zu() -> void:
+	$Wand.visible = false
+	fliege.visible = true
+	figur.wand_offen = false
+```
+Die Wand verschwindet, die Fliege sitzt wieder auf der Wiese, die Figur ist wieder dran.
+
+```gdscript
+func _input(ereignis: InputEvent) -> void:
+	if not $Wand.visible:
+		return
+	if ereignis is InputEventMouseButton or ereignis is InputEventScreenTouch:
+		if ereignis.pressed and $Wand/Fliege.get_global_rect().has_point(ereignis.position):
+			schliessen()
+```
+Nur wenn die Wand sichtbar ist: Kommt ein Mausklick oder ein Fingertipp, und liegt er im Rechteck der Fliege oben an der Kante, faehrt die Wand herunter. `get_global_rect()` gibt das Rechteck eines Bedien-Knotens auf dem Bildschirm, `has_point` fragt, ob ein Punkt darin liegt.
+
+Warum kein fertiger Knopf von Godot: Im Projekt ist seit Abschnitt 2 abgestellt, dass ein Fingertipp als Mausklick zaehlt (sonst wuerde jeder Tipp schiessen). Die fertigen Knoepfe und Schieberegler hoeren aber nur auf die Maus. Darum fragt das Skript Maus und Finger selbst ab.
+
+### `skripte/regler.gd` und `szenen/regler.tscn` - neu
+
+Die Szene: ein `Control` als Wurzel, darin die Schrift `Name`, ein dunkler `Balken` (800 mal 60) und darin die helle `Fuellung`. Die Szene wird zweimal in die Wand gesetzt, einmal fuer Musik, einmal fuer Effekte.
+
+```gdscript
+extends Control
+
+@export var bus: String = "Effekte"
+```
+Ein Bus ist ein Tonkanal. Alle Toene, die durch denselben Bus laufen, lassen sich gemeinsam lauter und leiser stellen. Hier steht der Name des Busses, den dieser Regler stellt.
+
+```gdscript
+var zieht: bool = false
+```
+Wahr, solange Maus oder Finger den Balken festhaelt.
+
+```gdscript
+func _ready() -> void:
+	$Name.text = bus
+	zeigen(AudioServer.get_bus_volume_linear(AudioServer.get_bus_index(bus)))
+```
+Der Name des Busses steht als Schrift ueber dem Balken. Dann zeigt der Balken die Lautstaerke, die der Bus gerade hat. `AudioServer` ist die Tonanlage von Godot. `get_bus_index` sucht die Nummer des Busses zu seinem Namen, `get_bus_volume_linear` gibt seine Lautstaerke als Zahl von 0 (stumm) bis 1 (voll). Das ist noetig, weil die Szene nach einem Absturz neu geladen wird, die Tonanlage aber ihre Einstellung behaelt.
+
+```gdscript
+func _input(ereignis: InputEvent) -> void:
+	if not is_visible_in_tree():
+		return
+```
+Ist die Wand unsichtbar, tut der Regler nichts.
+
+```gdscript
+	if ereignis is InputEventMouseButton or ereignis is InputEventScreenTouch:
+		zieht = ereignis.pressed and $Balken.get_global_rect().has_point(ereignis.position)
+		if zieht:
+			setzen(ereignis.position.x)
+```
+Bei Klick oder Tipp: `zieht` wird wahr, wenn gedrueckt wurde und die Stelle im Balken liegt. Beim Loslassen ist `pressed` falsch, also wird `zieht` falsch. Liegt die Stelle im Balken, springt der Regler sofort dorthin.
+
+```gdscript
+	if ereignis is InputEventMouseMotion or ereignis is InputEventScreenDrag:
+		if zieht:
+			setzen(ereignis.position.x)
+```
+Bewegt sich Maus oder Finger, waehrend der Balken gehalten wird, folgt der Regler.
+
+```gdscript
+func setzen(x: float) -> void:
+	var wert: float = clampf((x - $Balken.global_position.x) / $Balken.size.x, 0.0, 1.0)
+	AudioServer.set_bus_volume_linear(AudioServer.get_bus_index(bus), wert)
+	zeigen(wert)
+```
+`x - $Balken.global_position.x` ist, wie weit die Stelle vom linken Rand des Balkens entfernt ist. Geteilt durch die Breite wird daraus eine Zahl von 0 (ganz links) bis 1 (ganz rechts). `clampf` haelt sie in diesen Grenzen, auch wenn der Finger ueber den Rand hinauszieht. Diese Zahl bekommt der Bus als Lautstaerke.
+
+```gdscript
+func zeigen(wert: float) -> void:
+	$Balken/Fuellung.size.x = $Balken.size.x * wert
+```
+Die helle Fuellung wird so breit, wie der Wert sagt: bei 0,5 der halbe Balken.
+
+### `default_bus_layout.tres` - neu
+
+Die Datei legt die Busse des Spiels fest. Godot laedt sie von selbst, weil sie so heisst und im Hauptordner liegt. Darin stehen zwei neue Busse, `Musik` und `Effekte`, beide in voller Lautstaerke, beide senden weiter an den Hauptbus `Master`. Alle 16 Tonspieler in den Szenen haben die neue Zeile `bus = &"Effekte"` bekommen (die sechs Fliegen, das Hindernis, die Nadel und acht in `spiel.tscn`). Durch `Musik` laeuft noch nichts, die Musik kommt mit Abschnitt 11. Der Musik-Regler stellt bis dahin nichts Hoerbares.
+
+### `skripte/nadel.gd` - geaendert in Abschnitt 13
+
+```gdscript
+var richtung: Vector2 = Vector2.UP
+```
+Neu. In diese Richtung fliegt die Nadel. Ohne weitere Angabe nach oben, wie bisher.
+
+```gdscript
+	if kanone != null:
+		position.x = kanone.position.x
+	position += richtung * tempo * delta
+```
+Vorher stand hier: `position.x = kanone.position.x` und `position.y -= tempo * delta`. Neu ist die Frage `if kanone != null`: Nur eine Nadel aus der Kanone bleibt ueber ihr. Eine Nadel aus der Totale hat keine Kanone und fliegt frei. Die zweite Zeile bewegt die Nadel in ihrer Richtung. Fuer `Vector2.UP` ist das dasselbe wie vorher, denn `Vector2.UP` ist (0, -1).
+
+```gdscript
+		if geflogen >= reichweite or kanone == null or not noch_eine_darueber():
+```
+Neu ist `or kanone == null`. Eine Nadel aus der Totale bleibt in der ersten Fliege stecken. Die Suche nach einer weiteren Fliege senkrecht darueber passt nur zum senkrechten Schuss.
+
+In `szenen/nadel.tscn` steht am Wurzelknoten neu `groups=["nadeln"]`. Jede Nadel ist damit in der Gruppe `nadeln`, die die Einstellungsfliege durchsucht.
+
+### `skripte/erzeuger.gd` - geaendert in Abschnitt 13
+
+```gdscript
+@export var schwarm_breite: float = 900.0
+@export var schwarm_unten: float = 250.0
+@export var schwarm_oben: float = 600.0
+```
+`schwarm_breite` war 500. Die beiden anderen sind neu: Der Schwarm fliegt 250 bis 600 Pixel ueber der Kanone. Vorher flog er 560 bis 750 darueber, das laege in der Totale ueber dem Bildrand (der liegt 672 ueber der Kanone).
+
+```gdscript
+@export var flucht_faktor: float = 3.0
+```
+Neu. Auf der Flucht ist der Schwarm dreimal so schnell wie sonst.
+
+```gdscript
+@export var loeschen_seitlich: float = 1800.0
+```
+War 1100. In der Totale sieht man 1675 Pixel zu jeder Seite. Mit 1100 waeren fliehende Fliegen mitten im Bild verschwunden.
+
+Im Kommentar ueber `einflug_x` ist der Hinweis auf den alten Bildrand am Boden (847) gestrichen. Weg sind `rand_seitlich` und `rand_oben`. Sie haben den kuerzesten Weg zum Bildrand gemessen, das braucht die neue Flucht nicht mehr.
+
+```gdscript
+			fliege.position.y = kanone.position.y - randf_range(schwarm_unten, schwarm_oben)
+```
+In `_ready`: Der Schwarm nimmt seine eigenen Hoehen statt `einflug_unten` und `einflug_oben`.
+
+```gdscript
+func schwarm_aufloesen() -> void:
+	if not schwarm:
+		return
+	schwarm = false
+	for fliege in get_children():
+		fliege.flucht = kanone.position.direction_to(fliege.position)
+		fliege.tempo *= flucht_faktor
+```
+Neu geschrieben. Vorher flog jede Fliege zum naechsten Bildrand (links, rechts oder oben). Jetzt: `direction_to` gibt den Pfeil von der Kanone zur Fliege, mit der Laenge 1. Jede Fliege flieht also geradewegs von der Kanone weg, jede in ihre eigene Richtung. `tempo *= flucht_faktor` macht sie dreimal so schnell. Die Funktion hat keine Angabe in der Klammer mehr, weil sie nicht mehr am Signal `gefangen` haengt. Die Figur ruft sie direkt.
+
+### `skripte/kanone.gd` - geaendert in Abschnitt 13
+
+```gdscript
+@export var joystick: Node2D
+```
+Neu. Der Joystick, im Inspector eingetragen.
+
+```gdscript
+	var richtung: float = Input.get_axis("links", "rechts") + joystick.richtung.x
+	richtung = clampf(richtung, -1.0, 1.0)
+```
+In `fahren`. Zu den Pfeiltasten kommt der Ausschlag des Joysticks nach links oder rechts. `joystick.richtung.x` ist der waagrechte Teil seines Pfeils, von -1 bis 1. Hoch und runter am Joystick bewirkt im Spiel nichts. `clampf` sorgt dafuer, dass Taste und Joystick zusammen nicht schneller sind als eins von beiden.
+
+### `skripte/spiel.gd` - geaendert in Abschnitt 13
+
+```gdscript
+@export var zoom_totale: float = 0.43
+@export var versatz_totale: float = 584.0
+```
+Ersetzen `zoom_boden` (0,85) und `versatz_boden` (-447). Am Boden gibt es jetzt nur noch die Totale. 584 schiebt die Bildmitte 584 Pixel unter die Kanone. Die Rechnung: Die Fuesse stehen 1212 unter der Kanone und sollen auf drei Vierteln der Bildhoehe liegen, also ein Viertel des Bildes (2512 / 4 = 628) unter der Mitte. 1212 - 628 = 584.
+
+```gdscript
+	$Kanone/Figur.spielstart.connect(erster_fang)
+```
+In `_ready`. Ersetzt die Zeile, die `gefangen` mit `schwarm_aufloesen` verbunden hat. Meldet die Figur den Spielstart, laeuft `erster_fang`.
+
+```gdscript
+	$Kanone/Kamera.zoom = Vector2.ONE * zoom_totale
+	$Kanone/Kamera.offset.y = versatz_totale
+	$Kanone/Arm.visible = false
+	$Kanone/RechteHand.visible = false
+	$Kanone.set_process(false)
+	$Hindernisse.set_process(false)
+```
+In `_ready`. Die Kamera startet in der Totale. Die Kanone des Spiels und die rechte Hand mit der Leiste sind unsichtbar, man sieht stattdessen die Figur. `set_process(false)` schaltet das `_process` eines Knotens ab: Die Kanone faehrt und schiesst nicht, und es kommen keine Hindernisse, solange man in der Totale ist.
+
+```gdscript
+func losgehen() -> void:
+	$Kanone/Figur.ausschalten()
+	$Kanone/Arm.visible = true
+	$Kanone/RechteHand.visible = true
+	$Kanone.set_process(true)
+	$Hindernisse.set_process(true)
+```
+Neu. Das Ende der Totale, genau das Gegenteil der Zeilen in `_ready`: Figur aus, Kanone und Hand sichtbar, Kanone und Hindernisse laufen.
+
+```gdscript
+func erster_fang(nadel: Node2D) -> void:
+	losgehen()
+	nadel.anker = $Kanone/Arm/Muendung
+	$Kanone/Uebergabe.starten(nadel)
+```
+Neu. Wird von der Figur gerufen, mit der Nadel der ersten Fliege. Der Faden haengt ab jetzt an der Muendung der Kanone. Dann bekommt die Uebergabe die Nadel, genau wie bei jedem Treffer im Spiel: Sie sendet `gefangen`, man steigt, die Kamera zoomt heran, der Arm faehrt zur rechten Hand.
+
+```gdscript
+	losgehen()
+	$Erzeuger.schwarm_aufloesen()
+```
+In `springen` (nur zum Testen). Wer mit einer Zifferntaste in eine Zone springt, ueberspringt die Totale.
+
+```gdscript
+		kamera_fahren(zoom_totale, versatz_totale, strecke / falltempo)
+```
+In `fliege_verlieren`. Faellt man auf 0, faehrt die Kamera waehrend des Falls zurueck in die Totale.
+
+```gdscript
+	$Kanone/Figur.visible = false
+```
+In `aufstehen`. Waehrend der Aufsteh-Animation ist die Figur unsichtbar, man sieht die drei Platzhalter-Bilder an ihrer Stelle.
+
+```gdscript
+	$Kanone/Figur.visible = true
+```
+In `aufstehen_abbrechen`. Kommt waehrend des Aufstehens doch noch eine Fliege an, ist die Figur wieder da.
+
+Nach dem Aufstehen laedt `neustart` die Szene neu wie bisher. Weil die Szene jetzt in der Totale beginnt, steht man danach wieder auf der Wiese.
+
+### `szenen/spiel.tscn` - geaendert in Abschnitt 13
+
+- `Boden`: neu `scroll_offset = Vector2(0, 1212)`, das schiebt den ganzen Boden 1212 Pixel nach unten, an die Fuesse der Figur. `repeat_times = 4`, damit er auch in der breiten Totale bis an beide Raender reicht. Der `Streifen` ist jetzt 1300 hoch und gruen (die Wiese).
+- `Hintergrund`: `repeat_times` 3 -> 6, aus demselben Grund.
+- `Kanone`: neuer Eintrag `joystick`.
+- `Kanone/Aufstehen`: `position` (-130, 717) und `scale` (3.5, 4.95). Die drei Platzhalter-Bilder sind 200 hoch, mal 4,95 sind das 990, so gross wie die Figur. Sie stehen an ihrer Stelle.
+- Neu `Kanone/Figur` an (-130, 1212) mit `start_totale.gd`. Darin drei Rechtecke, gemessen von den Fuessen nach oben (nach oben ist minus): `Beine` 140 breit von 0 bis -470, `Rumpf` 300 breit von -470 bis -850, `Kopf` 132 mal 132 von -858 bis -990. Dazu `Schulter` (ein Node2D an (130, -812), der Drehpunkt des Arms) mit `Arm` (60 breit, 400 lang), `Faust`, `Koerper`, `Rohr` und dem Marker `Spitze` (540 ueber der Schulter, am Ende des Rohrs). `Faust`, `Koerper` und `Rohr` sind dieselben Rechtecke wie in `Kanone/Arm`, nur 400 Pixel hoeher, am Ende des Arms. Die Figur steht 130 links von der Kanone, damit ihre rechte Schulter genau unter der Kanone liegt.
+- `Bedienung`: `TasteLinks`, `TasteRechts` und `TasteSchussLinks` sind weg. Neu `Joystick` an (170, 910) mit `joystick.gd`, darin die Bilder `Grund` und `Knopf`. Beide benutzen das helle 200er-Quadrat der Tasten: `Grund` mit `scale` 1.2 (240 Pixel, so breit wie der Weg des Knopfs von Rand zu Rand), `Knopf` mit `scale` 0.5 (100 Pixel). `TasteSchuss` sitzt jetzt ganz rechts (1230, 880).
+- Neu `Einstellungsfliege` an (700, 1312) mit `einstellungsfliege.gd`: ein dunkles Quadrat mit der Schrift "Einst.", es sitzt in der Oberkante der Wiese.
+- Neu `Einstellungen` (CanvasLayer, `layer = 2`, liegt also ueber den Tasten) mit `einstellungen.gd`. Darin `Wand` (gruen, zuerst unsichtbar) mit `Fliege` (dieselbe Fliege, so gross wie sie im Bild der Totale ist: 86 Pixel), `Titel`, den zwei Reglern `Musik` und `Effekte` und einem `Hinweis`.
+
+### Was noch Platzhalter ist
+
+- Die Figur, die Wiese, die Einstellungsfliege und die Wand sind graue und gruene Rechtecke. Die Bilder kommen mit Abschnitt 10.
+- Fall und Aufprall haben noch keine eigenen Bilder. Die Figur faellt aufrecht, danach laufen die drei Aufsteh-Platzhalter.
+- Die Schrift "Schuss" sieht man auch am PC (bekannt seit Abschnitt 8).
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS fuer alle neun Skripte.
+- Probe mit Fenster, Eingaben nachgestellt, Bilder angesehen:
+  - Totale: Fuesse im Bild bei y 810 von 1080 (drei Viertel), Kanonenspitze bei 229, der Schwarm zwischen 23 und 197.
+  - Zielen: Schulter, Spitze und Maus auf einer Linie, Abweichung 0,14 Grad. Kippen: 20,0 Grad, nach dem Loslassen 0.
+  - Einstellungsfliege angeschossen: Wand faehrt hoch. Klick bei einem Viertel des Balkens: Lautstaerke 0,25. Ziehen auf 0,6: 0,60. Finger auf dem Musik-Balken bis 0,8: 0,80. Klick auf die Fliege oben: Wand weg, Figur wieder dran. Kein Schuss, waehrend die Wand oben war.
+  - Erster Treffer: nach 1 Sekunde 132 Pixel abgehoben, Figur schwankt, keine neue Fliege im Bild. Spielstart nach 2,1 bis 2,2 Sekunden. Danach Zoom 1, eine Fliege im Faecher, Hindernisse laufen.
+  - Joystick nach rechts oben: Arm 45 Grad. Im Spiel 1 Sekunde nach rechts: Kanone 182 Pixel weiter, Hoehe unveraendert.
+  - Absturz auf 0: Kamera wieder 0,43, Aufstehen, Szene neu geladen, Figur wieder aktiv.
+- Handy-Probe (Chromium und WebKit, iPhone-Profil): Joystick dreht den Arm, die Schuss-Taste schiesst. Der erste Lauf meldete in WebKit einen Fehler: Die Probe kann dort den Joystick nicht halten, die Messflaeche lag darum an der falschen Stelle. Mit eigener Messflaeche fuer WebKit bestanden.
+- Nicht angeschaut: wie sich Zielen, Einstieg und Zoom anfuehlen und ob der erste Fang zu schwer ist. Die Toene nicht angehoert. Am echten Handy nicht ausprobiert.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum zeigt die Kanonenspitze nicht mehr genau auf den Mauszeiger, wenn man die Figur mit den Pfeiltasten kippt? Welche Zeile muesste man aendern, damit sie es doch tut?
+2. Woran erkennt die Nadel, dass sie aus der Totale kommt, und an welchen zwei Stellen in `nadel.gd` macht das einen Unterschied?
+3. Warum zeigt der Regler nach einem Absturz noch die eingestellte Lautstaerke, obwohl die ganze Szene neu geladen wurde?

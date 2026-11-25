@@ -41,6 +41,7 @@ stream = ExtResource("2_summen")
 volume_db = -20.0
 autoplay = true
 max_distance = 760.0
+bus = &"Effekte"
 
 [node name="Loch" type="ColorRect" parent="."]
 visible = false

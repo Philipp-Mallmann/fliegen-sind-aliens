@@ -10,6 +10,8 @@ extends Node2D
 @export var nadel_szene: PackedScene
 # Wie lange die Kanone nach einem Schuss nachlaedt, in Sekunden.
 @export var nachladezeit: float = 0.5
+# Der Joystick am Handy. Sein Ausschlag nach links oder rechts lenkt wie die Pfeiltasten.
+@export var joystick: Node2D
 
 # Das Tempo, mit dem die Kanone gerade faehrt. Negativ heisst nach links.
 var aktuelles_tempo: float = 0.0
@@ -28,7 +30,8 @@ func _process(delta: float) -> void:
 
 
 func fahren(delta: float) -> void:
-	var richtung: float = Input.get_axis("links", "rechts")
+	var richtung: float = Input.get_axis("links", "rechts") + joystick.richtung.x
+	richtung = clampf(richtung, -1.0, 1.0)
 	var hoechstes: float = tempo
 	if steigt or $Uebergabe.laeuft:
 		hoechstes = tempo * steig_anteil
