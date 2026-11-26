@@ -5718,9 +5718,9 @@ Die Pappen, von unten nach oben. `Array[Texture2D]` ist eine Liste, in der nur B
 Nach so viel Flugkraft Hoehe kommt die naechste Pappe. Im Skript steht 10, in der Szene ist es auf 12,5 gestellt: 8 Pappen mal 12,5 ergibt 100, das Ziel. Bei vier Zonen (ab 0, 25, 50, 75) gehoeren so genau zwei Pappen zu jeder Zone.
 
 ```gdscript
-@export var uebergang: float = 4.0
+@export var uebergang: float = 1.8
 ```
-So viele Flugkraft vor dem Wechsel beginnt die naechste Pappe einzublenden. Groesser heisst: laengerer, weicherer Uebergang.
+So viele Flugkraft vor dem Wechsel beginnt die naechste Pappe einzublenden. 1,8 Flugkraft sind 540 Pixel Steigen (1,8 x 300), ein halber Bildschirm: Der Wechsel ist vorbei, bevor man einen halben Bildschirm hochgeflogen ist (dein Wunsch, Z171; vorher 4). Groesser heisst: laengerer, weicherer Uebergang.
 
 ```gdscript
 func _process(_delta: float) -> void:
@@ -5757,12 +5757,12 @@ Wie weit die Kanone schon in den Abschnitt der jetzigen Pappe hineingeflogen ist
 ```gdscript
 	var beginn: float = flugkraft_je_bild - uebergang
 ```
-Ab hier beginnt die Ueberblendung: 12,5 - 4 = 8,5 Flugkraft in den Abschnitt hinein.
+Ab hier beginnt die Ueberblendung: 12,5 - 1,8 = 10,7 Flugkraft in den Abschnitt hinein.
 
 ```gdscript
 	$Naechste.modulate.a = clampf((schon_geflogen - beginn) / uebergang, 0.0, 1.0)
 ```
-`modulate.a` ist die Deckkraft: 0 ist unsichtbar, 1 ist voll da. Vor dem Beginn kommt etwas unter 0 heraus, `clampf` macht 0 daraus: Man sieht nur die jetzige Pappe. Zwischen 8,5 und 12,5 waechst der Wert gleichmaessig von 0 bis 1, die naechste Pappe wird also langsam sichtbar. Weil alle Pappen aus demselben Foto gefaerbt sind und genau uebereinanderliegen, bleibt das Muster stehen, nur die Farbe fliesst. Bei 12,5 springt `nummer` eins weiter: Jetzt ist die naechste Pappe unten und voll sichtbar, die obere wieder unsichtbar. Man sieht keinen Sprung, weil vorher und nachher dieselbe Farbe zu sehen ist.
+`modulate.a` ist die Deckkraft: 0 ist unsichtbar, 1 ist voll da. Vor dem Beginn kommt etwas unter 0 heraus, `clampf` macht 0 daraus: Man sieht nur die jetzige Pappe. Zwischen 10,7 und 12,5 waechst der Wert gleichmaessig von 0 bis 1, die naechste Pappe wird also langsam sichtbar. Weil alle Pappen aus demselben Foto gefaerbt sind und genau uebereinanderliegen, bleibt das Muster stehen, nur die Farbe fliesst. Bei 12,5 springt `nummer` eins weiter: Jetzt ist die naechste Pappe unten und voll sichtbar, die obere wieder unsichtbar. Man sieht keinen Sprung, weil vorher und nachher dieselbe Farbe zu sehen ist.
 
 ### `szenen/spiel.tscn` - geaendert
 

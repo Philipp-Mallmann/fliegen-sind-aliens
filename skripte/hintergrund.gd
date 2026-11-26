@@ -11,7 +11,8 @@ extends CanvasLayer
 # Nach so viel Flugkraft Hoehe kommt die naechste Pappe.
 @export var flugkraft_je_bild: float = 10.0
 # So viel Flugkraft vor dem Wechsel beginnt die Ueberblendung zur naechsten Pappe.
-@export var uebergang: float = 4.0
+# 1,8 Flugkraft sind 540 Pixel, ein halber Bildschirm: So schnell ist der Wechsel vorbei.
+@export var uebergang: float = 1.8
 
 
 func _process(_delta: float) -> void:
