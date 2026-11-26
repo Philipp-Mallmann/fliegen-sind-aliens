@@ -6310,7 +6310,7 @@ Beim Start bekommt das Label den Text und die Groesse. `add_theme_font_size_over
 - `Wiese` in der Wand zeigt `wand.png` (mit den Forschern) statt `wiese.png`.
 - `Titel` ist jetzt ein Schild (Instanz von `schild.tscn`) mit "Einstellungen", Groesse 60, in der obersten Grasreihe (380 bis 920, 30 bis 170). Es endet links von der Zurueck-Fliege, damit man sie sieht.
 - `Musik` und `SFX` stehen rechts von den Forschern (470 bis 1390), in der zweiten und dritten Reihe (205 und 450 von oben).
-- Neu: `Dank`, ein Schild mit "Thanks to" und den Namen. Auf deinen Wunsch 1,5-mal so gross wie zuerst: 900 x 315 Pixel (490 bis 1390, 760 bis 1075), Schrift 51 statt 34. Es endet rechts genau wie Musik und SFX (bei 1390) und unten 5 Pixel ueber dem Bildrand. So gross passt es nicht mehr in die unterste Grasreihe (sie ist 240 hoch), es reicht oben in die vierte hinein. `\n` im Text ist der Zeilenumbruch nach "Thanks to".
+- Neu: `Dank`, ein Schild mit "Thanks to" und den Namen. Auf deinen Wunsch 1,5-mal so gross wie zuerst: 920 x 315 Pixel (470 bis 1390, 760 bis 1075), Schrift 51 statt 34. Es ist links und rechts buendig mit Musik und SFX (470 und 1390) und unten 5 Pixel ueber dem Bildrand. So gross passt es nicht mehr in die unterste Grasreihe (sie ist 240 hoch), es reicht oben in die vierte hinein. `\n` im Text ist der Zeilenumbruch nach "Thanks to".
 
 Angeschaut: Bild der hochgefahrenen Wand. Schilder und Regler liegen neben den Forschern, nichts deckt sie zu, die Zurueck-Fliege ist frei. Regler funktionieren weiter (Musik 40 Prozent: 0,40).
 

@@ -773,7 +773,7 @@ offset_bottom = 630.0
 
 [node name="Dank" parent="Einstellungen/Wand" instance=ExtResource("44_schild")]
 layout_mode = 0
-offset_left = 490.0
+offset_left = 470.0
 offset_top = 760.0
 offset_right = 1390.0
 offset_bottom = 1075.0
