@@ -5718,6 +5718,11 @@ Die Pappen, von unten nach oben. `Array[Texture2D]` ist eine Liste, in der nur B
 Nach so viel Flugkraft Hoehe kommt die naechste Pappe. Im Skript steht 10, in der Szene ist es auf 12,5 gestellt: 8 Pappen mal 12,5 ergibt 100, das Ziel. Bei vier Zonen (ab 0, 25, 50, 75) gehoeren so genau zwei Pappen zu jeder Zone.
 
 ```gdscript
+@export var uebergang: float = 4.0
+```
+So viele Flugkraft vor dem Wechsel beginnt die naechste Pappe einzublenden. Groesser heisst: laengerer, weicherer Uebergang.
+
+```gdscript
 func _process(_delta: float) -> void:
 	var hoehe: float = -kanone.position.y / get_parent().hoehe_je_flugkraft
 ```
@@ -5734,13 +5739,34 @@ Die wievielte Pappe ist dran? Mit 12,5: Bei Hoehe 0 bis unter 12,5 kommt 0 herau
 `clampi` haelt die Zahl zwischen 0 und der letzten Stelle der Liste. Ueber 100 bleibt es bei der letzten Pappe, und beim Wackeln unter dem Boden (Hoehe knapp unter 0) bei der ersten. Ohne diese Zeile gaebe es einen Fehler, wenn die Nummer ausserhalb der Liste liegt.
 
 ```gdscript
-	$Pappe.texture = bilder[nummer]
+	var naechste: int = mini(nummer + 1, bilder.size() - 1)
 ```
-Der Bild-Knoten `Pappe` bekommt die Pappe mit dieser Nummer. Die Liste zaehlt ab 0, `bilder[0]` ist also Blau.
+Die Nummer der Pappe, die als naechste kommt. `mini` nimmt die kleinere von zwei ganzen Zahlen: Bei der letzten Pappe gibt es keine naechste, dann bleibt es die letzte.
+
+```gdscript
+	$Pappe.texture = bilder[nummer]
+	$Naechste.texture = bilder[naechste]
+```
+Der Bild-Knoten `Pappe` bekommt die Pappe mit dieser Nummer, der Bild-Knoten `Naechste` (er liegt genau darueber) die folgende. Die Liste zaehlt ab 0, `bilder[0]` ist also Blau.
+
+```gdscript
+	var schon_geflogen: float = hoehe - nummer * flugkraft_je_bild
+```
+Wie weit die Kanone schon in den Abschnitt der jetzigen Pappe hineingeflogen ist, in Flugkraft. Am Anfang des Abschnitts 0, kurz vor dem Wechsel fast 12,5.
+
+```gdscript
+	var beginn: float = flugkraft_je_bild - uebergang
+```
+Ab hier beginnt die Ueberblendung: 12,5 - 4 = 8,5 Flugkraft in den Abschnitt hinein.
+
+```gdscript
+	$Naechste.modulate.a = clampf((schon_geflogen - beginn) / uebergang, 0.0, 1.0)
+```
+`modulate.a` ist die Deckkraft: 0 ist unsichtbar, 1 ist voll da. Vor dem Beginn kommt etwas unter 0 heraus, `clampf` macht 0 daraus: Man sieht nur die jetzige Pappe. Zwischen 8,5 und 12,5 waechst der Wert gleichmaessig von 0 bis 1, die naechste Pappe wird also langsam sichtbar. Weil alle Pappen aus demselben Foto gefaerbt sind und genau uebereinanderliegen, bleibt das Muster stehen, nur die Farbe fliesst. Bei 12,5 springt `nummer` eins weiter: Jetzt ist die naechste Pappe unten und voll sichtbar, die obere wieder unsichtbar. Man sieht keinen Sprung, weil vorher und nachher dieselbe Farbe zu sehen ist.
 
 ### `szenen/spiel.tscn` - geaendert
 
-- **Hintergrund:** Vorher ein `Parallax2D` mit `Feld1` und `Feld2` (das graue Schachbrett), das sich wiederholte und beim Steigen halb so schnell mitlief. Jetzt eine `CanvasLayer` (eine eigene Zeichenebene, die nicht mit der Kamera mitfaehrt) mit `layer = -1`, also hinter allem anderen. Sie traegt `hintergrund.gd`, `kanone` zeigt auf `../Kanone`, `bilder` enthaelt die acht Pappen, `flugkraft_je_bild = 12.5`. Darin `Pappe`, ein `TextureRect` (ein Kasten, der ein Bild zeigt), am Anfang mit der blauen Pappe. Die vier `anchor`-Zeilen (`anchors_preset = 15`) spannen den Kasten ueber den ganzen Bildschirm. `expand_mode = 1` erlaubt dem Kasten, groesser zu sein als das Bild; ohne `stretch_mode` wird das Bild auf die Kastengroesse gezogen. So deckt ein einziges Bild den Hintergrund ab, nichts wiederholt sich (dein Wunsch). Folge: Die Pappe steht still. Dass man steigt, sieht man an Fliegen, Hindernissen und am Farbwechsel. `mouse_filter = 2`: Der Kasten nimmt keine Klicks weg.
+- **Hintergrund:** Vorher ein `Parallax2D` mit `Feld1` und `Feld2` (das graue Schachbrett), das sich wiederholte und beim Steigen halb so schnell mitlief. Jetzt eine `CanvasLayer` (eine eigene Zeichenebene, die nicht mit der Kamera mitfaehrt) mit `layer = -1`, also hinter allem anderen. Sie traegt `hintergrund.gd`, `kanone` zeigt auf `../Kanone`, `bilder` enthaelt die acht Pappen, `flugkraft_je_bild = 12.5`. Darin `Pappe` und darueber `Naechste`, zwei gleiche `TextureRect` (ein Kasten, der ein Bild zeigt), am Anfang mit der blauen und der gelben Pappe. `Naechste` hat `modulate = Color(1, 1, 1, 0)`, ist also am Anfang unsichtbar. Die vier `anchor`-Zeilen (`anchors_preset = 15`) spannen den Kasten ueber den ganzen Bildschirm. `expand_mode = 1` erlaubt dem Kasten, groesser zu sein als das Bild; ohne `stretch_mode` wird das Bild auf die Kastengroesse gezogen. So deckt ein einziges Bild den Hintergrund ab, nichts wiederholt sich (dein Wunsch). Folge: Die Pappe steht still. Dass man steigt, sieht man an Fliegen, Hindernissen und am Farbwechsel. `mouse_filter = 2`: Der Kasten nimmt keine Klicks weg.
 - **Boden:** `Streifen` (der gruene Kasten) ist weg. Neu ist `Wiese`, ein `Sprite2D` mit `wiese.png`, 5,23-fach vergroessert (`scale`). Warum 5,23: In der Totale ist die Kamera auf 0,43 gezoomt, 5,23 x 0,43 = 2,25. Auf dem Bildschirm ist die Wiese dann genau so gross wie auf der Wand in den Einstellungen (dort 2,25-fach), und beim Hochfahren der Wand springt nichts. `position = (0, -429)`: Im Bild beginnt das Gras 82 Pixel unter dem oberen Rand, 82 x 5,23 = 429. So stehen die Halme oben ueber der Linie, auf der die Figur steht. `repeat_size = (6694, 0)`: Bildbreite 1280 x 5,23.
 - **Zonen:** Die Zeile `hintergrund = NodePath("../Hintergrund")` ist weg, ebenso die `farbe`-Zeilen der Zonen Scheue, Koeder und Boss.
 - **Wand (Einstellungen):** Die Farbe ist jetzt durchsichtig (`Color(0, 0, 0, 0)`), die Wand selbst zeigt nichts mehr. Neu als erstes Kind: `Wiese`, ein `TextureRect` (ein Bild-Knoten fuer Bedienflaechen) mit `wiese.png`, 2,25-fach (`scale = (2.25, 2.25)`). Der Kasten ist 640 breit, also nur die linke, ungespiegelte Haelfte des Bilds; 640 x 2,25 = 1440, genau die Bildschirmbreite. Er ist 640 hoch, 640 x 2,25 = 1440, das reicht ueber die 1080 des Bildschirms hinaus. `offset_top = -184.5`: Das Gras beginnt im Bild bei 82, mal 2,25. Die Halme stehen also ueber der Oberkante der Wand, und die Kante liegt da, wo in der Totale die Wiese anfaengt. `stretch_mode = 1` heisst Kacheln: Das Bild wird in Originalgroesse gezeigt und nicht verzerrt. `mouse_filter = 2`: Das Bild nimmt keine Klicks weg, der Klick auf die Fliege oben an der Kante kommt weiter an. Weil es das erste Kind ist, wird es zuerst gezeichnet und liegt hinter Titel, Reglern und Fliege.
@@ -5761,5 +5787,5 @@ Der Bild-Knoten `Pappe` bekommt die Pappe mit dieser Nummer. Die Liste zaehlt ab
 ### Drei Fragen zur Selbstkontrolle
 
 1. Warum ist die Wiese im Spiel 5,23-fach vergroessert und auf der Wand nur 2,25-fach?
-2. Welche Pappe ist bei Flugkraft 37 zu sehen, und welche bei 120?
+2. Welche Pappe ist bei Flugkraft 37 zu sehen, und wie stark ist bei Flugkraft 11 die naechste schon eingeblendet?
 3. Warum werden `Koerper` und `Fluegel` nur unsichtbar gemacht und nicht geloescht?
