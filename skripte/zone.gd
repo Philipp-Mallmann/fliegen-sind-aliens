@@ -12,5 +12,3 @@ extends Node
 @export var einmalig: Array[PackedScene] = []
 # Wie viele freie Fliegen hier mindestens in der Naehe sein sollen.
 @export var mindestens: int = 4
-# Die Farbe, mit der der Hintergrund in dieser Zone getoent wird. Weiss heisst: unveraendert.
-@export var farbe: Color = Color.WHITE

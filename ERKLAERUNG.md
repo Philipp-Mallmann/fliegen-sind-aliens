@@ -5676,3 +5676,90 @@ In `fliegen`, im Teil fuer die Schleife. In beiden Zeilen ist `* faktor_schleife
 - Probe ohne Bildschirm: Teleport-Fliege ruhig: Nadel an ihrer Stelle trifft. Kanone unter ihr, sie flackert: `entkommt` wahr, Nadel trifft nicht. Nach dem Sprung: trifft wieder, zwei Spruenge uebrig. Flugkraft 6.
 - Schnelle Fliege mit Tempo 560: eine Schleife dauert 24 Bilder, das sind 0,4 Sekunden (vorher gerechnet 0,79). Danach liegt sie wieder genau auf ihrer Hoehe.
 - Nicht angeschaut: ob die beiden jetzt schwer genug sind.
+
+## Abschnitt 10, erster Teil - Riffelpappe, Wiese und drei Fliegen als Bilder (ohne Forscher)
+
+Die grauen Flaechen werden zum ersten Mal durch Bilder ersetzt. Der Forscher bleibt noch grau. Geaendert in Abschnitt 10: `zone.gd` und `zonen.gd` aus Abschnitt 9, `spiel.tscn`, drei Fliegenszenen aus Abschnitt 3 und 9.
+
+### Die Bilder
+
+- `assets/hintergrund/riffel/riffel-1-blau.png` bis `riffel-8-fast-schwarz.png`: deine Riffelpappe (`geriffelt.png`) achtmal umgefaerbt, in dieser Reihenfolge von unten nach oben: blau, gelb, creme, weiss, violett, indigo, nachtblau, fast schwarz. Je zwei gehoeren zu einer Zone. Die beiden hellsten (Creme, Weiss) bilden zusammen die helle Zone, Violett fuehrt danach zu den dunklen Weltall-Farben hin, damit der Sprung von Hell zu Dunkel nicht so hart ist. Blau und Violett haben Kontrast und Buntheit des Grases (gemessen im Farbraum LAB wie `boden2.png`: Streuung der Helligkeit 18, Buntheit 55) bei der Helligkeit 68 (Z13). Gelb hat schwaechere Rillen (Streuung 10), weil es sonst sticht. Creme ist sehr hell (88) und kaum bunt, Weiss ist ganz ohne Farbe (Helligkeit 93, Rillen-Streuung 9), die drei Weltall-Pappen werden immer dunkler bis 10. Die dunklen Rillen sind auf halben Abstand zur Mitte geholt (Z42). An jedem Rand sind 4 Pixel abgeschnitten, dort hatte das Foto eine helle Linie.
+- `assets/hintergrund/wiese.png`: `boden2.png` zweimal nebeneinander, die rechte Haelfte gespiegelt. Aus demselben Grund: Die Wiese wiederholt sich seitlich ohne sichtbare Naht.
+- Die Fliegen nutzen `fliege-1.png`, `fliege-fuehler-gruen.png` und `fliege-ruessel-orange.png` unveraendert.
+
+### `skripte/zone.gd` - geaendert
+
+Die Zeilen `farbe` (mit ihrem Kommentar) sind weg. Die Zone toent den Hintergrund nicht mehr, das macht jetzt `hintergrund.gd`. Die Zonen bestimmen weiter, welche Fliegen kommen.
+
+### `skripte/zonen.gd` - geaendert
+
+Weg sind `@export var hintergrund: Node2D` (mit Kommentar) und in `_process` die Zeile `hintergrund.modulate = zone.farbe`. Grund wie oben: Die Farbe haengt nicht mehr an der Zone, sondern an der Hoehe, alle 10 Flugkraft eine neue (Z51). So bleibt offen, wie viele Zonen es am Ende gibt.
+
+### `skripte/hintergrund.gd` - neu
+
+```gdscript
+extends CanvasLayer
+```
+Das Skript haengt am Knoten `Hintergrund`, einer `CanvasLayer`, und kann darum alles, was eine `CanvasLayer` kann.
+
+```gdscript
+@export var kanone: Node2D
+```
+Die Kanone. Ihre Hoehe entscheidet, welche Pappe zu sehen ist.
+
+```gdscript
+@export var bilder: Array[Texture2D] = []
+```
+Die Pappen, von unten nach oben. `Array[Texture2D]` ist eine Liste, in der nur Bilder stehen duerfen. Im Inspector kann man Bilder hinzufuegen, tauschen oder umsortieren.
+
+```gdscript
+@export var flugkraft_je_bild: float = 10.0
+```
+Nach so viel Flugkraft Hoehe kommt die naechste Pappe. Im Skript steht 10, in der Szene ist es auf 12,5 gestellt: 8 Pappen mal 12,5 ergibt 100, das Ziel. Bei vier Zonen (ab 0, 25, 50, 75) gehoeren so genau zwei Pappen zu jeder Zone.
+
+```gdscript
+func _process(_delta: float) -> void:
+	var hoehe: float = -kanone.position.y / get_parent().hoehe_je_flugkraft
+```
+Jedes Bild: Wie hoch ist die Kanone, in Flugkraft gerechnet? Nach oben ist `y` in Godot negativ, darum das Minus. `get_parent()` ist der Knoten `Spiel`, dort steht, wie viele Pixel eine Flugkraft hoch ist (300). Dieselbe Rechnung steht in `zonen.gd`.
+
+```gdscript
+	var nummer: int = int(hoehe / flugkraft_je_bild)
+```
+Die wievielte Pappe ist dran? Mit 12,5: Bei Hoehe 0 bis unter 12,5 kommt 0 heraus, bei 12,5 bis unter 25 kommt 1 heraus, und so weiter. `int(...)` schneidet die Nachkommastellen ab.
+
+```gdscript
+	nummer = clampi(nummer, 0, bilder.size() - 1)
+```
+`clampi` haelt die Zahl zwischen 0 und der letzten Stelle der Liste. Ueber 100 bleibt es bei der letzten Pappe, und beim Wackeln unter dem Boden (Hoehe knapp unter 0) bei der ersten. Ohne diese Zeile gaebe es einen Fehler, wenn die Nummer ausserhalb der Liste liegt.
+
+```gdscript
+	$Pappe.texture = bilder[nummer]
+```
+Der Bild-Knoten `Pappe` bekommt die Pappe mit dieser Nummer. Die Liste zaehlt ab 0, `bilder[0]` ist also Blau.
+
+### `szenen/spiel.tscn` - geaendert
+
+- **Hintergrund:** Vorher ein `Parallax2D` mit `Feld1` und `Feld2` (das graue Schachbrett), das sich wiederholte und beim Steigen halb so schnell mitlief. Jetzt eine `CanvasLayer` (eine eigene Zeichenebene, die nicht mit der Kamera mitfaehrt) mit `layer = -1`, also hinter allem anderen. Sie traegt `hintergrund.gd`, `kanone` zeigt auf `../Kanone`, `bilder` enthaelt die acht Pappen, `flugkraft_je_bild = 12.5`. Darin `Pappe`, ein `TextureRect` (ein Kasten, der ein Bild zeigt), am Anfang mit der blauen Pappe. Die vier `anchor`-Zeilen (`anchors_preset = 15`) spannen den Kasten ueber den ganzen Bildschirm. `expand_mode = 1` erlaubt dem Kasten, groesser zu sein als das Bild; ohne `stretch_mode` wird das Bild auf die Kastengroesse gezogen. So deckt ein einziges Bild den Hintergrund ab, nichts wiederholt sich (dein Wunsch). Folge: Die Pappe steht still. Dass man steigt, sieht man an Fliegen, Hindernissen und am Farbwechsel. `mouse_filter = 2`: Der Kasten nimmt keine Klicks weg.
+- **Boden:** `Streifen` (der gruene Kasten) ist weg. Neu ist `Wiese`, ein `Sprite2D` mit `wiese.png`, 5,23-fach vergroessert (`scale`). Warum 5,23: In der Totale ist die Kamera auf 0,43 gezoomt, 5,23 x 0,43 = 2,25. Auf dem Bildschirm ist die Wiese dann genau so gross wie auf der Wand in den Einstellungen (dort 2,25-fach), und beim Hochfahren der Wand springt nichts. `position = (0, -429)`: Im Bild beginnt das Gras 82 Pixel unter dem oberen Rand, 82 x 5,23 = 429. So stehen die Halme oben ueber der Linie, auf der die Figur steht. `repeat_size = (6694, 0)`: Bildbreite 1280 x 5,23.
+- **Zonen:** Die Zeile `hintergrund = NodePath("../Hintergrund")` ist weg, ebenso die `farbe`-Zeilen der Zonen Scheue, Koeder und Boss.
+- **Wand (Einstellungen):** Die Farbe ist jetzt durchsichtig (`Color(0, 0, 0, 0)`), die Wand selbst zeigt nichts mehr. Neu als erstes Kind: `Wiese`, ein `TextureRect` (ein Bild-Knoten fuer Bedienflaechen) mit `wiese.png`, 2,25-fach (`scale = (2.25, 2.25)`). Der Kasten ist 640 breit, also nur die linke, ungespiegelte Haelfte des Bilds; 640 x 2,25 = 1440, genau die Bildschirmbreite. Er ist 640 hoch, 640 x 2,25 = 1440, das reicht ueber die 1080 des Bildschirms hinaus. `offset_top = -184.5`: Das Gras beginnt im Bild bei 82, mal 2,25. Die Halme stehen also ueber der Oberkante der Wand, und die Kante liegt da, wo in der Totale die Wiese anfaengt. `stretch_mode = 1` heisst Kacheln: Das Bild wird in Originalgroesse gezeigt und nicht verzerrt. `mouse_filter = 2`: Das Bild nimmt keine Klicks weg, der Klick auf die Fliege oben an der Kante kommt weiter an. Weil es das erste Kind ist, wird es zuerst gezeichnet und liegt hinter Titel, Reglern und Fliege.
+
+- **Schrift:** Die Beschriftungen ueber dem Spiel (`Bedienung/Zone`, `Bedienung/TestHinweis`, `Bedienung/Sieg`, `Bedienung/Absturz` und `Bedienung/TasteSchuss/Wort`) bekommen je zwei Zeilen: `theme_override_colors/font_outline_color = Color(0, 0, 0, 1)` setzt die Farbe der Kontur auf Schwarz, `theme_override_constants/outline_size = 8` macht sie 8 Pixel dick. `theme_override` heisst: nur fuer diesen Knoten, statt der allgemeinen Einstellung. So bleibt die weisse Schrift auch auf den hellen Pappen lesbar.
+
+### `szenen/fliege_normal.tscn`, `fliege_schnell.tscn`, `fliege_scheu.tscn` - geaendert
+
+- `Fluegel`, `Koerper` und `Art` bekommen `visible = false`. Sie bleiben in der Szene, nur unsichtbar. So muss kein Skript umgebaut werden, und man kann sie zum Vergleichen wieder einschalten.
+- Neu: `Bild`, ein `Sprite2D` mit dem Fliegenbild. Normal: `fliege-1.png`, 0,068-fach. Schnell: `fliege-fuehler-gruen.png`, 0,25-fach. Scheu: `fliege-ruessel-orange.png`, 0,22-fach. Die Faktoren machen jede Fliege etwa 130 Pixel breit, ungefaehr so gross wie das graue Quadrat (100 Pixel), das weiter fuer den Treffer zaehlt.
+
+### So wurde es angeschaut
+
+- Schnellcheck PASS fuer `hintergrund.gd`, `zone.gd` und `zonen.gd`, Verify PASS.
+- Bildschirmfotos aus dem laufenden Spiel (Probe ausserhalb des Spielordners): Totale mit blauer Pappe und Wiese, Wand oben mit den Grasreihen, Hoehen 1, 10, 30, 55 und 80. Erste Fassung zeigte Kanten zwischen den Pappe-Kacheln, eine Naht in der Wiese und unten an der Wand einen Streifen ohne Gras, zweite Fassung eine helle Linie in der Pappe und eine gespiegelte Stelle auf der Wand. Darum die beschnittenen Bilder und die Wand mit nur der ungespiegelten Haelfte. Danach (auf deinen Wunsch) die Pappe als ein einziges, bildschirmfuellendes Bild statt Kacheln, heller, mit weicheren Rillen und acht Farben nach Hoehe. Bildschirmfotos bei Hoehe 5, 18, 30, 43, 55, 68, 80, 93: jede zeigt die erwartete Pappe. Gesehen: Auf Creme und Weiss war die weisse Schrift (Zone, Schuss) kaum lesbar, darum die dunkle Kontur. Mit Kontur auf Weiss lesbar (Bildschirmfoto bei Hoehe 43).
+- Nicht angeschaut: Stil und Wirkung (das entscheidest du), am Handy.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum ist die Wiese im Spiel 5,23-fach vergroessert und auf der Wand nur 2,25-fach?
+2. Welche Pappe ist bei Flugkraft 37 zu sehen, und welche bei 120?
+3. Warum werden `Koerper` und `Fluegel` nur unsichtbar gemacht und nicht geloescht?

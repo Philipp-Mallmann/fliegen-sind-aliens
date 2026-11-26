@@ -1,4 +1,4 @@
-[gd_scene load_steps=42 format=3]
+[gd_scene load_steps=52 format=3]
 
 [ext_resource type="Script" path="res://skripte/kanone.gd" id="1_kanone"]
 [ext_resource type="PackedScene" path="res://szenen/nadel.tscn" id="2_nadel"]
@@ -32,6 +32,16 @@
 [ext_resource type="Script" path="res://skripte/musik.gd" id="30_musik"]
 [ext_resource type="AudioStream" path="res://assets/audio/musik/musik_schleife.ogg" id="31_schleife"]
 [ext_resource type="AudioStream" path="res://assets/audio/musik/musik_ende.ogg" id="32_ende"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wiese.png" id="37_wiese"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-1-blau.png" id="p01"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-2-gelb.png" id="p02"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-3-creme.png" id="p03"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-4-weiss.png" id="p04"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-5-violett.png" id="p05"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-6-indigo.png" id="p06"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-7-nachtblau.png" id="p07"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-8-fast-schwarz.png" id="p08"]
+[ext_resource type="Script" path="res://skripte/hintergrund.gd" id="38_hintergrund"]
 
 [sub_resource type="Gradient" id="Gradient_taste"]
 colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
@@ -89,36 +99,33 @@ animations = [{
 [node name="Spiel" type="Node2D"]
 script = ExtResource("5_spiel")
 
-[node name="Hintergrund" type="Parallax2D" parent="."]
-scroll_scale = Vector2(0.5, 0.5)
-repeat_size = Vector2(800, 800)
-repeat_times = 6
+[node name="Hintergrund" type="CanvasLayer" parent="." node_paths=PackedStringArray("kanone")]
+layer = -1
+script = ExtResource("38_hintergrund")
+kanone = NodePath("../Kanone")
+bilder = Array[Texture2D]([ExtResource("p01"), ExtResource("p02"), ExtResource("p03"), ExtResource("p04"), ExtResource("p05"), ExtResource("p06"), ExtResource("p07"), ExtResource("p08")])
+flugkraft_je_bild = 12.5
 
-[node name="Feld1" type="ColorRect" parent="Hintergrund"]
-offset_left = 0.0
-offset_top = 0.0
-offset_right = 400.0
-offset_bottom = 400.0
+[node name="Pappe" type="TextureRect" parent="Hintergrund"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
-color = Color(0.34, 0.34, 0.34, 1)
-
-[node name="Feld2" type="ColorRect" parent="Hintergrund"]
-offset_left = 400.0
-offset_top = 400.0
-offset_right = 800.0
-offset_bottom = 800.0
-mouse_filter = 2
-color = Color(0.34, 0.34, 0.34, 1)
+texture = ExtResource("p01")
+expand_mode = 1
 
 [node name="Boden" type="Parallax2D" parent="."]
 scroll_offset = Vector2(0, 1212)
-repeat_size = Vector2(1600, 0)
+repeat_size = Vector2(6694, 0)
 repeat_times = 4
 
-[node name="Streifen" type="ColorRect" parent="Boden"]
-offset_right = 1600.0
-offset_bottom = 1300.0
-color = Color(0.33, 0.5, 0.33, 1)
+[node name="Wiese" type="Sprite2D" parent="Boden"]
+position = Vector2(0, -429)
+scale = Vector2(5.23, 5.23)
+texture = ExtResource("37_wiese")
+centered = false
 
 [node name="Pfosten1" type="ColorRect" parent="Boden"]
 offset_top = -60.0
@@ -352,6 +359,8 @@ action = "schiessen"
 visibility_mode = 1
 
 [node name="Wort" type="Label" parent="Bedienung/TasteSchuss"]
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
 offset_right = 200.0
 offset_bottom = 200.0
 theme_override_font_sizes/font_size = 48
@@ -360,6 +369,8 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Sieg" type="Label" parent="Bedienung"]
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
 visible = false
 offset_top = 440.0
 offset_right = 1440.0
@@ -370,6 +381,8 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Absturz" type="Label" parent="Bedienung"]
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
 visible = false
 offset_top = 440.0
 offset_right = 1440.0
@@ -424,10 +437,9 @@ volume_db = -11.0
 max_polyphony = 4
 bus = &"Effekte"
 
-[node name="Zonen" type="Node" parent="." node_paths=PackedStringArray("kanone", "hintergrund", "anzeige")]
+[node name="Zonen" type="Node" parent="." node_paths=PackedStringArray("kanone", "anzeige")]
 script = ExtResource("22_zonen")
 kanone = NodePath("../Kanone")
-hintergrund = NodePath("../Hintergrund")
 anzeige = NodePath("../Bedienung/Zone")
 
 [node name="Anfang" type="Node" parent="Zonen"]
@@ -438,14 +450,12 @@ fliegen = Array[PackedScene]([ExtResource("3_fliege"), ExtResource("17_schnell")
 script = ExtResource("23_zone")
 ab_flugkraft = 25.0
 fliegen = Array[PackedScene]([ExtResource("18_scheu"), ExtResource("17_schnell")])
-farbe = Color(0.7, 1, 0.7, 1)
 
 [node name="Koeder" type="Node" parent="Zonen"]
 script = ExtResource("23_zone")
 ab_flugkraft = 50.0
 fliegen = Array[PackedScene]([ExtResource("19_koeder")])
 mindestens = 3
-farbe = Color(1, 0.85, 0.6, 1)
 
 [node name="Boss" type="Node" parent="Zonen"]
 script = ExtResource("23_zone")
@@ -453,9 +463,10 @@ ab_flugkraft = 75.0
 fliegen = Array[PackedScene]([ExtResource("20_teleport")])
 einmalig = Array[PackedScene]([ExtResource("21_boss")])
 mindestens = 3
-farbe = Color(1, 0.7, 0.9, 1)
 
 [node name="Zone" type="Label" parent="Bedienung"]
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
 offset_left = 20.0
 offset_top = 10.0
 offset_right = 700.0
@@ -464,6 +475,8 @@ theme_override_font_sizes/font_size = 32
 text = "Zone"
 
 [node name="TestHinweis" type="Label" parent="Bedienung"]
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
 offset_left = 20.0
 offset_top = 55.0
 offset_right = 700.0
@@ -592,7 +605,17 @@ offset_top = 810.0
 offset_right = 1440.0
 offset_bottom = 1890.0
 mouse_filter = 2
-color = Color(0.33, 0.5, 0.33, 1)
+color = Color(0, 0, 0, 0)
+
+[node name="Wiese" type="TextureRect" parent="Einstellungen/Wand"]
+layout_mode = 0
+offset_top = -184.5
+offset_right = 640.0
+offset_bottom = 455.5
+scale = Vector2(2.25, 2.25)
+mouse_filter = 2
+texture = ExtResource("37_wiese")
+stretch_mode = 1
 
 [node name="Fliege" type="ColorRect" parent="Einstellungen/Wand"]
 layout_mode = 0
