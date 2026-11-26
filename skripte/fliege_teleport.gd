@@ -1,6 +1,7 @@
 extends "res://skripte/fliege.gd"
 
 # Die Teleport-Fliege: fliegt hin und her. Kommt die Kanone unter sie, flackert sie kurz und springt zur Seite.
+# Sobald sie flackert, ist sie schon entkommen: Die Nadel fliegt durch sie hindurch. Das Flackern ist nur zum Ansehen.
 # Das kann sie ein paarmal hintereinander, dann muss sie sich erholen. In dieser Pause kann man sie fangen.
 # Wie viele Spruenge sie noch hat, sieht man am Schimmer um sie herum und hoert man an ihrem Summen:
 # Mit jedem Sprung wird der Schimmer schwaecher und das Summen tiefer.
@@ -65,6 +66,7 @@ func fliegen(delta: float) -> void:
 		return
 	if absf(position.x - kanone.position.x) < ausloese_weite:
 		flackert_noch = flacker_zeit
+		entkommt = true
 
 
 func springen() -> void:
@@ -74,6 +76,7 @@ func springen() -> void:
 	position.x += weit
 	mitte_x += weit
 	modulate.a = 1.0
+	entkommt = false
 	uebrig -= 1
 	if uebrig == 0:
 		erholt_in = erholzeit

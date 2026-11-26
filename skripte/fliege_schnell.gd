@@ -1,6 +1,6 @@
 extends "res://skripte/fliege.gd"
 
-# Die schnelle Fliege: fliegt gerade und sehr schnell. Am Ende ihrer Strecke wendet sie in einer Schleife, dort mit ihrem einfachen Tempo.
+# Die schnelle Fliege: fliegt gerade und sehr schnell. Am Ende ihrer Strecke wendet sie in einer Schleife.
 
 # Wie weit die Fliege von ihrer Mitte nach links und nach rechts fliegt, bevor sie wendet, in Pixeln.
 @export var strecke: float = 300.0
@@ -8,6 +8,8 @@ extends "res://skripte/fliege.gd"
 @export var schleife: float = 60.0
 # Wie viel schneller sie auf dem geraden Stueck fliegt als in der Schleife. 2 heisst: doppelt so schnell.
 @export var faktor_gerade: float = 2.0
+# Wie viel schneller sie die Schleife fliegt als ihr einfaches Tempo. 2 heisst: doppelt so schnell, die Wende dauert halb so lang.
+@export var faktor_schleife: float = 2.0
 
 # Wie weit sie in der Schleife insgesamt lenkt, im Bogenmass:
 # erst ein Sechstel Kreis nach oben, dann fuenf Sechstel Kreis nach unten herum, dann wieder ein Sechstel nach oben.
@@ -36,8 +38,8 @@ func fliegen(delta: float) -> void:
 			wendet = true
 			gelenkt = 0.0
 		return
-	position += Vector2.from_angle(winkel) * tempo * delta
-	var schritt: float = tempo / schleife * delta
+	position += Vector2.from_angle(winkel) * tempo * faktor_schleife * delta
+	var schritt: float = tempo * faktor_schleife / schleife * delta
 	gelenkt += schritt
 	if gelenkt < ERSTES_STUECK or gelenkt > TAU:
 		winkel -= schritt * richtung

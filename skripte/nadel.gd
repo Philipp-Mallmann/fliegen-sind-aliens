@@ -54,7 +54,7 @@ func _process(delta: float) -> void:
 
 
 func trifft(kandidat: Node2D, nur_darueber: bool) -> bool:
-	if kandidat.gefangen:
+	if kandidat.gefangen or kandidat.entkommt:
 		return false
 	if kandidat.leben > 1 and not aufgespiesste.is_empty():
 		return false

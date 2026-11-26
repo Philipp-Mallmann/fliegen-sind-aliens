@@ -28,6 +28,8 @@ var mitte_x: float = 0.0
 var richtung: float = 1.0
 # true heisst: Die Fliege haengt an der Nadel und fliegt nicht mehr.
 var gefangen: bool = false
+# true heisst: Die Nadel fliegt gerade durch die Fliege hindurch, man kann sie nicht treffen. Nur die Teleport-Fliege setzt das.
+var entkommt: bool = false
 # In diese Richtung flieht die Fliege aus dem Bild. Vector2.ZERO heisst: Sie flieht nicht. Setzt der Erzeuger.
 var flucht: Vector2 = Vector2.ZERO
 # Die Hoehe, auf der die Fliege zu Hause ist. Um sie herum wippt oder kreist sie.

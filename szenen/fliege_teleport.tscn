@@ -19,7 +19,7 @@ z_index = 1
 script = ExtResource("1_fliege")
 tempo_langsam = 100.0
 tempo_schnell = 180.0
-flugkraft = 7
+flugkraft = 6
 
 [node name="Schimmer" type="Sprite2D" parent="."]
 texture = SubResource("GradientTexture2D_schimmer")

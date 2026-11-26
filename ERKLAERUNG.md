@@ -5620,3 +5620,59 @@ Die 0,3 Sekunden bleiben, weil der Arm erst gerade stehen muss. Sonst saehe man,
 - Verify PASS, Schnellcheck PASS.
 - Probe mit Fenster: vom Treffer bis zum Spielstart 0,30 Sekunden (vorher 2,1 bis 2,2), bis der Zoom fertig ist 1,10 Sekunden. Kanonenspitze weiter 140 ueber der Kanone. Im Bild: Arm links vom Rumpf.
 - Nicht angeschaut: ob sich der Einstieg jetzt richtig anfuehlt.
+
+## Spass-Test, Runde 20 - Teleport-Fliege entkommt wirklich, schnelle Fliege wendet schneller
+
+Was sich aendert: Die Teleport-Fliege flackert 0,2 Sekunden, bevor sie springt. In dieser Zeit konnte man sie noch treffen. Jetzt fliegt die Nadel waehrenddessen durch sie hindurch, das Flackern ist nur noch zum Ansehen. Sie gibt 6 statt 7 Flugkraft, damit die letzte Zone laenger dauert. Die schnelle Fliege fliegt ihre Schleife an der Wende doppelt so schnell.
+
+### `skripte/fliege.gd` - geaendert
+
+```gdscript
+var entkommt: bool = false
+```
+Neu, bei allen Fliegen vorhanden. Wahr heisst: Die Nadel kann diese Fliege gerade nicht treffen. Nur die Teleport-Fliege setzt es auf wahr. Es steht im gemeinsamen Skript, weil die Nadel jede Fliege danach fragt.
+
+### `skripte/nadel.gd` - geaendert
+
+```gdscript
+	if kandidat.gefangen or kandidat.entkommt:
+		return false
+```
+In `trifft`. Vorher stand dort nur `kandidat.gefangen`. Eine Fliege, die gerade entkommt, zaehlt fuer die Nadel nicht, genau wie eine schon gefangene. Die Nadel fliegt weiter.
+
+### `skripte/fliege_teleport.gd` - geaendert
+
+```gdscript
+		flackert_noch = flacker_zeit
+		entkommt = true
+```
+In `fliegen`, an der Stelle, an der die Kanone nah genug ist und das Flackern beginnt. Die zweite Zeile ist neu: Mit dem ersten Flackern ist sie schon entkommen.
+
+```gdscript
+	modulate.a = 1.0
+	entkommt = false
+	uebrig -= 1
+```
+In `springen`. Die mittlere Zeile ist neu: Nach dem Sprung, an der neuen Stelle, kann man sie wieder treffen. Fangen kann man sie also, wenn die Kanone weiter als 120 Pixel seitlich steht (das geht nur mit einer Nadel, die schon fliegt) oder in den 2,5 Sekunden Erholung nach dem dritten Sprung.
+
+In `szenen/fliege_teleport.tscn`: `flugkraft = 6` statt 7.
+
+### `skripte/fliege_schnell.gd` - geaendert
+
+```gdscript
+@export var faktor_schleife: float = 2.0
+```
+Neu. So viel schneller als ihr einfaches Tempo fliegt sie die Schleife. Bisher flog sie die Schleife mit dem einfachen Tempo, das entspricht einer 1.
+
+```gdscript
+	position += Vector2.from_angle(winkel) * tempo * faktor_schleife * delta
+	var schritt: float = tempo * faktor_schleife / schleife * delta
+```
+In `fliegen`, im Teil fuer die Schleife. In beiden Zeilen ist `* faktor_schleife` neu. Die erste bewegt die Fliege, die zweite rechnet, wie weit sie in diesem Bild lenkt. Beide muessen zusammen schneller werden, sonst wuerde der Kreis groesser statt schneller. Die Schleife bleibt gleich gross (Radius 60), sie dauert nur halb so lang. Die Wende ist die Stelle, an der man die schnelle Fliege am leichtesten erwischt, weil sie dort lange in einer Spalte bleibt.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS fuer die vier Skripte.
+- Probe ohne Bildschirm: Teleport-Fliege ruhig: Nadel an ihrer Stelle trifft. Kanone unter ihr, sie flackert: `entkommt` wahr, Nadel trifft nicht. Nach dem Sprung: trifft wieder, zwei Spruenge uebrig. Flugkraft 6.
+- Schnelle Fliege mit Tempo 560: eine Schleife dauert 24 Bilder, das sind 0,4 Sekunden (vorher gerechnet 0,79). Danach liegt sie wieder genau auf ihrer Hoehe.
+- Nicht angeschaut: ob die beiden jetzt schwer genug sind.
