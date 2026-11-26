@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cg1ro4o8lm42g"
-path="res://.godot/imported/hose-13.png-b60a975cebeabaeaa2f5ef5254864b00.ctex"
+uid="uid://bt6l7ts167q2v"
+path="res://.godot/imported/drahtrolle-09.png-676be9a88d194ae17c1cb83dc4aa0736.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/hose/hose-13.png"
-dest_files=["res://.godot/imported/hose-13.png-b60a975cebeabaeaa2f5ef5254864b00.ctex"]
+source_file="res://assets/kanone/drahtrolle-anim/drahtrolle-09.png"
+dest_files=["res://.godot/imported/drahtrolle-09.png-676be9a88d194ae17c1cb83dc4aa0736.ctex"]
 
 [params]
 

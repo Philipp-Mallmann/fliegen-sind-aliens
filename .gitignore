@@ -16,3 +16,9 @@ build/
 
 __pycache__/
 *.pyc
+
+# Arbeitsnotizen der Kit-Rollen (lokal, kein Repo-Inhalt)
+tools/agent-journal/
+tools/agent-vorschlag/
+tools/spec-vorschlag/
+.claude/agent-memory-local/

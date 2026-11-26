@@ -6031,6 +6031,53 @@ Die Stechfliege entsteht und bekommt die Stelle. `to_local` rechnet die Stelle i
 2. Was rechnet `sin(PI * anteil)` im Sprung der Heuschrecke, und was kommt bei `anteil = 0.5` heraus?
 3. Warum gehoert der Tween zum Verblassen dem roten Punkt und nicht der Stechfliege?
 
+## Kanone als Bild, Triebwerke und Feuer (26.11.2026)
+
+Die Kanone ist jetzt ein Bild statt zweier grauer Rechtecke. Links und rechts sitzt ein Triebwerk, daran brennt Feuer, wenn du lenkst. Triebwerk und Feuerbilder kommen aus Pineapple Boss Fight. Die Lage der Triebwerke ist vorlaeufig, du setzt sie in Photoshop selbst.
+
+### Die Bilder
+
+- `assets/kanone/kanone.png`: Tonne, Draht, Lauf und die zwei Triebwerke in einem Bild. Das rechte Triebwerk ist gespiegelt, wie in Pineapple.
+- `assets/kanone/feuer/feuer-1.png` bis `feuer-6.png`: sechs Bilder einer Flamme. In Pineapple sind sie 1024 mal 576 Pixel gross und fast leer, die Flamme sitzt unten in der Mitte. Hier sind sie auf die Flamme zugeschnitten (247 mal 201 Pixel). Damit liegt der Knoten dort, wo die Flamme ist, und der Browser muss weniger laden.
+
+### `szenen/spiel.tscn` - geaendert
+
+- `Kanone/Arm/Koerper` und `Kanone/Arm/Rohr` (graue Rechtecke) sind weg. Neu: `Kanone/Arm/Bild`, ein `Sprite2D` mit `kanone.png`. `scale` 0,21 heisst: Das Bild wird auf 21 Prozent verkleinert. `position` (-2, 0) ist so gewaehlt, dass die Oberkante des Laufs genau an der `Muendung` (0, -140) liegt. Die Muendung selbst ist nicht verschoben, die Nadel startet also wie bisher.
+- Dasselbe in der Totale: `Kanone/Figur/Schulter/Armbild/Bild` statt `Koerper` und `Rohr`, die Oberkante des Laufs liegt an der `Spitze`.
+- Neu: `Kanone/Arm/FeuerLinks` und `FeuerRechts`, zwei `AnimatedSprite2D`. Ein `AnimatedSprite2D` zeigt mehrere Bilder nacheinander. Welche, steht in `sprite_frames`: die sechs Feuerbilder, 16 Bilder pro Sekunde (`speed`), in Schleife (`loop`). `autoplay = "default"` heisst: Die Animation laeuft von selbst los, dafuer braucht es keinen Code. `visible = false`: Am Anfang sieht man das Feuer nicht.
+- Die Feuerbilder zeigen eine Flamme, die nach oben brennt. `rotation` dreht sie um 90 Grad (1,5707964 ist ein Viertelkreis im Bogenmass), damit sie zur Seite zeigt: rechts im Uhrzeigersinn, links dagegen. `flip_h` spiegelt das linke Feuer, damit es das genaue Spiegelbild des rechten ist.
+- Die beiden Feuer stehen in der Liste vor `Bild`. Was weiter oben steht, wird zuerst gemalt, das Feuer liegt also hinter der Kanone.
+
+### Woher die Zahlen am Feuer kommen
+
+In Pineapple ist das Triebwerk auf 22 Prozent verkleinert und das Feuer auf 70 Prozent, die Mitte der Flamme liegt 137 Pixel neben der Mitte des Triebwerks. Hier ist das Triebwerk kleiner, naemlich 7,35 Prozent (in Photoshop 35 Prozent, im Spiel davon 21 Prozent). Das ist ein Drittel von 22 Prozent (7,35 / 22 = 0,334). Also wird alles andere auch ein Drittel so gross: Feuer 0,7 mal 0,334 = 0,234 und Abstand 137 mal 0,334 = 46 Pixel. So sitzt die Flamme im Verhaeltnis genauso am Triebwerk wie in Pineapple. Aendert sich die Groesse der Triebwerke, werden diese zwei Zahlen neu gerechnet.
+
+### `skripte/kanone.gd` - geaendert
+
+```gdscript
+	feuer_zeigen(richtung)
+```
+Neue Zeile in `fahren`, direkt nachdem `richtung` feststeht. `richtung` ist negativ, wenn du nach links lenkst, positiv nach rechts, 0 wenn du nicht lenkst.
+
+```gdscript
+func feuer_zeigen(richtung: float) -> void:
+	$Arm/FeuerLinks.visible = richtung > 0.0
+	$Arm/FeuerRechts.visible = richtung < 0.0
+```
+`richtung > 0.0` ist entweder wahr oder falsch. Dieses Ergebnis wird direkt in `visible` geschrieben. Lenkst du nach rechts, ist das linke Feuer zu sehen: Das linke Triebwerk schiebt die Kanone nach rechts. Lenkst du nach links, brennt das rechte. Lenkst du nicht, sind beide Vergleiche falsch und beide Feuer aus. Die Funktion laeuft in jedem Bild, darum geht das Feuer sofort aus, wenn du loslaesst.
+
+### So wurde es angeschaut
+
+- Schnellcheck PASS fuer `kanone.gd`, Verify PASS.
+- Zwei Bilder aus dem laufenden Spiel: die Totale beim Start (Kanone am Arm) und die Kanone gross mit beiden Feuern an.
+- Nicht angeschaut: wie es beim Lenken wirkt, ob die Kanone zu gross oder zu klein ist (dein Blick).
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum brennt beim Lenken nach rechts das linke Feuer?
+2. Warum braucht das Feuer keinen `play()`-Aufruf im Skript?
+3. Warum wird das Feuer kleiner, wenn die Triebwerke kleiner werden, und um wie viel?
+
 ### Geaendert in Abschnitt 10: Groesse der Fliege per Ziehen (`skripte/fliege.gd`, `szenen/fliege_boss.tscn`)
 
 Dein Wunsch: Die Groesse einer Fliege stellt man ein, indem man in ihrer Szene das Bild groesser oder kleiner zieht.
@@ -6059,6 +6106,98 @@ In `fliege_boss.tscn` ist die Zeile `halbe_groesse = 150.0` weg, weil es das Fel
 So stellst du die Groesse ein: Fliegenszene oeffnen, den Knoten `Bild` auswaehlen, an den Ecken ziehen (oder im Inspector `scale` aendern). Gemessen (Probe): Normal 48, Schnell 45, Scheu 65, Koeder 60, Teleport 56, Boss 166, Heuschrecke 51 Pixel halbe Seite; Bild der normalen Fliege doppelt so gross gezogen: 96.
 
 Frage zur Selbstkontrolle: Warum wuerde ohne `abs()` eine gespiegelte Fliege eine kleinere Trefferflaeche bekommen?
+
+## Kanone in drei Teilen, Drahtrolle als Animation (26.11.2026, Nachtrag)
+
+Die Kanone ist jetzt aus drei Bildern zusammengesetzt, damit sich die Drahtrolle bewegen kann, waehrend Tonne und Lauf stehen. Die Rolle wechselt zwischen deinen fuenf Rollenfotos, der Draht laeuft von ihrer rechten Kante zur Spitze des Laufs und wandert dabei zwischen deinen zwei Markierungen hoch und runter. Die zehn Bilder kommen aus deiner Krita-Datei.
+
+### Die Bilder
+
+- `assets/kanone/kanone-hinten.png`: Triebwerke und Lauf. Liegt ganz hinten.
+- `assets/kanone/drahtrolle-anim/drahtrolle-01.png` bis `-10.png`: Rolle mit Draht, ein Bild je Schritt der Animation.
+- `assets/kanone/kanone-tonne.png`: die Tonne. Liegt vorn und verdeckt den unteren Teil der Rolle.
+- `assets/kanone/kanone.png`: alles zusammen, Bild 1 der Animation. Nur noch fuer die Totale, dort bewegt sich nichts.
+
+Alle drei Teile sind mit derselben Groesse (`scale` 0,21) aus derselben Leinwand geschnitten. Ihre Positionen sind so gerechnet, dass die Mitte der Laufspitze genau auf der `Muendung` (0, -140) liegt. Darum passen sie aufeinander, ohne dass man sie im Editor ausrichten muss.
+
+### `szenen/spiel.tscn` - geaendert
+
+- `Kanone/Arm/Bild` zeigt jetzt `kanone-hinten.png`.
+- Neu: `Kanone/Arm/Drahtrolle`, ein `AnimatedSprite2D` mit den zehn Bildern, 12 Bilder pro Sekunde, in Schleife. Diesmal ohne `autoplay`: Es laeuft nur, wenn das Skript es startet.
+- Neu: `Kanone/Arm/Tonne`, ein `Sprite2D` mit `kanone-tonne.png`. Es steht in der Liste als Letztes, wird also zuletzt und damit ganz vorn gemalt.
+- `FeuerLinks` und `FeuerRechts` sind verschoben, weil du die Triebwerke in Photoshop anders gesetzt hast. Gerechnet wie vorher, nur mit der neuen Lage.
+
+### `skripte/kanone.gd` - geaendert
+
+```gdscript
+var ziehende: Array[Node2D] = []
+```
+Eine Liste der Nadeln, die gerade noch Draht aus der Kanone ziehen. `Array[Node2D]` heisst: In der Liste duerfen nur Knoten vom Typ `Node2D` stehen.
+
+```gdscript
+		ziehende.append(nadel)
+```
+In `schiessen`, direkt nach dem Schuss: Die neue Nadel kommt in die Liste.
+
+```gdscript
+	draht_zeigen()
+```
+Neue Zeile in `_process`, laeuft also in jedem Bild.
+
+```gdscript
+func draht_zeigen() -> void:
+	var noch: Array[Node2D] = []
+	for nadel in ziehende:
+		if is_instance_valid(nadel) and not nadel.steckt:
+			noch.append(nadel)
+	ziehende = noch
+```
+Eine neue, leere Liste `noch`. Jede Nadel aus der alten Liste kommt nur hinein, wenn sie noch Draht zieht. `is_instance_valid(nadel)` ist falsch, wenn die Nadel geloescht wurde: Sie ist ins Leere geflogen, ihre `reichweite` (2160 Pixel) war um, und `nadel.gd` hat `queue_free()` gerufen. `nadel.steckt` ist wahr, wenn sie in einer Fliege steckt. Danach ersetzt `noch` die alte Liste.
+
+Warum eine neue Liste und nicht einfach die alte Nadel herausloeschen? Eine geloeschte Nadel laesst sich aus einer Liste mit festem Typ nicht mehr entfernen, Godot meldet dann in jedem Bild einen Fehler. Das hat die Probe gezeigt (siehe unten).
+
+```gdscript
+	if ziehende.is_empty():
+		$Arm/Drahtrolle.pause()
+	elif not $Arm/Drahtrolle.is_playing():
+		$Arm/Drahtrolle.play()
+```
+Zieht keine Nadel mehr Draht, haelt die Rolle an. `pause()` haelt sie genau bei dem Bild an, das gerade zu sehen ist (`stop()` wuerde auf Bild 1 zurueckspringen). Zieht mindestens eine Nadel und die Rolle laeuft noch nicht, startet `play()` sie wieder, und zwar dort, wo sie angehalten hat.
+
+### So wurde es angeschaut
+
+- Schnellcheck PASS fuer `kanone.gd`, Verify PASS.
+- Probe ausserhalb des Spielordners: Schuss ins Leere, die Rolle laeuft 0,7 Sekunden und haelt an, sobald die Nadel weg ist. Schuss auf eine Fliege 400 Pixel ueber der Kanone: Die Rolle laeuft, bis die Nadel steckt (nach 0,12 Sekunden), und steht im naechsten Bild still.
+- Die Probe hat beim ersten Lauf einen Fehler gefunden (geloeschte Nadel nicht aus der Liste entfernbar), darum die neue Liste.
+- Bild aus dem Spiel: Rolle, Lauf und Tonne sitzen aufeinander, in Ruhe und waehrend die Rolle laeuft.
+- Nicht angeschaut: wie es beim Spielen wirkt, ob der Draht im Spiel dick genug ist (dort ist er gut 1 Pixel breit).
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum haelt die Rolle mit `pause()` an und nicht mit `stop()`?
+2. Wann verschwindet eine Nadel aus der Liste `ziehende`? Nenne beide Faelle.
+3. Warum muss die Tonne in der Szene unter der Drahtrolle stehen?
+
+### Nachtrag: Draht verschwindet hinter dem Visierblock (26.11.2026)
+
+Nur Bilder und zwei Positionen geaendert, kein Code. Der Draht laeuft von der rechten Kante der Rolle schraeg nach oben und verschwindet hinter der unteren Ecke des Visierblocks am Lauf. Dafuer liegt er jetzt **hinter** dem Lauf: Beim Bauen der Bilder wird er ueberall dort ausgeblendet, wo der Lauf deckt, erst danach kommt die Rolle davor. So bleibt es im Spiel bei einem einzigen `AnimatedSprite2D` fuer Rolle und Draht. (Ein Zwischenstand, bei dem der Draht oben ueber den Rand in die Oeffnung bog, ist damit ersetzt.)
+
+In `szenen/spiel.tscn` hat sich die Position von `Kanone/Arm/Drahtrolle` geaendert (-28,1 / -24,7), weil die Bilder jetzt einen anderen Ausschnitt haben. Die Position gleicht das aus, damit Rolle und Draht an derselben Stelle bleiben.
+
+Frage: Warum kann der Draht hinter dem Lauf liegen, obwohl Rolle und Draht in einem Bild stecken, das vor dem Lauf gemalt wird?
+
+### Nachtrag: Kanone ragt von unten ins Bild (26.11.2026)
+
+Nur `szenen/spiel.tscn`, kein Code.
+
+- `Kanone/Arm/LinkeHand` (graues Rechteck aus der Greybox) ist geloescht, die Kanone ersetzt es.
+- Alles im `Arm` ist 65 Pixel nach oben gerueckt: `Bild` (-95,7), `Drahtrolle` (-89,7), `Tonne` (-3,9), beide Feuer (y -4,2) und die `Muendung` (0, -205 statt -140).
+
+Warum: In der Luft zeigt die Kamera die Kanone mit `versatz_luft` -520. Die halbe Bildhoehe ist 540, also liegt der untere Bildrand 20 Pixel unter dem Nullpunkt der Kanone (-520 + 540 = 20). Die Duesen reichten bis 79 Pixel darunter und wurden abgeschnitten. Jetzt enden sie bei 14, das Bild schneidet die Tonne knapp unter den Duesen ab, die Kanone ragt von unten ins Bild.
+
+Warum die Kanone verschoben und nicht die Kamera: Mehrere Skripte rechnen mit dem oberen Bildrand 1060 ueber der Kanone (Erzeuger, Hindernisse). Eine andere Kamera haette all diese Zahlen falsch gemacht. Die Muendung rueckt mit, damit die Nadel weiter oben aus dem Lauf kommt.
+
+Frage: Wo liegt der untere Bildrand, wenn `versatz_luft` -500 waere?
 
 ## Geaendert in Abschnitt 10: Lautstaerke-Regler als Brett mit Naegeln
 
@@ -6171,7 +6310,7 @@ Beim Start bekommt das Label den Text und die Groesse. `add_theme_font_size_over
 - `Wiese` in der Wand zeigt `wand.png` (mit den Forschern) statt `wiese.png`.
 - `Titel` ist jetzt ein Schild (Instanz von `schild.tscn`) mit "Einstellungen", Groesse 60, in der obersten Grasreihe (380 bis 920, 30 bis 170). Es endet links von der Zurueck-Fliege, damit man sie sieht.
 - `Musik` und `SFX` stehen rechts von den Forschern (470 bis 1390), in der zweiten und dritten Reihe (205 und 450 von oben).
-- Neu: `Dank`, ein Schild mit "Thanks to" und den Namen, Groesse 34, in der untersten, unschaerfsten Reihe (790 bis 1390, 855 bis 1065). Es ragt nicht ueber die Reihe hinaus und endet rechts genau wie Musik und SFX (bei 1390). `\n` im Text ist der Zeilenumbruch nach "Thanks to".
+- Neu: `Dank`, ein Schild mit "Thanks to" und den Namen. Auf deinen Wunsch 1,5-mal so gross wie zuerst: 900 x 315 Pixel (490 bis 1390, 760 bis 1075), Schrift 51 statt 34. Es endet rechts genau wie Musik und SFX (bei 1390) und unten 5 Pixel ueber dem Bildrand. So gross passt es nicht mehr in die unterste Grasreihe (sie ist 240 hoch), es reicht oben in die vierte hinein. `\n` im Text ist der Zeilenumbruch nach "Thanks to".
 
 Angeschaut: Bild der hochgefahrenen Wand. Schilder und Regler liegen neben den Forschern, nichts deckt sie zu, die Zurueck-Fliege ist frei. Regler funktionieren weiter (Musik 40 Prozent: 0,40).
 

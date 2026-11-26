@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://76kjd4m7a2jf"
-path="res://.godot/imported/hose-31.png-5bb3a3e565447e5f080294ff5bd020f0.ctex"
+uid="uid://pfoyi7lw4ser"
+path="res://.godot/imported/accc5e4348fe8b07e4bfbeb38bc21c70.jpg-a58a55b469f46d9857aeb538ee612988.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/hose/hose-31.png"
-dest_files=["res://.godot/imported/hose-31.png-5bb3a3e565447e5f080294ff5bd020f0.ctex"]
+source_file="res://assets/hintergrund/accc5e4348fe8b07e4bfbeb38bc21c70.jpg"
+dest_files=["res://.godot/imported/accc5e4348fe8b07e4bfbeb38bc21c70.jpg-a58a55b469f46d9857aeb538ee612988.ctex"]
 
 [params]
 

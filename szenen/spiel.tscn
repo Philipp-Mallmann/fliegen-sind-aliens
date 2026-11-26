@@ -1,4 +1,4 @@
-[gd_scene load_steps=57 format=3]
+[gd_scene load_steps=78 format=3]
 
 [ext_resource type="Script" path="res://skripte/kanone.gd" id="1_kanone"]
 [ext_resource type="PackedScene" path="res://szenen/nadel.tscn" id="2_nadel"]
@@ -47,6 +47,25 @@
 [ext_resource type="Script" path="res://skripte/stecher.gd" id="42_stecher"]
 [ext_resource type="Texture2D" path="res://assets/einstellungen/wand.png" id="43_wand"]
 [ext_resource type="PackedScene" path="res://szenen/schild.tscn" id="44_schild"]
+[ext_resource type="Texture2D" path="res://assets/kanone/kanone.png" id="43_kanone"]
+[ext_resource type="Texture2D" path="res://assets/kanone/kanone-hinten.png" id="44_hinten"]
+[ext_resource type="Texture2D" path="res://assets/kanone/kanone-tonne.png" id="45_tonne"]
+[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-01.png" id="d1"]
+[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-02.png" id="d2"]
+[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-03.png" id="d3"]
+[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-04.png" id="d4"]
+[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-05.png" id="d5"]
+[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-06.png" id="d6"]
+[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-07.png" id="d7"]
+[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-08.png" id="d8"]
+[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-09.png" id="d9"]
+[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-10.png" id="d10"]
+[ext_resource type="Texture2D" path="res://assets/kanone/feuer/feuer-1.png" id="f1"]
+[ext_resource type="Texture2D" path="res://assets/kanone/feuer/feuer-2.png" id="f2"]
+[ext_resource type="Texture2D" path="res://assets/kanone/feuer/feuer-3.png" id="f3"]
+[ext_resource type="Texture2D" path="res://assets/kanone/feuer/feuer-4.png" id="f4"]
+[ext_resource type="Texture2D" path="res://assets/kanone/feuer/feuer-5.png" id="f5"]
+[ext_resource type="Texture2D" path="res://assets/kanone/feuer/feuer-6.png" id="f6"]
 
 [sub_resource type="Gradient" id="Gradient_taste"]
 colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
@@ -99,6 +118,70 @@ animations = [{
 "loop": false,
 "name": &"aufstehen",
 "speed": 5.0
+}]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_feuer"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("f1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f6")
+}],
+"loop": true,
+"name": &"default",
+"speed": 16.0
+}]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_drahtrolle"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("d1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d9")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d10")
+}],
+"loop": true,
+"name": &"default",
+"speed": 12.0
 }]
 
 [node name="Spiel" type="Node2D"]
@@ -289,28 +372,40 @@ joystick = NodePath("../Bedienung/Joystick")
 
 [node name="Arm" type="Node2D" parent="Kanone"]
 
-[node name="LinkeHand" type="ColorRect" parent="Kanone/Arm"]
-offset_left = -60.0
-offset_top = -35.0
-offset_right = 60.0
-offset_bottom = 5.0
-color = Color(0.6, 0.6, 0.6, 1)
+[node name="FeuerLinks" type="AnimatedSprite2D" parent="Kanone/Arm"]
+visible = false
+position = Vector2(-124.7, -8.9)
+rotation = -1.5707964
+scale = Vector2(0.351, 0.351)
+sprite_frames = SubResource("SpriteFrames_feuer")
+autoplay = "default"
+flip_h = true
 
-[node name="Koerper" type="ColorRect" parent="Kanone/Arm"]
-offset_left = -40.0
-offset_top = -60.0
-offset_right = 40.0
-color = Color(0.75, 0.75, 0.75, 1)
+[node name="FeuerRechts" type="AnimatedSprite2D" parent="Kanone/Arm"]
+visible = false
+position = Vector2(123.8, -8.9)
+rotation = 1.5707964
+scale = Vector2(0.351, 0.351)
+sprite_frames = SubResource("SpriteFrames_feuer")
+autoplay = "default"
 
-[node name="Rohr" type="ColorRect" parent="Kanone/Arm"]
-offset_left = -8.0
-offset_top = -140.0
-offset_right = 8.0
-offset_bottom = -60.0
-color = Color(0.75, 0.75, 0.75, 1)
+[node name="Bild" type="Sprite2D" parent="Kanone/Arm"]
+position = Vector2(-0.5, -106.4)
+scale = Vector2(0.315, 0.315)
+texture = ExtResource("44_hinten")
+
+[node name="Drahtrolle" type="AnimatedSprite2D" parent="Kanone/Arm"]
+position = Vector2(-42.2, -57.8)
+scale = Vector2(0.315, 0.315)
+sprite_frames = SubResource("SpriteFrames_drahtrolle")
+
+[node name="Tonne" type="Sprite2D" parent="Kanone/Arm"]
+position = Vector2(0.2, 70.9)
+scale = Vector2(0.315, 0.315)
+texture = ExtResource("45_tonne")
 
 [node name="Muendung" type="Marker2D" parent="Kanone/Arm"]
-position = Vector2(0, -140)
+position = Vector2(0, -230.7)
 
 [node name="Aufstehen" type="AnimatedSprite2D" parent="Kanone"]
 visible = false
@@ -581,19 +676,10 @@ offset_right = 60.0
 offset_bottom = -395.0
 color = Color(0.6, 0.6, 0.6, 1)
 
-[node name="Koerper" type="ColorRect" parent="Kanone/Figur/Schulter/Armbild"]
-offset_left = -40.0
-offset_top = -460.0
-offset_right = 40.0
-offset_bottom = -400.0
-color = Color(0.75, 0.75, 0.75, 1)
-
-[node name="Rohr" type="ColorRect" parent="Kanone/Figur/Schulter/Armbild"]
-offset_left = -8.0
-offset_top = -540.0
-offset_right = 8.0
-offset_bottom = -460.0
-color = Color(0.75, 0.75, 0.75, 1)
+[node name="Bild" type="Sprite2D" parent="Kanone/Figur/Schulter/Armbild"]
+position = Vector2(-0.3, -403.9)
+scale = Vector2(0.21, 0.21)
+texture = ExtResource("43_kanone")
 
 [node name="Spitze" type="Marker2D" parent="Kanone/Figur/Schulter/Armbild"]
 position = Vector2(0, -540)
@@ -687,13 +773,13 @@ offset_bottom = 630.0
 
 [node name="Dank" parent="Einstellungen/Wand" instance=ExtResource("44_schild")]
 layout_mode = 0
-offset_left = 790.0
-offset_top = 855.0
+offset_left = 490.0
+offset_top = 760.0
 offset_right = 1390.0
-offset_bottom = 1065.0
+offset_bottom = 1075.0
 schrift = "Thanks to
 Steffen, Amke, Louisa, Loki, Mattis, Ivan, Sophie, Lysann, Mischa"
-groesse = 34
+groesse = 51
 
 [node name="Musik" type="Node" parent="."]
 script = ExtResource("30_musik")

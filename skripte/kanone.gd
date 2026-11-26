@@ -21,23 +21,48 @@ var nachladen_noch: float = 0.0
 var gesperrt: bool = false
 # true heisst: Die Kanone steigt gerade nach einem Fang und faehrt darum langsamer. Setzt spiel.gd.
 var steigt: bool = false
+# Die Nadeln, die gerade noch Draht aus der Kanone ziehen: Sie fliegen und stecken noch nicht.
+var ziehende: Array[Node2D] = []
 
 
 func _process(delta: float) -> void:
 	fahren(delta)
 	if not $Uebergabe.laeuft:
 		schiessen(delta)
+	draht_zeigen()
 
 
 func fahren(delta: float) -> void:
 	var richtung: float = Input.get_axis("links", "rechts") + joystick.richtung.x
 	richtung = clampf(richtung, -1.0, 1.0)
+	feuer_zeigen(richtung)
 	var hoechstes: float = tempo
 	if steigt or $Uebergabe.laeuft:
 		hoechstes = tempo * steig_anteil
 	var ziel_tempo: float = richtung * hoechstes
 	aktuelles_tempo = move_toward(aktuelles_tempo, ziel_tempo, beschleunigung * delta)
 	position.x += aktuelles_tempo * delta
+
+
+# Zeigt das Feuer an den Triebwerken. Es brennt auf der Seite, von der die Kanone weggeschoben wird:
+# Lenkt man nach rechts, brennt das linke Triebwerk. Lenkt man gar nicht, brennt keins.
+func feuer_zeigen(richtung: float) -> void:
+	$Arm/FeuerLinks.visible = richtung > 0.0
+	$Arm/FeuerRechts.visible = richtung < 0.0
+
+
+# Die Drahtrolle bewegt sich, solange Draht aus der Kanone laeuft. Steckt die Nadel oder ist sie weggeflogen,
+# bleibt die Rolle stehen, und zwar genau so, wie sie gerade ist.
+func draht_zeigen() -> void:
+	var noch: Array[Node2D] = []
+	for nadel in ziehende:
+		if is_instance_valid(nadel) and not nadel.steckt:
+			noch.append(nadel)
+	ziehende = noch
+	if ziehende.is_empty():
+		$Arm/Drahtrolle.pause()
+	elif not $Arm/Drahtrolle.is_playing():
+		$Arm/Drahtrolle.play()
 
 
 func schiessen(delta: float) -> void:
@@ -53,5 +78,6 @@ func schiessen(delta: float) -> void:
 		nadel.kanone = self
 		get_parent().add_child(nadel)
 		nadel.getroffen.connect($Uebergabe.starten)
+		ziehende.append(nadel)
 		nachladen_noch = nachladezeit
 		$TonSchuss.play()
