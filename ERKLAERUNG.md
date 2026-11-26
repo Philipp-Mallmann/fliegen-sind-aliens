@@ -5683,7 +5683,7 @@ Die grauen Flaechen werden zum ersten Mal durch Bilder ersetzt. Der Forscher ble
 
 ### Die Bilder
 
-- `assets/hintergrund/riffel/riffel-1-blau.png` bis `riffel-8-fast-schwarz.png`: deine Riffelpappe (`geriffelt.png`) achtmal umgefaerbt, in dieser Reihenfolge von unten nach oben: blau, gelb, creme, weiss, violett, indigo, nachtblau, fast schwarz. Je zwei gehoeren zu einer Zone. Die beiden hellsten (Creme, Weiss) bilden zusammen die helle Zone, Violett fuehrt danach zu den dunklen Weltall-Farben hin, damit der Sprung von Hell zu Dunkel nicht so hart ist. Blau und Violett haben Kontrast und Buntheit des Grases (gemessen im Farbraum LAB wie `boden2.png`: Streuung der Helligkeit 18, Buntheit 55) bei der Helligkeit 68 (Z13). Gelb hat schwaechere Rillen (Streuung 10), weil es sonst sticht. Creme ist sehr hell (88) und kaum bunt, Weiss ist ganz ohne Farbe (Helligkeit 93, Rillen-Streuung 9), die drei Weltall-Pappen werden immer dunkler bis 10. Die dunklen Rillen sind auf halben Abstand zur Mitte geholt (Z42). An jedem Rand sind 4 Pixel abgeschnitten, dort hatte das Foto eine helle Linie.
+- `assets/hintergrund/riffel/riffel-1-blau.png` bis `riffel-8-fast-schwarz.png`: deine Riffelpappe (`geriffelt.png`) achtmal umgefaerbt, in dieser Reihenfolge von unten nach oben: blau, gelb, creme, weiss, gruen (ein helles Alien-Gruen, fast Neon, aber gedaempft), indigo, nachtblau, fast schwarz. Je zwei gehoeren zu einer Zone. Die beiden hellsten (Creme, Weiss) bilden zusammen die helle Zone, Das Gruen fuehrt danach zu den dunklen Weltall-Farben hin (Helligkeit 78, Rillen-Streuung 12, Buntheit 75, Z153). Blau hat Kontrast und Buntheit des Grases (gemessen im Farbraum LAB wie `boden2.png`: Streuung der Helligkeit 18, Buntheit 55) bei der Helligkeit 68 (Z13). Gelb hat schwaechere Rillen (Streuung 10), weil es sonst sticht. Creme ist sehr hell (88) und kaum bunt, Weiss ist ganz ohne Farbe (Helligkeit 93, Rillen-Streuung 9), die drei Weltall-Pappen werden immer dunkler bis 10. Die dunklen Rillen sind auf halben Abstand zur Mitte geholt (Z42). An jedem Rand sind 4 Pixel abgeschnitten, dort hatte das Foto eine helle Linie.
 - `assets/hintergrund/wiese.png`: `boden2.png` zweimal nebeneinander, die rechte Haelfte gespiegelt. Aus demselben Grund: Die Wiese wiederholt sich seitlich ohne sichtbare Naht.
 - Die Fliegen nutzen `fliege-1.png`, `fliege-fuehler-gruen.png` und `fliege-ruessel-orange.png` unveraendert.
 
@@ -5789,3 +5789,244 @@ Ab hier beginnt die Ueberblendung: 12,5 - 4 = 8,5 Flugkraft in den Abschnitt hin
 1. Warum ist die Wiese im Spiel 5,23-fach vergroessert und auf der Wand nur 2,25-fach?
 2. Welche Pappe ist bei Flugkraft 37 zu sehen, und wie stark ist bei Flugkraft 11 die naechste schon eingeblendet?
 3. Warum werden `Koerper` und `Fluegel` nur unsichtbar gemacht und nicht geloescht?
+
+## Abschnitt 10, zweiter Teil - deine Fliegenbilder, Heuschrecke und Stechfliege
+
+Deine Zuordnung: Normal = `insekt-bleistift-skizze.png`, Schnell = `fliege-skizze.png`, Scheu = `fliege-ohne-fluegel.png`, Koeder = `fliege-fuehler-gruen.png`, Teleport = `fliege-1.png`, Boss = `bockkaefer-skizze.png`. Neu: Heuschrecke = `heuschrecke-skizze.png`, Stechfliege = `fliege-ruessel-orange.png`. Deine Antworten: Arm = der Arm des Forschers (Z12), der Stich tut nichts, nur Gag (Z21), die Heuschrecke kann man fangen (Z31).
+
+### Die Bilder
+
+`assets/fliegen/spiel/` enthaelt Kopien deiner Bilder, auf das Bild selbst zugeschnitten (der durchsichtige Rand ist weg, damit die Mitte des Bilds die Mitte der Fliege ist) und hoechstens 600 Pixel breit. Deine Originale in `assets/fliegen/` bleiben unveraendert. Die Bleistiftskizze ist im Original 5729 Pixel breit und 60 MB gross, die Kopie 600 Pixel.
+
+### Die sieben Fliegenszenen - geaendert bzw. neu
+
+In jeder Szene zeigt `Bild` (ein `Sprite2D`) das neue Bild. `scale` macht es im Spiel etwa so breit: Normal 140, Schnell 130, Scheu 130, Koeder 120, Teleport 140, Boss 340, Heuschrecke 140 Pixel. In `fliege_koeder.tscn`, `fliege_teleport.tscn` und `fliege_boss.tscn` werden `Fluegel`, `Koerper` und `Art` unsichtbar (`visible = false`), wie vorher bei den drei anderen. Der `Schimmer` der Teleport-Fliege bleibt. Die Bildzeile (`ext_resource`) muss in einer Szene vor den `sub_resource`-Zeilen stehen, sonst kann Godot die Datei nicht lesen (so entstand ein FAIL beim ersten Verify, danach PASS).
+
+`szenen/fliege_heuschrecke.tscn` ist eine Kopie von `fliege_schnell.tscn` mit dem Heuschrecken-Skript, dem Heuschrecken-Bild und `flugkraft = 5` (die schnelle gibt 4; die Heuschrecke ist schwerer zu treffen).
+
+### `skripte/fliege_heuschrecke.gd` - neu
+
+```gdscript
+extends "res://skripte/fliege.gd"
+```
+Baut auf dem Gemeinsamen aller Fliegen auf, wie die anderen Arten. Treffen, Fangen und Fliehen kommen von dort, hier steht nur die Flugweise.
+
+```gdscript
+@export var sprungweite: float = 360.0
+@export var sprungdauer: float = 0.2
+@export var bogen: float = 60.0
+@export var pause: float = 1.0
+@export var wippen: float = 8.0
+@export var strecke: float = 400.0
+```
+Die Werte zum Einstellen: Ein Sprung geht 360 Pixel weit, zwei Spruenge sind ein halber Bildschirm (1440 / 2). Er dauert 0,2 Sekunden, das sind 1800 Pixel pro Sekunde, viel schneller als die schnelle Fliege (hoechstens 1440 auf dem geraden Stueck). Der Sprung ist ein Bogen, in der Mitte 60 Pixel hoch. Danach schwebt sie 1 Sekunde und wippt 8 Pixel auf und ab. Weiter als 400 Pixel von ihrer Mitte springt sie nicht, sonst dreht sie um.
+
+```gdscript
+var springt: bool = false
+var sprung_nummer: int = 0
+var uhr: float = 0.0
+var start_x: float = 0.0
+```
+Was sie sich merkt: ob sie gerade springt, der wievielte Sprung es ist (1 oder 2), eine Uhr fuer Sprung oder Pause, und wo der Sprung angefangen hat.
+
+```gdscript
+func fliegen(delta: float) -> void:
+	uhr += delta
+```
+`fliegen` wird von `fliege.gd` in jedem Bild aufgerufen, solange die Fliege frei ist. Die Uhr laeuft weiter.
+
+```gdscript
+	if springt:
+		var anteil: float = minf(uhr / sprungdauer, 1.0)
+```
+Wie weit der Sprung schon ist: 0 am Anfang, 1 am Ende. `minf` sorgt dafuer, dass es nie ueber 1 geht.
+
+```gdscript
+		position.x = start_x + richtung * sprungweite * anteil
+		position.y = grund_y - sin(PI * anteil) * bogen
+```
+Zur Seite geht es gleichmaessig. Nach oben geht es mit einem Sinus: `sin(PI * anteil)` ist am Anfang 0, in der Mitte 1 und am Ende wieder 0. Das ergibt den Bogen. Minus, weil oben in Godot kleinere y-Werte hat.
+
+```gdscript
+		if anteil >= 1.0:
+			if sprung_nummer < 2:
+				sprung_beginnen()
+			else:
+				springt = false
+				uhr = 0.0
+		return
+```
+Ist der Sprung fertig: Nach dem ersten kommt gleich der zweite, nach dem zweiten beginnt die Pause (die Uhr faengt neu an). `return` beendet die Funktion, der Rest gilt nur fuer die Pause.
+
+```gdscript
+	position.y = grund_y + sin(uhr * TAU) * wippen
+```
+In der Pause wippt sie auf und ab. `TAU` ist ein ganzer Kreis: Einmal hoch und runter dauert genau eine Sekunde.
+
+```gdscript
+	if uhr >= pause:
+		if absf(position.x + richtung * sprungweite * 2.0 - mitte_x) > strecke:
+			richtung = -richtung
+		sprung_nummer = 0
+		sprung_beginnen()
+```
+Ist die Pause vorbei, springt sie wieder. Vorher prueft sie: Wuerde sie nach den zwei Spruengen weiter als `strecke` von ihrer Mitte landen? Dann dreht sie die Richtung um. So bleibt sie in der Naehe.
+
+```gdscript
+func sprung_beginnen() -> void:
+	springt = true
+	sprung_nummer += 1
+	uhr = 0.0
+	start_x = position.x
+	$Bild.flip_h = richtung < 0.0
+```
+Ein Sprung faengt an: Nummer eins weiter, Uhr auf 0, Startpunkt merken. `flip_h` spiegelt das Bild, wenn sie nach links springt, damit sie in Sprungrichtung schaut. Gespiegelt wird nur das Bild, nicht die ganze Fliege, weil `hindernis.gd` mit der Groesse der Fliege rechnet und eine negative Groesse dort falsch waere.
+
+### `skripte/stechfliege.gd` - neu
+
+Haengt an `szenen/stechfliege.tscn`. Die Szene ist nicht in der Gruppe `fliegen`, darum findet die Nadel sie nicht: Man kann sie nicht treffen.
+
+```gdscript
+@export var flugzeit: float = 0.4
+@export var sitzzeit: float = 0.8
+@export var sitz_drehung: float = PI / 2.0
+@export var anflug_von: Vector2 = Vector2(-600.0, -900.0)
+@export var abflug_nach: Vector2 = Vector2(600.0, -900.0)
+@export var ausholen: float = 300.0
+@export var stich_szene: PackedScene
+@export var stich_dauer: float = 3.0
+```
+Anflug und Abflug dauern je 0,4 Sekunden (aehnlich schnell wie die Heuschrecke), sie sitzt 0,8 Sekunden. Zum Sitzen dreht sie sich um eine Vierteldrehung (`PI / 2`), also hochkant. Schaut sie dabei falsch herum, stellt man `-PI / 2` ein. Sie kommt von 600 links und 900 ueber der Stelle (also von oben) und fliegt nach rechts oben weg. Der Bogen holt 300 Pixel zur Seite aus. Der rote Punkt verblasst in 3 Sekunden.
+
+```gdscript
+var ziel: Vector2 = Vector2.ZERO
+var bogen_start: Vector2 = Vector2.ZERO
+var bogen_ende: Vector2 = Vector2.ZERO
+var bogen_mitte: Vector2 = Vector2.ZERO
+```
+`ziel` ist die Stelle auf dem Arm, die setzt der Stecher. Die drei anderen beschreiben den Bogen, der gerade geflogen wird.
+
+```gdscript
+func _ready() -> void:
+	position = ziel + anflug_von
+	bogen_setzen(position, ziel, -ausholen)
+```
+Beim Start steht sie oben links und legt den Bogen bis zur Stelle auf dem Arm fest.
+
+```gdscript
+	var ablauf: Tween = create_tween()
+	ablauf.tween_method(bogen_fliegen, 0.0, 1.0, flugzeit)
+	ablauf.tween_property(self, "rotation", sitz_drehung, 0.15)
+	ablauf.tween_callback(stechen)
+	ablauf.tween_interval(sitzzeit)
+	ablauf.tween_property(self, "rotation", 0.0, 0.15)
+	ablauf.tween_callback(abflug_vorbereiten)
+	ablauf.tween_method(bogen_fliegen, 0.0, 1.0, flugzeit)
+	ablauf.tween_callback(queue_free)
+```
+Der ganze Ablauf als ein Tween, Schritt fuer Schritt nacheinander: `tween_method` ruft `bogen_fliegen` mit einer Zahl auf, die in 0,4 Sekunden von 0 auf 1 waechst (der Anflug). Dann dreht sie sich in 0,15 Sekunden hochkant, sticht, wartet (`tween_interval`), dreht sich zurueck, legt den Bogen fuer den Abflug fest, fliegt ihn, und loescht sich zum Schluss selbst (`queue_free`).
+
+```gdscript
+func bogen_setzen(von: Vector2, nach: Vector2, seite: float) -> void:
+	bogen_start = von
+	bogen_ende = nach
+	bogen_mitte = (von + nach) / 2.0 + Vector2(seite, 0.0)
+```
+Ein Bogen hat einen Anfang, ein Ende und eine Mitte, die zur Seite verschoben ist. Laege die Mitte genau zwischen Anfang und Ende, waere es eine gerade Linie.
+
+```gdscript
+func bogen_fliegen(anteil: float) -> void:
+	var erstes: Vector2 = bogen_start.lerp(bogen_mitte, anteil)
+	var zweites: Vector2 = bogen_mitte.lerp(bogen_ende, anteil)
+	position = erstes.lerp(zweites, anteil)
+```
+`lerp` sucht einen Punkt zwischen zwei Punkten: bei 0 der erste, bei 1 der zweite, bei 0,5 die Mitte. Hier zweimal hintereinander: ein Punkt auf der Strecke Anfang-Mitte, einer auf Mitte-Ende, und dazwischen noch einmal. Das ergibt eine gleichmaessige Kurve (eine Bezier-Kurve), die bei Anfang und Ende genau ankommt und zur Mitte hin ausholt.
+
+```gdscript
+func stechen() -> void:
+	var stich: Node2D = stich_szene.instantiate()
+	stich.position = ziel
+	get_parent().add_child(stich)
+```
+Der rote Punkt wird an die Stelle gesetzt, an der sie sitzt. Er haengt an der Kanone (dem Elternknoten der Fliege), so faehrt er mit dem Arm mit.
+
+```gdscript
+	var verblassen: Tween = stich.create_tween()
+	verblassen.tween_property(stich, "modulate:a", 0.0, stich_dauer)
+	verblassen.tween_callback(stich.queue_free)
+```
+Der Punkt verblasst in 3 Sekunden und loescht sich dann. Der Tween gehoert dem Punkt, nicht der Fliege: Die Fliege ist laengst weg, wenn der Punkt verblasst ist.
+
+```gdscript
+func abflug_vorbereiten() -> void:
+	bogen_setzen(ziel, ziel + abflug_nach, ausholen)
+```
+Der Bogen fuer den Abflug: von der Stelle auf dem Arm nach rechts oben, zur anderen Seite ausgeholt.
+
+### `szenen/stich.tscn` - neu
+
+Der rote Punkt: ein `Sprite2D` mit einem runden Farbverlauf (`GradientTexture2D`, `fill = 1` heisst rund), innen rot, aussen durchsichtig, 28 Pixel gross. Platzhalter, bis dein PNG kommt: dann nur `texture` tauschen.
+
+### `skripte/stecher.gd` - neu
+
+```gdscript
+@export var stechfliege_szene: PackedScene
+@export var kanone: Node2D
+@export var zonen: Node
+@export var zone: Node
+@export var stichstelle: Control
+@export var abstand_kurz: float = 6.0
+@export var abstand_lang: float = 12.0
+```
+Was der Stecher braucht: die Szene der Stechfliege, die Kanone (die Fliege wird an sie gehaengt und faehrt mit), die Zonen, die eine Zone, in der sie kommt (Scheue), das Rechteck auf dem Arm und den Abstand zwischen zwei Stechfliegen: zwischen 6 und 12 Sekunden.
+
+```gdscript
+var uhr: float = 0.0
+
+func _ready() -> void:
+	uhr = randf_range(abstand_kurz, abstand_lang)
+```
+Die Uhr zaehlt rueckwaerts bis zur naechsten Stechfliege. Am Anfang wird ein Abstand ausgewuerfelt.
+
+```gdscript
+func _process(delta: float) -> void:
+	if zonen.aktuelle() != zone:
+		return
+	uhr -= delta
+	if uhr > 0.0:
+		return
+```
+Nur in der richtigen Zone laeuft die Uhr. Ist sie noch nicht abgelaufen, passiert nichts.
+
+```gdscript
+	uhr = randf_range(abstand_kurz, abstand_lang)
+	var flaeche: Rect2 = stichstelle.get_global_rect()
+	var punkt: Vector2 = flaeche.position + Vector2(randf() * flaeche.size.x, randf() * flaeche.size.y)
+```
+Neue Wartezeit auswuerfeln. Dann eine zufaellige Stelle im Rechteck: `get_global_rect` gibt das Rechteck in Weltkoordinaten, `randf()` ist eine Zufallszahl zwischen 0 und 1.
+
+```gdscript
+	var fliege: Node2D = stechfliege_szene.instantiate()
+	fliege.ziel = kanone.to_local(punkt)
+	kanone.add_child(fliege)
+```
+Die Stechfliege entsteht und bekommt die Stelle. `to_local` rechnet die Stelle in Koordinaten der Kanone um, weil die Fliege an der Kanone haengt.
+
+### `szenen/spiel.tscn` - geaendert
+
+- Neu: `Kanone/RechteHand/Stichstelle`, ein `ReferenceRect`. Das ist ein Rechteck, das nur im Editor zu sehen ist (rote Linie, 3 Pixel). Im Spiel ist es unsichtbar. Du verschiebst es im Editor dorthin, wo sich die Stechfliege auf den Arm setzen soll, und ziehst es groesser oder kleiner. Es haengt an der Hand und bewegt sich mit ihr. Kommt das Foto des Arms, ziehst du es auf das Foto.
+- Neu: `Stecher` mit `stecher.gd`, Zone `Zonen/Scheue`.
+- Zone `Scheue`: In `fliegen` steht statt der schnellen Fliege die Heuschrecke. In der Zone Anfang bleibt die schnelle.
+
+### So wurde es angeschaut
+
+- Schnellcheck PASS fuer die drei neuen Skripte, Verify PASS (davor ein FAIL, siehe oben).
+- Probe ausserhalb des Spielordners: eine Heuschrecke 3 Sekunden beobachtet, alle 0,1 Sekunden die Stelle: zwei Spruenge in 0,4 Sekunden, zusammen 720 Pixel, Bogen bis etwa 57 Pixel hoch, dann Pause mit Wippen bis 7 Pixel, danach zurueck in die andere Richtung (sie waere sonst zu weit weg gewesen).
+- Stechfliege in fuenf Bildern: Anflug von oben links, sitzt hochkant auf dem Arm, roter Punkt bleibt nach dem Abflug.
+- Nicht angeschaut: Gefuehl, ob die Heuschrecke zu schwer oder zu leicht zu fangen ist, wie oft die Stechfliege kommen soll, ob sie richtig herum sitzt (dein Blick).
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum kann die Nadel die Stechfliege nicht treffen?
+2. Was rechnet `sin(PI * anteil)` im Sprung der Heuschrecke, und was kommt bei `anteil = 0.5` heraus?
+3. Warum gehoert der Tween zum Verblassen dem roten Punkt und nicht der Stechfliege?

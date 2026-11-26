@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://skripte/fliege_schnell.gd" id="1_fliege"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/summen.ogg" id="2_summen"]
 
-[ext_resource type="Texture2D" path="res://assets/fliegen/fliege-fuehler-gruen.png" id="9_bild"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/fliege-skizze.png" id="9_bild"]
 
 [node name="Fliege" type="Node2D" groups=["fliegen"]]
 z_index = 1
@@ -31,7 +31,7 @@ mouse_filter = 2
 color = Color(0.2, 0.2, 0.2, 1)
 
 [node name="Bild" type="Sprite2D" parent="."]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.2167, 0.2167)
 texture = ExtResource("9_bild")
 
 [node name="Art" type="Label" parent="."]

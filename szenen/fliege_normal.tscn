@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://skripte/fliege_normal.gd" id="1_fliege"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/summen.ogg" id="2_summen"]
 
-[ext_resource type="Texture2D" path="res://assets/fliegen/fliege-1.png" id="9_bild"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/insekt-bleistift-skizze.png" id="9_bild"]
 
 [node name="Fliege" type="Node2D" groups=["fliegen"]]
 z_index = 1
@@ -28,7 +28,7 @@ mouse_filter = 2
 color = Color(0.1, 0.1, 0.1, 1)
 
 [node name="Bild" type="Sprite2D" parent="."]
-scale = Vector2(0.068, 0.068)
+scale = Vector2(0.2333, 0.2333)
 texture = ExtResource("9_bild")
 
 [node name="Art" type="Label" parent="."]

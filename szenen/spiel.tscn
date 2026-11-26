@@ -1,4 +1,4 @@
-[gd_scene load_steps=52 format=3]
+[gd_scene load_steps=55 format=3]
 
 [ext_resource type="Script" path="res://skripte/kanone.gd" id="1_kanone"]
 [ext_resource type="PackedScene" path="res://szenen/nadel.tscn" id="2_nadel"]
@@ -37,11 +37,14 @@
 [ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-2-gelb.png" id="p02"]
 [ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-3-creme.png" id="p03"]
 [ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-4-weiss.png" id="p04"]
-[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-5-violett.png" id="p05"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-5-gruen.png" id="p05"]
 [ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-6-indigo.png" id="p06"]
 [ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-7-nachtblau.png" id="p07"]
 [ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-8-fast-schwarz.png" id="p08"]
 [ext_resource type="Script" path="res://skripte/hintergrund.gd" id="38_hintergrund"]
+[ext_resource type="PackedScene" path="res://szenen/fliege_heuschrecke.tscn" id="40_heuschrecke"]
+[ext_resource type="PackedScene" path="res://szenen/stechfliege.tscn" id="41_stechfliege"]
+[ext_resource type="Script" path="res://skripte/stecher.gd" id="42_stecher"]
 
 [sub_resource type="Gradient" id="Gradient_taste"]
 colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
@@ -331,6 +334,16 @@ pivot_offset = Vector2(40, 435)
 fill_mode = 3
 show_percentage = false
 
+[node name="Stichstelle" type="ReferenceRect" parent="Kanone/RechteHand"]
+layout_mode = 0
+offset_left = -100.0
+offset_top = 150.0
+offset_right = -40.0
+offset_bottom = 350.0
+mouse_filter = 2
+border_color = Color(1, 0.2, 0.2, 1)
+border_width = 3.0
+
 [node name="Griff" type="Marker2D" parent="Kanone"]
 position = Vector2(620, -700)
 
@@ -460,7 +473,7 @@ fliegen = Array[PackedScene]([ExtResource("3_fliege"), ExtResource("17_schnell")
 [node name="Scheue" type="Node" parent="Zonen"]
 script = ExtResource("23_zone")
 ab_flugkraft = 25.0
-fliegen = Array[PackedScene]([ExtResource("18_scheu"), ExtResource("17_schnell")])
+fliegen = Array[PackedScene]([ExtResource("18_scheu"), ExtResource("40_heuschrecke")])
 
 [node name="Koeder" type="Node" parent="Zonen"]
 script = ExtResource("23_zone")
@@ -688,3 +701,11 @@ bus = &"Musik"
 [node name="Ende" type="AudioStreamPlayer" parent="Musik"]
 stream = ExtResource("32_ende")
 bus = &"Musik"
+
+[node name="Stecher" type="Node" parent="." node_paths=PackedStringArray("kanone", "zonen", "zone", "stichstelle")]
+script = ExtResource("42_stecher")
+stechfliege_szene = ExtResource("41_stechfliege")
+kanone = NodePath("../Kanone")
+zonen = NodePath("../Zonen")
+zone = NodePath("../Zonen/Scheue")
+stichstelle = NodePath("../Kanone/RechteHand/Stichstelle")

@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://skripte/fliege_scheu.gd" id="1_fliege"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/summen.ogg" id="2_summen"]
 
-[ext_resource type="Texture2D" path="res://assets/fliegen/fliege-ruessel-orange.png" id="9_bild"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/fliege-ohne-fluegel.png" id="9_bild"]
 
 [node name="Fliege" type="Node2D" groups=["fliegen"]]
 z_index = 1
@@ -31,7 +31,7 @@ mouse_filter = 2
 color = Color(0.3, 0.3, 0.3, 1)
 
 [node name="Bild" type="Sprite2D" parent="."]
-scale = Vector2(0.22, 0.22)
+scale = Vector2(0.2167, 0.2167)
 texture = ExtResource("9_bild")
 
 [node name="Art" type="Label" parent="."]

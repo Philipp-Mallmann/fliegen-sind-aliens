@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://skripte/fliege_boss.gd" id="1_fliege"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/summen.ogg" id="2_summen"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/bockkaefer-skizze.png" id="9_bild"]
 
 [node name="Fliege" type="Node2D" groups=["fliegen"]]
 z_index = 1
@@ -14,6 +15,7 @@ leben = 3
 flieht = false
 
 [node name="Fluegel" type="ColorRect" parent="."]
+visible = false
 offset_left = -120.0
 offset_top = -150.0
 offset_right = 120.0
@@ -22,6 +24,7 @@ mouse_filter = 2
 color = Color(0.6, 0.6, 0.6, 1)
 
 [node name="Koerper" type="ColorRect" parent="."]
+visible = false
 offset_left = -150.0
 offset_top = -75.0
 offset_right = 150.0
@@ -29,7 +32,12 @@ offset_bottom = 150.0
 mouse_filter = 2
 color = Color(0.1, 0.1, 0.1, 1)
 
+[node name="Bild" type="Sprite2D" parent="."]
+scale = Vector2(0.5667, 0.5667)
+texture = ExtResource("9_bild")
+
 [node name="Art" type="Label" parent="."]
+visible = false
 offset_left = -150.0
 offset_top = -75.0
 offset_right = 150.0
