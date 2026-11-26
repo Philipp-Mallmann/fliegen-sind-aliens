@@ -6059,3 +6059,188 @@ In `fliege_boss.tscn` ist die Zeile `halbe_groesse = 150.0` weg, weil es das Fel
 So stellst du die Groesse ein: Fliegenszene oeffnen, den Knoten `Bild` auswaehlen, an den Ecken ziehen (oder im Inspector `scale` aendern). Gemessen (Probe): Normal 48, Schnell 45, Scheu 65, Koeder 60, Teleport 56, Boss 166, Heuschrecke 51 Pixel halbe Seite; Bild der normalen Fliege doppelt so gross gezogen: 96.
 
 Frage zur Selbstkontrolle: Warum wuerde ohne `abs()` eine gespiegelte Fliege eine kleinere Trefferflaeche bekommen?
+
+## Geaendert in Abschnitt 10: Lautstaerke-Regler als Brett mit Naegeln
+
+Dein Wunsch: zwei Bretter auf der Wiese in den Einstellungen, mittig und fett, vorne "Musik" und "SFX" in deiner Pinselschrift (Freckle Face, Z191). Darauf 20 Naegel nebeneinander: je mehr stecken, desto lauter. Wo keiner steckt, sieht man nur seinen Schatten. Bedienung: klicken oder ziehen entlang der Naegel (Z201, mein Vorschlag, von dir nicht anders entschieden).
+
+### Die Bilder und die Schrift
+
+- `assets/einstellungen/brett-balken.png`: dein ausgeschnittenes Brett (`assets/hintergrund/brett.png`), auf das Brett selbst zugeschnitten.
+- `assets/einstellungen/nagel.png`: der Nagel aus `assets/nadel/nagel_platzhalter.png`, zugeschnitten und auf 240 Pixel Hoehe verkleinert.
+- `assets/schrift/FreckleFace-Regular.ttf` mit `OFL-FreckleFace.txt`: die Schrift und ihre Lizenz (SIL Open Font License). Die Lizenz verlangt, dass der Text mitgeliefert wird.
+
+### `szenen/regler_nagel.tscn` - neu
+
+Ein einzelner Nagel: ein `TextureRect` mit dem Nagelbild. `size_flags_horizontal = 3` heisst: Er nimmt sich so viel Breite, wie da ist, alle Naegel teilen sich die Reihe gleichmaessig. `expand_mode = 1` und `stretch_mode = 5` (mittig, Seitenverhaeltnis behalten): Das Bild wird auf die Hoehe der Reihe gezogen, ohne verzerrt zu werden. `mouse_filter = 2`: Der Nagel nimmt keine Klicks weg.
+
+### `szenen/regler.tscn` - geaendert
+
+Vorher: Schrift oben, darunter ein dunkler Balken mit heller Fuellung. Jetzt:
+- `Brett`: ein `TextureRect` mit dem Brett, 1000 x 140 Pixel, 40 Pixel unter der Oberkante des Reglers.
+- `Name`: die Schrift vorne auf dem Brett, Freckle Face (`theme_override_fonts/font`), 72 gross, dunkelbraun wie Farbe auf Holz. `vertical_alignment = 1`: senkrecht mittig auf dem Brett.
+- `Naegel`: ein `HBoxContainer`, ein Kasten, der seine Kinder von selbst nebeneinander anordnet. Er liegt rechts von der Schrift (300 bis 980) und reicht von der Oberkante des Reglers bis 150. Die Naegel ragen also oben ueber das Brett hinaus und stecken unten im Brett. `separation = 0`: kein extra Abstand, die Naegel teilen sich die Breite.
+- `Balken` und `Fuellung` sind weg.
+
+### `skripte/regler.gd` - geaendert
+
+```gdscript
+@export var beschriftung: String = "SFX"
+```
+Neu. Was vorne auf dem Brett steht. Vorher stand dort der Name des Tonkanals ("Effekte"); jetzt kann es etwas anderes sein ("SFX").
+
+```gdscript
+@export var nagel_szene: PackedScene
+@export var anzahl: int = 20
+@export var schatten: Color = Color(0.0, 0.0, 0.0, 0.35)
+```
+Neu. Die Nagel-Szene, wie viele Naegel auf das Brett kommen, und wie ein fehlender Nagel aussieht: schwarz mit 35 Prozent Deckkraft, also ein Schatten.
+
+```gdscript
+	$Name.text = beschriftung
+	for nummer in anzahl:
+		$Naegel.add_child(nagel_szene.instantiate())
+```
+In `_ready`. Die Schrift kommt jetzt aus `beschriftung`. Dann werden 20 Naegel aus der Nagel-Szene erzeugt und in die Reihe gehaengt. `for nummer in anzahl` wiederholt die Zeile 20 Mal. Der `HBoxContainer` stellt sie von selbst nebeneinander.
+
+```gdscript
+		zieht = ereignis.pressed and $Naegel.get_global_rect().has_point(ereignis.position)
+```
+Geaendert: Gegriffen wird jetzt auf der Nagelreihe (`$Naegel`) statt auf dem alten Balken.
+
+```gdscript
+func setzen(x: float) -> void:
+	var wert: float = clampf((x - $Naegel.global_position.x) / $Naegel.size.x, 0.0, 1.0)
+	var stecken: int = ceili(wert * anzahl)
+	AudioServer.set_bus_volume_linear(AudioServer.get_bus_index(bus), float(stecken) / anzahl)
+	zeigen(float(stecken) / anzahl)
+```
+Geaendert. Wie weit rechts in der Reihe man ist, 0 ganz links, 1 ganz rechts. Daraus die Zahl der Naegel: `ceili` rundet auf. Wer auf den dritten Nagel klickt, bekommt drei Naegel, nicht zweieinhalb. Die Lautstaerke ist dann genau ein Zwanzigstel je Nagel, damit Bild und Ton zusammenpassen. Ganz links ausserhalb der Reihe (beim Ziehen) kommt 0 heraus: kein Nagel, stumm.
+
+```gdscript
+func zeigen(wert: float) -> void:
+	var stecken: int = roundi(wert * anzahl)
+	for nummer in anzahl:
+		var nagel: Control = $Naegel.get_child(nummer)
+		if nummer < stecken:
+			nagel.modulate = Color.WHITE
+		else:
+			nagel.modulate = schatten
+```
+Geaendert. Vorher wurde die Fuellung breiter oder schmaler. Jetzt geht die Funktion alle Naegel durch: Die ersten `stecken` sind normal (`Color.WHITE` heisst unveraendert), die restlichen werden zum Schatten. `roundi` rundet auf die naechste ganze Zahl, weil die Lautstaerke beim Start aus der Tonanlage kommt und nicht genau ein Zwanzigstel sein muss.
+
+### `szenen/spiel.tscn` - geaendert
+
+Die beiden Regler `Einstellungen/Wand/Musik` und `Effekte` sind 1000 breit und stehen mittig (220 bis 1220 auf der 1440 breiten Wand), Musik bei 320, SFX bei 560 von oben. `Musik` hat `beschriftung = "Musik"`, `Effekte` behaelt die Vorgabe "SFX".
+
+### Nachtrag: Wand mit den Forschern, Schild "Einstellungen" und Dank
+
+Du hast in `assets/hintergrund/psd/boden2.psd` zwei Forscher in die Grasreihen gesetzt (liegend mit den Beinen nach oben, und von hinten). Die PSD ist gespeichert.
+
+- `assets/einstellungen/wand.png`: die PSD als ein Bild (alle Ebenen zusammen), ohne Metadaten. Nur die Wand zeigt es. Die Wiese draussen bleibt `wiese.png` ohne Forscher, sonst wuerden sie sich dort seitlich wiederholen.
+- `assets/einstellungen/brett-halb.png`: die linke Haelfte des Bretts, fuer die kurzen Schilder.
+
+#### `szenen/schild.tscn` und `skripte/schild.gd` - neu
+
+Ein Holzschild mit Schrift: ein `TextureRect` mit dem halben Brett, darin ein `Label` `Schrift` in Freckle Face. Die vier `anchor`-Zeilen und die `offset`-Werte (16 links und rechts) spannen die Schrift ueber das ganze Schild mit etwas Rand. `horizontal_alignment = 1` und `vertical_alignment = 1`: mittig. `autowrap_mode = 3`: Ist der Text zu lang fuer eine Zeile, bricht er um.
+
+```gdscript
+extends TextureRect
+```
+Das Skript haengt am Schild selbst.
+
+```gdscript
+@export_multiline var schrift: String = "Schild"
+@export var groesse: int = 64
+```
+Was auf dem Schild steht und wie gross. `@export_multiline` gibt im Inspector ein grosses Textfeld, in dem man auch neue Zeilen schreiben kann.
+
+```gdscript
+func _ready() -> void:
+	$Schrift.text = schrift
+	$Schrift.add_theme_font_size_override("font_size", groesse)
+```
+Beim Start bekommt das Label den Text und die Groesse. `add_theme_font_size_override` ist dasselbe wie im Inspector unter "Theme Overrides" die Schriftgroesse zu setzen, nur aus dem Skript.
+
+#### `szenen/regler.tscn` - nochmal geaendert
+
+`Brett` und `Naegel` haengen jetzt an den Raendern des Reglers (`anchor_right = 1.0`), statt feste 1000 Pixel breit zu sein. So passt sich das Brett an, wenn man den Regler in der Wand breiter oder schmaler zieht. Die Naegel enden 20 Pixel vor dem rechten Rand (`offset_right = -20`).
+
+#### `szenen/spiel.tscn` - Wand neu aufgeteilt
+
+- `Wiese` in der Wand zeigt `wand.png` (mit den Forschern) statt `wiese.png`.
+- `Titel` ist jetzt ein Schild (Instanz von `schild.tscn`) mit "Einstellungen", Groesse 60, in der obersten Grasreihe (380 bis 920, 30 bis 170). Es endet links von der Zurueck-Fliege, damit man sie sieht.
+- `Musik` und `SFX` stehen rechts von den Forschern (470 bis 1390), in der zweiten und dritten Reihe (205 und 450 von oben).
+- Neu: `Dank`, ein Schild mit "Thanks to" und den Namen, Groesse 34, in der untersten, unschaerfsten Reihe (790 bis 1390, 855 bis 1065). Es ragt nicht ueber die Reihe hinaus und endet rechts genau wie Musik und SFX (bei 1390). `\n` im Text ist der Zeilenumbruch nach "Thanks to".
+
+Angeschaut: Bild der hochgefahrenen Wand. Schilder und Regler liegen neben den Forschern, nichts deckt sie zu, die Zurueck-Fliege ist frei. Regler funktionieren weiter (Musik 40 Prozent: 0,40).
+
+### Nachtrag: Schild faehrt von oben herein und schliesst die Einstellungen (`skripte/einstellungen.gd`, `szenen/spiel.tscn`)
+
+Dein Wunsch: Das Schild "Einstellungen" kommt von oben herein, waehrend die Wiese hochfaehrt, und ist ein Knopf zum Schliessen. Geoeffnet wird nur ueber die Fliege. Der Satz "Zurueck: die Fliege oben an der Kante antippen" ist weg.
+
+In `spiel.tscn` haengt `Titel` jetzt direkt an `Einstellungen` statt an der Wand. Sonst wuerde es mit der Wand von unten kommen. Am Anfang ist es unsichtbar (`visible = false`) und steht ueber dem Bildrand (`offset_top = -150`). Der Knoten `Hinweis` ist geloescht.
+
+```gdscript
+@export var titel_oben: float = 0.0
+@export var titel_versteckt: float = -150.0
+```
+Neu. Wo das Schild steht, wenn die Wand oben ist (0: es stoesst oben an den Bildrand, ohne Abstand), und wo es wartet (150 Pixel ueber dem Bild, also unsichtbar ausserhalb).
+
+```gdscript
+	$Titel.position.y = titel_versteckt
+	$Titel.visible = true
+```
+Neu in `oeffnen`: Das Schild wird ueber das Bild gesetzt und eingeschaltet.
+
+```gdscript
+	fahrt.parallel().tween_property($Titel, "position:y", titel_oben, fahrdauer)
+```
+Neu in `oeffnen`, nach der Fahrt der Wand. `parallel()` heisst: gleichzeitig mit dem Schritt davor, nicht danach. Waehrend die Wiese von unten hochfaehrt, faehrt das Schild in derselben Zeit (0,6 Sekunden) von oben herein.
+
+```gdscript
+	fahrt.parallel().tween_property($Titel, "position:y", titel_versteckt, fahrdauer)
+```
+Neu in `schliessen`: dasselbe rueckwaerts, das Schild faehrt nach oben hinaus, waehrend die Wiese herunterfaehrt.
+
+```gdscript
+	$Titel.visible = false
+```
+Neu in `zu`: Wenn alles unten ist, wird das Schild ausgeschaltet.
+
+```gdscript
+		if not ereignis.pressed:
+			return
+		if $Wand/Fliege.get_global_rect().has_point(ereignis.position) or $Titel.get_global_rect().has_point(ereignis.position):
+			schliessen()
+```
+Geaendert in `_input`. Vorher: nur ein Klick auf die Fliege schloss. Jetzt: Erst wird geprueft, ob gedrueckt wurde (Loslassen zaehlt nicht, sonst wuerde ein Klick zweimal zaehlen). Dann schliesst ein Klick auf die Fliege **oder** (`or`) auf das Schild.
+
+Angeschaut (Probe): nach 0,3 Sekunden steht die Wiese halb oben und das Schild halb im Bild; nach 0,9 Sekunden ist alles oben. Klick auf die Mitte des Schilds: Wand und Schild fahren weg, danach sind beide aus und die Figur ist wieder frei (`wand_offen` falsch).
+
+Frage zur Selbstkontrolle: Was wuerde passieren, wenn `parallel()` fehlte?
+
+### So wurde es angeschaut
+
+- Schnellcheck PASS fuer `regler.gd`, Verify PASS.
+- Probe: Wand hochgefahren, Bild aufgenommen: zwei Bretter mit Schrift und je 20 Naegeln. Musik auf 40 Prozent gesetzt: Tonkanal Musik 0,40, auf dem Bild 8 Naegel und 12 Schatten. SFX auf den ersten Nagel: Tonkanal 0,05, 1 Nagel und 19 Schatten.
+- Nicht angeschaut: am Handy mit dem Finger, und wie es sich anfuehlt.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum rundet `setzen` mit `ceili` auf, `zeigen` aber mit `roundi`?
+2. Was passiert, wenn man im Inspector `anzahl` auf 10 stellt?
+3. Warum ordnet der `HBoxContainer` die Naegel von selbst an, ohne dass das Skript Positionen ausrechnet?
+
+### Nachtrag: Kanone 1,5-mal so gross, Triebwerke oben an der Tonne (26.11.2026)
+
+Nur Bilder und `szenen/spiel.tscn`, kein Code.
+
+- Die Triebwerke sitzen im Bild jetzt oben an der Tonne: Ihre Oberkante liegt dort, wo der Tonnenrand an den Seiten ist. Dafuer sind sie auf der Leinwand 252 Pixel nach oben gerueckt (`kanone-hinten.png` neu gebaut).
+- Alle Teile im `Arm` haben `scale` 0,315 statt 0,21, also 1,5-mal so gross. Die Feuer 0,351 statt 0,234 (auch mal 1,5, damit sie im Verhaeltnis zu den Triebwerken gleich bleiben).
+- Die Positionen sind neu gerechnet: Der untere Bildrand in der Luft liegt 20 Pixel unter dem Nullpunkt der Kanone. Die Unterkante der Triebwerke liegt jetzt knapp darueber, so schneidet das Bild die Kanone gerade unter den Triebwerken ab. Daraus ergibt sich die `Muendung` bei (0, -230,7).
+- In der Totale bleibt die Kanone so gross wie vorher (0,21), dort haengt sie an der Figur.
+
+Rechnung fuer die Muendung: Unterkante der Triebwerke plus 6 Pixel Rand liegt auf der Leinwand bei 989, die Laufspitze bei 193. Der Abstand ist 796 Leinwand-Pixel, im Spiel 796 mal 0,315 = 250,7. Die Unterkante soll bei 20 liegen, also die Muendung bei 20 - 250,7 = -230,7.
+
+Frage: Warum muss die Muendung hoeher rutschen, wenn die Kanone groesser wird, obwohl der Bildrand gleich bleibt?

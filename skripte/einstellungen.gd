@@ -1,7 +1,8 @@
 extends CanvasLayer
 
 # Die Wand mit den Einstellungen. Sie faehrt hoch, wenn die Einstellungsfliege getroffen ist,
-# und wieder herunter, wenn man die Fliege oben an der Kante anklickt oder antippt.
+# und wieder herunter, wenn man die Fliege oben an der Kante oder das Schild "Einstellungen" anklickt oder antippt.
+# Das Schild kommt dabei von oben herein und faehrt am Ende wieder nach oben hinaus.
 
 # Die Einstellungsfliege auf der Wiese.
 @export var fliege: Node2D
@@ -11,6 +12,9 @@ extends CanvasLayer
 @export var fahrdauer: float = 0.6
 # Auf dieser Bildhoehe liegt in der Totale die Oberkante der Wiese: drei Viertel von 1080.
 @export var wiesenkante: float = 810.0
+# Wo das Schild "Einstellungen" steht, wenn die Wand oben ist, und wo es wartet, solange sie unten ist (ueber dem Bildrand).
+@export var titel_oben: float = 0.0
+@export var titel_versteckt: float = -150.0
 
 
 func _ready() -> void:
@@ -25,18 +29,23 @@ func oeffnen() -> void:
 	musik_daempfen(true)
 	$Wand.position.y = wiesenkante
 	$Wand.visible = true
+	$Titel.position.y = titel_versteckt
+	$Titel.visible = true
 	var fahrt: Tween = create_tween()
 	fahrt.tween_property($Wand, "position:y", 0.0, fahrdauer)
+	fahrt.parallel().tween_property($Titel, "position:y", titel_oben, fahrdauer)
 
 
 func schliessen() -> void:
 	var fahrt: Tween = create_tween()
 	fahrt.tween_property($Wand, "position:y", wiesenkante, fahrdauer)
+	fahrt.parallel().tween_property($Titel, "position:y", titel_versteckt, fahrdauer)
 	fahrt.tween_callback(zu)
 
 
 func zu() -> void:
 	$Wand.visible = false
+	$Titel.visible = false
 	fliege.visible = true
 	figur.wand_offen = false
 	musik_daempfen(false)
@@ -57,5 +66,7 @@ func _input(ereignis: InputEvent) -> void:
 	if not $Wand.visible:
 		return
 	if ereignis is InputEventMouseButton or ereignis is InputEventScreenTouch:
-		if ereignis.pressed and $Wand/Fliege.get_global_rect().has_point(ereignis.position):
+		if not ereignis.pressed:
+			return
+		if $Wand/Fliege.get_global_rect().has_point(ereignis.position) or $Titel.get_global_rect().has_point(ereignis.position):
 			schliessen()

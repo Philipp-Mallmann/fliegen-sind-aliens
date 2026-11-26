@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/einstellungen/nagel.png" id="1_nagel"]
+
+[node name="Nagel" type="TextureRect"]
+custom_minimum_size = Vector2(16, 0)
+size_flags_horizontal = 3
+mouse_filter = 2
+texture = ExtResource("1_nagel")
+expand_mode = 1
+stretch_mode = 5

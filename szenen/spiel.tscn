@@ -1,4 +1,4 @@
-[gd_scene load_steps=55 format=3]
+[gd_scene load_steps=57 format=3]
 
 [ext_resource type="Script" path="res://skripte/kanone.gd" id="1_kanone"]
 [ext_resource type="PackedScene" path="res://szenen/nadel.tscn" id="2_nadel"]
@@ -45,6 +45,8 @@
 [ext_resource type="PackedScene" path="res://szenen/fliege_heuschrecke.tscn" id="40_heuschrecke"]
 [ext_resource type="PackedScene" path="res://szenen/stechfliege.tscn" id="41_stechfliege"]
 [ext_resource type="Script" path="res://skripte/stecher.gd" id="42_stecher"]
+[ext_resource type="Texture2D" path="res://assets/einstellungen/wand.png" id="43_wand"]
+[ext_resource type="PackedScene" path="res://szenen/schild.tscn" id="44_schild"]
 
 [sub_resource type="Gradient" id="Gradient_taste"]
 colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
@@ -638,7 +640,7 @@ offset_right = 640.0
 offset_bottom = 455.5
 scale = Vector2(2.25, 2.25)
 mouse_filter = 2
-texture = ExtResource("37_wiese")
+texture = ExtResource("43_wand")
 stretch_mode = 1
 
 [node name="Fliege" type="ColorRect" parent="Einstellungen/Wand"]
@@ -658,38 +660,40 @@ text = "Einst."
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Titel" type="Label" parent="Einstellungen/Wand"]
-layout_mode = 0
-offset_left = 320.0
-offset_top = 150.0
-offset_right = 1120.0
-offset_bottom = 250.0
-theme_override_font_sizes/font_size = 72
-text = "Einstellungen"
+[node name="Titel" parent="Einstellungen" instance=ExtResource("44_schild")]
+visible = false
+offset_left = 380.0
+offset_top = -150.0
+offset_right = 920.0
+offset_bottom = -10.0
+schrift = "Einstellungen"
+groesse = 60
 
 [node name="Musik" parent="Einstellungen/Wand" instance=ExtResource("29_regler")]
 layout_mode = 0
-offset_left = 320.0
-offset_top = 330.0
-offset_right = 1120.0
-offset_bottom = 460.0
+offset_left = 470.0
+offset_top = 205.0
+offset_right = 1390.0
+offset_bottom = 385.0
 bus = "Musik"
+beschriftung = "Musik"
 
 [node name="Effekte" parent="Einstellungen/Wand" instance=ExtResource("29_regler")]
 layout_mode = 0
-offset_left = 320.0
-offset_top = 550.0
-offset_right = 1120.0
-offset_bottom = 680.0
+offset_left = 470.0
+offset_top = 450.0
+offset_right = 1390.0
+offset_bottom = 630.0
 
-[node name="Hinweis" type="Label" parent="Einstellungen/Wand"]
+[node name="Dank" parent="Einstellungen/Wand" instance=ExtResource("44_schild")]
 layout_mode = 0
-offset_left = 320.0
-offset_top = 800.0
-offset_right = 1120.0
-offset_bottom = 860.0
-theme_override_font_sizes/font_size = 32
-text = "Zurueck: die Fliege oben an der Kante antippen"
+offset_left = 790.0
+offset_top = 855.0
+offset_right = 1390.0
+offset_bottom = 1065.0
+schrift = "Thanks to
+Steffen, Amke, Louisa, Loki, Mattis, Ivan, Sophie, Lysann, Mischa"
+groesse = 34
 
 [node name="Musik" type="Node" parent="."]
 script = ExtResource("30_musik")
