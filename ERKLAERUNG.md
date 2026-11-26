@@ -5583,3 +5583,40 @@ Neu der Knoten `Musik` mit `musik.gd` und den zwei Tonspielern `Schleife` und `E
 1. Warum wird in der Totale die Lautstaerke des Tonspielers geaendert und nicht die des Busses `Musik`?
 2. Was passiert, wenn man `_exit_tree` in `einstellungen.gd` loescht und bei offener Wand die Taste R drueckt?
 3. Warum darf die Schleife genau 115,2 Sekunden lang sein und nicht 116?
+
+## Abschnitt 13, Aenderung nach dem ersten Anspielen - Einstieg kurz, Kanone im rechten Arm
+
+Was sich aendert: Nach dem ersten Treffer sah man die Figur zwei Sekunden lang schwanken. Das war zu lang. Jetzt nimmt sie nur noch in 0,3 Sekunden den Arm nach oben, dann steigt man sofort und das Bild zoomt heran. Und die Kanone sitzt jetzt im rechten Arm der Figur. Die Figur schaut uns an, ihr rechter Arm ist darum im Bild links.
+
+### `skripte/start_totale.gd` - geaendert
+
+```gdscript
+@export var einstieg_dauer: float = 0.3
+```
+War 2.0. So lange braucht die Figur nach dem Treffer, um den Arm gerade nach oben zu nehmen.
+
+Weg ist `@export var schwanken`. Die Figur schwankt nicht mehr.
+
+```gdscript
+	var ablauf: Tween = create_tween()
+	ablauf.tween_property(kanone, "position:y", -abheben, einstieg_dauer)
+	ablauf.parallel().tween_property(self, "rotation_degrees", 0.0, einstieg_dauer)
+	ablauf.parallel().tween_property($Schulter, "rotation", 0.0, einstieg_dauer)
+	ablauf.parallel().tween_property(nadel, "rotation", 0.0, einstieg_dauer)
+	ablauf.tween_callback(sequenz_fertig)
+```
+In `erster_treffer`. Vorher waren es vier Stuecke nacheinander (abheben, links, rechts, aufrichten). Jetzt ist es ein einziges Stueck von 0,3 Sekunden, in dem vier Dinge gleichzeitig laufen (`parallel()`): Die Figur hebt eine Kopfhoehe ab, sie richtet sich auf, falls sie gekippt war, der Arm dreht nach oben, die Nadel mit der Fliege dreht sich aufrecht. Danach kommt wie bisher `sequenz_fertig`, das Spiel beginnt, man steigt um die Flugkraft der Fliege und die Kamera zoomt in 0,8 Sekunden heran.
+
+Die 0,3 Sekunden bleiben, weil der Arm erst gerade stehen muss. Sonst saehe man, wie der schraege Arm verschwindet und die Kanone des Spiels senkrecht auftaucht.
+
+### `szenen/spiel.tscn` - geaendert
+
+- `Kanone/Figur`: `position` (130, 1212) statt (-130, 1212). Die Figur steht jetzt rechts neben der Kanone.
+- `Kanone/Figur/Schulterpunkt` und `Schulter`: (-130, -812) statt (130, -812). Die Schulter liegt auf der linken Seite des Rumpfs im Bild, das ist die rechte Schulter der Figur. 130 nach rechts und 130 zurueck nach links: Die Faust liegt weiter genau auf der Kanone.
+- `Kanone/Aufstehen`: `position` (130, 717), damit die Aufsteh-Bilder dort stehen, wo die Figur steht.
+
+### So wurde es angeschaut
+
+- Verify PASS, Schnellcheck PASS.
+- Probe mit Fenster: vom Treffer bis zum Spielstart 0,30 Sekunden (vorher 2,1 bis 2,2), bis der Zoom fertig ist 1,10 Sekunden. Kanonenspitze weiter 140 ueber der Kanone. Im Bild: Arm links vom Rumpf.
+- Nicht angeschaut: ob sich der Einstieg jetzt richtig anfuehlt.

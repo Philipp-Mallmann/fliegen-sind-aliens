@@ -291,7 +291,7 @@ position = Vector2(0, -140)
 
 [node name="Aufstehen" type="AnimatedSprite2D" parent="Kanone"]
 visible = false
-position = Vector2(-130, 717)
+position = Vector2(130, 717)
 scale = Vector2(3.5, 4.95)
 sprite_frames = SubResource("SpriteFrames_aufstehen")
 animation = &"aufstehen"
@@ -492,7 +492,7 @@ zonen = NodePath("../Zonen")
 knopf = NodePath("../Bedienung/Neustart")
 
 [node name="Figur" type="Node2D" parent="Kanone" node_paths=PackedStringArray("kanone", "erzeuger", "joystick")]
-position = Vector2(-130, 1212)
+position = Vector2(130, 1212)
 script = ExtResource("25_totale")
 nadel_szene = ExtResource("2_nadel")
 kanone = NodePath("..")
@@ -520,10 +520,10 @@ offset_bottom = -858.0
 color = Color(0.7, 0.7, 0.7, 1)
 
 [node name="Schulterpunkt" type="Marker2D" parent="Kanone/Figur"]
-position = Vector2(130, -812)
+position = Vector2(-130, -812)
 
 [node name="Schulter" type="Node2D" parent="Kanone/Figur"]
-position = Vector2(130, -812)
+position = Vector2(-130, -812)
 
 [node name="Armbild" type="Node2D" parent="Kanone/Figur/Schulter"]
 
