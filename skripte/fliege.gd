@@ -8,8 +8,6 @@ extends Node2D
 @export var tempo_schnell: float = 180.0
 # Wie viel Flugkraft die Fliege gibt, wenn sie gefangen ist.
 @export var flugkraft: int = 2
-# Die halbe Breite und die halbe Hoehe der Fliege, in Pixeln. 50 heisst: Die Fliege ist 100 mal 100 gross.
-@export var halbe_groesse: float = 50.0
 # Wie oft man die Fliege treffen muss, bis sie gefangen ist. Nur der Boss braucht mehr als 1.
 @export var leben: int = 1
 # true heisst: Der Erzeuger laesst sie fliehen, wenn sie zu tief oder zu hoch im Bild ist. Der Boss flieht nie.
@@ -38,10 +36,15 @@ var grund_y: float = 0.0
 var zeit: float = 0.0
 # Die Nadeln, die in der Fliege stecken, solange sie noch nicht gefangen ist. Nur beim Boss.
 var steckende: Array[Node2D] = []
+# Die halbe Groesse der Trefferflaeche, in Pixeln. Wird beim Start aus der Groesse des Bilds berechnet.
+var halbe_groesse: float = 50.0
 
 
 func _ready() -> void:
 	tempo = randf_range(tempo_langsam, tempo_schnell)
+	# Die Trefferflaeche richtet sich nach dem Bild. Zieht man in der Fliegenszene das Bild groesser oder kleiner, waechst sie mit.
+	var bild_groesse: Vector2 = $Bild.texture.get_size() * $Bild.scale.abs()
+	halbe_groesse = (bild_groesse.x + bild_groesse.y) / 4.0
 	grund_y = position.y
 	if mitte_x < position.x:
 		richtung = -1.0

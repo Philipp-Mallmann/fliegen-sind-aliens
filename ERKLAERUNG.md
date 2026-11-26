@@ -6030,3 +6030,32 @@ Die Stechfliege entsteht und bekommt die Stelle. `to_local` rechnet die Stelle i
 1. Warum kann die Nadel die Stechfliege nicht treffen?
 2. Was rechnet `sin(PI * anteil)` im Sprung der Heuschrecke, und was kommt bei `anteil = 0.5` heraus?
 3. Warum gehoert der Tween zum Verblassen dem roten Punkt und nicht der Stechfliege?
+
+### Geaendert in Abschnitt 10: Groesse der Fliege per Ziehen (`skripte/fliege.gd`, `szenen/fliege_boss.tscn`)
+
+Dein Wunsch: Die Groesse einer Fliege stellt man ein, indem man in ihrer Szene das Bild groesser oder kleiner zieht.
+
+Weg sind diese zwei Zeilen (mit dem Kommentar darueber):
+```gdscript
+@export var halbe_groesse: float = 50.0
+```
+Vorher war die Trefferflaeche eine feste Zahl, unabhaengig vom Bild. Zog man das Bild groesser, blieb die Flaeche gleich, und die Nadel ging durch den Rand der Fliege hindurch.
+
+Neu, bei den anderen Variablen:
+```gdscript
+var halbe_groesse: float = 50.0
+```
+Keine `@export` mehr, weil man die Zahl nicht mehr selbst eintraegt. Sie wird beim Start berechnet. Den Namen behaelt sie, weil `nadel.gd` und `hindernis.gd` sie lesen.
+
+Neu in `_ready`:
+```gdscript
+	var bild_groesse: Vector2 = $Bild.texture.get_size() * $Bild.scale.abs()
+	halbe_groesse = (bild_groesse.x + bild_groesse.y) / 4.0
+```
+`texture.get_size()` ist die Groesse der Bilddatei in Pixeln, `scale` ist, wie stark du das Bild in der Szene gezogen hast. Malgenommen ergibt das die Groesse auf dem Bildschirm. `abs()` macht negative Werte positiv, falls das Bild gespiegelt ist. Die Trefferflaeche ist weiter ein Quadrat: Seine halbe Seite ist der Durchschnitt aus halber Breite und halber Hoehe des Bilds (Breite plus Hoehe, durch 4). Eine flache, breite Fliege bekommt so ein Quadrat, das etwas breiter ist als sie hoch und etwas schmaler als sie breit ist. Genauer wird es erst mit der Polygon-Form (spaeter).
+
+In `fliege_boss.tscn` ist die Zeile `halbe_groesse = 150.0` weg, weil es das Feld im Inspector nicht mehr gibt.
+
+So stellst du die Groesse ein: Fliegenszene oeffnen, den Knoten `Bild` auswaehlen, an den Ecken ziehen (oder im Inspector `scale` aendern). Gemessen (Probe): Normal 48, Schnell 45, Scheu 65, Koeder 60, Teleport 56, Boss 166, Heuschrecke 51 Pixel halbe Seite; Bild der normalen Fliege doppelt so gross gezogen: 96.
+
+Frage zur Selbstkontrolle: Warum wuerde ohne `abs()` eine gespiegelte Fliege eine kleinere Trefferflaeche bekommen?

@@ -10,7 +10,6 @@ script = ExtResource("1_fliege")
 tempo_langsam = 110.0
 tempo_schnell = 130.0
 flugkraft = 15
-halbe_groesse = 150.0
 leben = 3
 flieht = false
 
