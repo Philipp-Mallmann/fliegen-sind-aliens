@@ -1,11 +1,18 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://skripte/hindernis.gd" id="1_hindernis"]
 [ext_resource type="PackedScene" path="res://szenen/blutfleck.tscn" id="2_blutfleck"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/warnung.wav" id="3_warnung"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/hindernisse/spiel/stein-1.png" id="4_stein1"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/hindernisse/spiel/stein-2.png" id="5_stein2"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/hindernisse/spiel/stein-3.png" id="6_stein3"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/hindernisse/spiel/stein-4.png" id="7_stein4"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/hindernisse/spiel/stein-5.png" id="8_stein5"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/hindernisse/spiel/warnschild.png" id="9_warnschild"]
 
 [node name="Hindernis" type="Node2D" groups=["hindernisse"]]
 script = ExtResource("1_hindernis")
+steine = Array[Texture2D]([ExtResource("4_stein1"), ExtResource("5_stein2"), ExtResource("6_stein3"), ExtResource("7_stein4"), ExtResource("8_stein5")])
 matsch_szene = ExtResource("2_blutfleck")
 
 [node name="Spalte" type="ColorRect" parent="."]
@@ -15,30 +22,15 @@ offset_bottom = 1080.0
 mouse_filter = 2
 color = Color(1, 0.85, 0, 0.15)
 
-[node name="Klotz" type="ColorRect" parent="."]
+[node name="Klotz" type="Sprite2D" parent="."]
 z_index = 2
-offset_left = -100.0
-offset_top = -120.0
-offset_right = 100.0
-mouse_filter = 2
-color = Color(0.45, 0.45, 0.45, 1)
+position = Vector2(0, -60)
+texture = ExtResource("4_stein1")
 
-[node name="Warnung" type="Polygon2D" parent="."]
+[node name="Warnung" type="Sprite2D" parent="."]
 z_index = 2
 position = Vector2(0, 80)
-color = Color(1, 0.85, 0, 1)
-polygon = PackedVector2Array(0, -50, 55, 45, -55, 45)
-
-[node name="Zeichen" type="Label" parent="Warnung"]
-offset_left = -20.0
-offset_top = -35.0
-offset_right = 20.0
-offset_bottom = 45.0
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 60
-text = "!"
-horizontal_alignment = 1
-vertical_alignment = 1
+texture = ExtResource("9_warnschild")
 
 [node name="TonWarnung" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("3_warnung")

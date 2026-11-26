@@ -2,10 +2,8 @@ extends Node2D
 
 # Wie lange die Warnung laeuft, bevor der Gegenstand faellt, in Sekunden.
 @export var warnzeit: float = 3.0
-# Wie breit die Spalte ist, in Pixeln. Jede Fliege darin wird zermatscht.
-@export var breite: float = 200.0
-# Wie hoch der fallende Gegenstand ist, in Pixeln.
-@export var hoehe: float = 120.0
+# Die Steine, die fallen koennen. Bei jedem Hindernis wird einer ausgewuerfelt.
+@export var steine: Array[Texture2D] = []
 # Wie schnell der Gegenstand faellt, in Pixeln pro Sekunde. Muss schneller sein als der Absturz (falltempo in spiel.gd, 2400).
 @export var falltempo: float = 3000.0
 # Wie lange ein Blinken der Warnung dauert, am Anfang und am Ende, in Sekunden. Kleiner heisst schneller.
@@ -32,16 +30,21 @@ var kanone: Node2D = null
 var faecher: Node2D = null
 # Wie viele Sekunden schon gewarnt wird.
 var gewarnt: float = 0.0
+# Wie breit und wie hoch der fallende Stein ist, in Pixeln. Kommt aus der Groesse seines Bilds.
+# So breit ist auch die Spalte: Jede Fliege darin wird zermatscht.
+var breite: float = 200.0
+var hoehe: float = 120.0
 # Die laengste Warnzeit, die vorkommt. Daran haengt das Aussehen: Gleiche Restzeit heisst gleiches Schild. Setzt der Hindernis-Erzeuger.
 var volle_warnzeit: float = 9.0
 
 
 func _ready() -> void:
+	$Klotz.texture = steine.pick_random()
+	breite = $Klotz.texture.get_width()
+	hoehe = $Klotz.texture.get_height()
+	$Klotz.position.y = -hoehe / 2.0
 	$Spalte.offset_left = -breite / 2.0
 	$Spalte.offset_right = breite / 2.0
-	$Klotz.offset_left = -breite / 2.0
-	$Klotz.offset_right = breite / 2.0
-	$Klotz.offset_top = -hoehe
 
 
 func _process(delta: float) -> void:

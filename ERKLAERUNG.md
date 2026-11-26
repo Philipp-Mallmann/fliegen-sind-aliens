@@ -6383,3 +6383,52 @@ Nur Bilder und `szenen/spiel.tscn`, kein Code.
 Rechnung fuer die Muendung: Unterkante der Triebwerke plus 6 Pixel Rand liegt auf der Leinwand bei 989, die Laufspitze bei 193. Der Abstand ist 796 Leinwand-Pixel, im Spiel 796 mal 0,315 = 250,7. Die Unterkante soll bei 20 liegen, also die Muendung bei 20 - 250,7 = -230,7.
 
 Frage: Warum muss die Muendung hoeher rutschen, wenn die Kanone groesser wird, obwohl der Bildrand gleich bleibt?
+
+## Geaendert in Abschnitt 10: Steine als Hindernisse, Warnschild als Bild (`skripte/hindernis.gd`, `szenen/hindernis.tscn`)
+
+Deine fuenf ausgeschnittenen Fotos (`assets/hintergrund/hindernisse/stein-1.png` bis `stein-5.png`) fallen jetzt statt des grauen Klotzes. Fuer das Spiel liegen angepasste Kopien in `assets/hintergrund/hindernisse/spiel/`: zugeschnitten, Stein 1 und Stein 5 (der Turm) um 90 Grad gedreht, damit sie quer liegen, und in der Breite angeglichen, damit sie nicht so unterschiedlich sind: Stein 1 270, Stein 2 220, Stein 3 300, Stein 4 240, Stein 5 260 Pixel breit (vorher 62 bis 655). Stein 1 und 3 sind dabei kleiner geworden, Stein 5 breiter. Stein 2, 4 und 5 waren als Ausschnitt kleiner und sind vergroessert, darum etwas weicher. Das Warndreieck ist dein ausgeschnittenes Warnschild, 120 Pixel breit (`spiel/warnschild.png`).
+
+### `szenen/hindernis.tscn`
+
+- `Klotz` ist jetzt ein `Sprite2D` (ein Knoten, der ein Bild zeigt) statt eines grauen Rechtecks.
+- `Warnung` ist jetzt ein `Sprite2D` mit dem Warnschild statt eines gelben Dreiecks mit "!". Das Kind `Zeichen` ist weg, das Ausrufezeichen ist im Bild.
+- Neu am Hindernis: `steine`, die Liste der fuenf Steinbilder.
+
+### `skripte/hindernis.gd`
+
+Weg sind die zwei `@export`-Zeilen `breite` und `hoehe` (mit Kommentar). Neu:
+
+```gdscript
+@export var steine: Array[Texture2D] = []
+```
+Die Steine, die fallen koennen. Neue Steine zieht man im Inspector der Hindernis-Szene in diese Liste.
+
+```gdscript
+var breite: float = 200.0
+var hoehe: float = 120.0
+```
+Jetzt normale Variablen statt `@export`: Sie werden beim Start aus dem Bild des Steins berechnet. Den Namen behalten sie, weil `im_klotz` damit rechnet.
+
+```gdscript
+func _ready() -> void:
+	$Klotz.texture = steine.pick_random()
+	breite = $Klotz.texture.get_width()
+	hoehe = $Klotz.texture.get_height()
+	$Klotz.position.y = -hoehe / 2.0
+	$Spalte.offset_left = -breite / 2.0
+	$Spalte.offset_right = breite / 2.0
+```
+`pick_random()` nimmt einen zufaelligen Stein aus der Liste. Breite und Hoehe sind die Groesse seines Bilds. Ein `Sprite2D` zeigt sein Bild um seinen Punkt herum (mittig), darum setzt die vierte Zeile ihn um die halbe Hoehe nach oben: Die Unterkante des Steins liegt dann genau auf dem Punkt des Hindernisses, wie vorher beim grauen Klotz. Die gelbe Spalte ist so breit wie der Stein. Die Zeilen fuer `$Klotz.offset_...` sind weg, weil ein Bild-Knoten keine Raender hat.
+
+Angeschaut (Probe): fuenf Hindernisse nebeneinander, je ein Stein. Waehrend der Warnung oben das Warnschild, danach fallen die Steine, Fliegen in der Spalte werden zermatscht. Verify PASS, Schnellcheck PASS.
+
+Frage zur Selbstkontrolle: Warum muss `$Klotz.position.y` auf `-hoehe / 2.0` stehen und nicht auf 0?
+
+### Nachtrag: kraeftigere Skizzen (27.11.2026)
+
+Nur Bilder und zwei Pfade, kein Code. Die Skizzen sind 600 Pixel breit und werden im Spiel auf knapp ein Viertel verkleinert (`scale` 0,2333). Dabei verschwimmen duenne, helle Striche fast ganz. Darum gibt es zwei neue Dateien, die Originale bleiben unveraendert:
+
+- `assets/fliegen/spiel/insekt-bleistift-skizze-kraeftig.png` (normale Fliege): Papier fast weiss, Bleistiftstriche schwarz und auf etwa 5 Pixel verdickt.
+- `assets/fliegen/spiel/fliege-skizze-kraeftig.png` (schnelle Fliege): Papier fast weiss, Kugelschreiberstriche dunkler und satter blau, nur wenig verdickt (3 Pixel), weil die Schraffur dicht ist und sonst zu einer Flaeche zusammenlaeuft.
+
+`fliege_normal.tscn` und `fliege_schnell.tscn` zeigen jetzt auf die neuen Dateien. Die Trefferflaeche bleibt gleich, die Bilder sind gleich gross wie vorher.
