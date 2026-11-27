@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://pwwrl2b28cbe" path="res://skripte/kanone.gd" id="1_kanone"]
 [ext_resource type="PackedScene" path="res://szenen/nadel.tscn" id="2_nadel"]
-[ext_resource type="PackedScene" path="res://szenen/fliege_normal.tscn" id="3_fliege"]
+[ext_resource type="PackedScene" uid="uid://dqpgprhpo0jn1" path="res://szenen/fliege_normal.tscn" id="3_fliege"]
 [ext_resource type="Script" uid="uid://b8u3ao06b1w0l" path="res://skripte/uebergabe.gd" id="4_uebergabe"]
 [ext_resource type="Script" uid="uid://de8sfqsm6fwn" path="res://skripte/spiel.gd" id="5_spiel"]
 [ext_resource type="Script" uid="uid://dusnn0tjsnqa1" path="res://skripte/erzeuger.gd" id="6_erzeuger"]
@@ -17,10 +17,10 @@
 [ext_resource type="AudioStream" uid="uid://c7n38k4ccc4bp" path="res://assets/audio/sfx/klotz.wav" id="15_klotz"]
 [ext_resource type="AudioStream" uid="uid://bkc0wx2mwsu68" path="res://assets/audio/sfx/matsch.wav" id="16_matsch"]
 [ext_resource type="PackedScene" path="res://szenen/fliege_schnell.tscn" id="17_schnell"]
-[ext_resource type="PackedScene" path="res://szenen/fliege_scheu.tscn" id="18_scheu"]
+[ext_resource type="PackedScene" uid="uid://c60dujfrak3dp" path="res://szenen/fliege_scheu.tscn" id="18_scheu"]
 [ext_resource type="PackedScene" path="res://szenen/fliege_koeder.tscn" id="19_koeder"]
 [ext_resource type="PackedScene" path="res://szenen/fliege_teleport.tscn" id="20_teleport"]
-[ext_resource type="PackedScene" path="res://szenen/fliege_boss.tscn" id="21_boss"]
+[ext_resource type="PackedScene" uid="uid://cy8sn2iydr7sj" path="res://szenen/fliege_boss.tscn" id="21_boss"]
 [ext_resource type="Script" uid="uid://b5bq330c7u6gb" path="res://skripte/zonen.gd" id="22_zonen"]
 [ext_resource type="Script" uid="uid://cvklwrx1wxep" path="res://skripte/zone.gd" id="23_zone"]
 [ext_resource type="Script" uid="uid://dns7ylcko1chc" path="res://skripte/test_sprung.gd" id="24_sprung"]
@@ -34,15 +34,7 @@
 [ext_resource type="AudioStream" uid="uid://dqny740xkicao" path="res://assets/audio/musik/musik_ende.ogg" id="32_ende"]
 [ext_resource type="Texture2D" uid="uid://bpkstdm7xn4af" path="res://assets/hintergrund/wiese.png" id="37_wiese"]
 [ext_resource type="Script" uid="uid://8b4vnukwtk4a" path="res://skripte/hintergrund.gd" id="38_hintergrund"]
-[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/aufprall.png" id="a1"]
-[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/kniend.png" id="a2"]
-[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/fallen-1.png" id="f1_fallen"]
-[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/fallen-2.png" id="f2_fallen"]
-[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/fallen-3.png" id="f3_fallen"]
-[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/fallen-4.png" id="f4_fallen"]
-[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/fallen-5.png" id="f5_fallen"]
-[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/fallen-6.png" id="f6_fallen"]
-[ext_resource type="PackedScene" path="res://szenen/fliege_heuschrecke.tscn" id="40_heuschrecke"]
+[ext_resource type="PackedScene" uid="uid://ejx1qsnv5lx8" path="res://szenen/fliege_heuschrecke.tscn" id="40_heuschrecke"]
 [ext_resource type="PackedScene" path="res://szenen/stechfliege.tscn" id="41_stechfliege"]
 [ext_resource type="Script" uid="uid://bcvwcnsiwex35" path="res://skripte/stecher.gd" id="42_stecher"]
 [ext_resource type="Texture2D" uid="uid://c7tyg4e2k67uf" path="res://assets/kanone/kanone.png" id="43_kanone"]
@@ -50,6 +42,8 @@
 [ext_resource type="Texture2D" uid="uid://b20h7pjcu3kf8" path="res://assets/kanone/kanone-hinten.png" id="44_hinten"]
 [ext_resource type="PackedScene" path="res://szenen/schild.tscn" id="44_schild"]
 [ext_resource type="Texture2D" uid="uid://xjc3c4vfsqpk" path="res://assets/kanone/kanone-tonne.png" id="45_tonne"]
+[ext_resource type="Texture2D" uid="uid://dynmlffdcvspd" path="res://assets/forscher/aufstehen/aufprall.png" id="a1"]
+[ext_resource type="Texture2D" uid="uid://bbujjob3730uw" path="res://assets/forscher/aufstehen/kniend.png" id="a2"]
 [ext_resource type="Texture2D" uid="uid://kcreoknpmlx8" path="res://assets/kanone/drahtrolle-anim/drahtrolle-01.png" id="d1"]
 [ext_resource type="Texture2D" uid="uid://cvk6a0n448oky" path="res://assets/kanone/drahtrolle-anim/drahtrolle-02.png" id="d2"]
 [ext_resource type="Texture2D" uid="uid://c1rdl5r2aj2hl" path="res://assets/kanone/drahtrolle-anim/drahtrolle-03.png" id="d3"]
@@ -61,11 +55,17 @@
 [ext_resource type="Texture2D" uid="uid://bt6l7ts167q2v" path="res://assets/kanone/drahtrolle-anim/drahtrolle-09.png" id="d9"]
 [ext_resource type="Texture2D" uid="uid://ba1cmdpfnt7k7" path="res://assets/kanone/drahtrolle-anim/drahtrolle-10.png" id="d10"]
 [ext_resource type="Texture2D" uid="uid://2exl3nvvmx0n" path="res://assets/kanone/feuer/feuer-1.png" id="f1"]
+[ext_resource type="Texture2D" uid="uid://btdo1qthif0l5" path="res://assets/forscher/aufstehen/fallen-1.png" id="f1_fallen"]
 [ext_resource type="Texture2D" uid="uid://dsybuuxktckty" path="res://assets/kanone/feuer/feuer-2.png" id="f2"]
+[ext_resource type="Texture2D" uid="uid://dd8fhtrevs5i3" path="res://assets/forscher/aufstehen/fallen-2.png" id="f2_fallen"]
 [ext_resource type="Texture2D" uid="uid://dkcv5cxg6iued" path="res://assets/kanone/feuer/feuer-3.png" id="f3"]
+[ext_resource type="Texture2D" uid="uid://dahnrhy8h1l27" path="res://assets/forscher/aufstehen/fallen-3.png" id="f3_fallen"]
 [ext_resource type="Texture2D" uid="uid://dc1bsri4uj78a" path="res://assets/kanone/feuer/feuer-4.png" id="f4"]
+[ext_resource type="Texture2D" uid="uid://b8170qqiv7xqa" path="res://assets/forscher/aufstehen/fallen-4.png" id="f4_fallen"]
 [ext_resource type="Texture2D" uid="uid://cjwritfcthdqf" path="res://assets/kanone/feuer/feuer-5.png" id="f5"]
+[ext_resource type="Texture2D" uid="uid://bi85mk6foe2vc" path="res://assets/forscher/aufstehen/fallen-5.png" id="f5_fallen"]
 [ext_resource type="Texture2D" uid="uid://usdfafd662mr" path="res://assets/kanone/feuer/feuer-6.png" id="f6"]
+[ext_resource type="Texture2D" uid="uid://bm53xrm5mflnu" path="res://assets/forscher/aufstehen/fallen-6.png" id="f6_fallen"]
 [ext_resource type="Texture2D" uid="uid://dvpbbqtn603vf" path="res://assets/hintergrund/riffel/riffel-1-blau.png" id="p01"]
 [ext_resource type="Texture2D" uid="uid://bdl0imbn3qaak" path="res://assets/hintergrund/riffel/riffel-2-gelb.png" id="p02"]
 [ext_resource type="Texture2D" uid="uid://d2xht8namsnb4" path="res://assets/hintergrund/riffel/riffel-3-creme.png" id="p03"]
@@ -75,6 +75,7 @@
 [ext_resource type="Texture2D" uid="uid://cjotxxjwgfwxf" path="res://assets/hintergrund/riffel/riffel-7-nachtblau.png" id="p07"]
 [ext_resource type="Texture2D" uid="uid://b51qj80smql6e" path="res://assets/hintergrund/riffel/riffel-8-fast-schwarz.png" id="p08"]
 [ext_resource type="PackedScene" path="res://szenen/wolke_bewegt.tscn" id="w4"]
+[ext_resource type="PackedScene" path="res://szenen/forscher_arm.tscn" id="arm_foto"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_feuer"]
 animations = [{
@@ -172,7 +173,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("f6_fallen")
 }],
-"loop": true,
+"loop": 1,
 "name": &"fallen",
 "speed": 12.0
 }]
@@ -214,28 +215,28 @@ texture = ExtResource("p02")
 expand_mode = 1
 stretch_mode = 1
 
-[node name="Wolken" type="Parallax2D" parent="."]
+[node name="Wolken" type="Parallax2D" parent="." unique_id=2144808862]
 repeat_size = Vector2(2600, 1600)
 repeat_times = 4
 
-[node name="AnfangNormal" parent="Wolken" instance=ExtResource("w4")]
+[node name="AnfangNormal" parent="Wolken" unique_id=806549534 instance=ExtResource("w4")]
 position = Vector2(300, 300)
 scale = Vector2(1.7, 1.7)
 
-[node name="MitteKopf" parent="Wolken" instance=ExtResource("w4")]
+[node name="MitteKopf" parent="Wolken" unique_id=1684295379 instance=ExtResource("w4")]
 position = Vector2(1700, 420)
 rotation = 3.1415927
 scale = Vector2(1.7, 1.7)
 animation = &"mitte"
 autoplay = "mitte"
 
-[node name="MitteNormal" parent="Wolken" instance=ExtResource("w4")]
+[node name="MitteNormal" parent="Wolken" unique_id=315873602 instance=ExtResource("w4")]
 position = Vector2(1000, 1180)
 scale = Vector2(1.7, 1.7)
 animation = &"mitte"
 autoplay = "mitte"
 
-[node name="AnfangKopf" parent="Wolken" instance=ExtResource("w4")]
+[node name="AnfangKopf" parent="Wolken" unique_id=2131816653 instance=ExtResource("w4")]
 position = Vector2(2250, 1040)
 rotation = 3.1415927
 scale = Vector2(1.7, 1.7)
@@ -445,8 +446,8 @@ texture = ExtResource("45_tonne")
 position = Vector2(0, -230.7)
 
 [node name="Aufstehen" type="AnimatedSprite2D" parent="Kanone" unique_id=1527670631]
-position = Vector2(136, 802)
-scale = Vector2(0.76, 0.76)
+position = Vector2(-130, 1115)
+scale = Vector2(0.9351437, 0.93514365)
 sprite_frames = SubResource("SpriteFrames_aufstehen")
 animation = &"aufstehen"
 
@@ -481,7 +482,7 @@ border_width = 3.0
 [node name="Griff" type="Marker2D" parent="Kanone" unique_id=1784918379]
 position = Vector2(620, -700)
 
-[node name="Fadenpunkt" type="Marker2D" parent="Kanone"]
+[node name="Fadenpunkt" type="Marker2D" parent="Kanone" unique_id=441611]
 position = Vector2(620, -700)
 
 [node name="Faecher" type="Node2D" parent="Kanone" unique_id=1952737731]
@@ -548,17 +549,21 @@ position = Vector2(-130, -812)
 [node name="Drehpunkt" type="Marker2D" parent="Kanone/Figur/Schulter/Armbild" unique_id=2120943947]
 
 [node name="Arm" type="ColorRect" parent="Kanone/Figur/Schulter/Armbild" unique_id=756651120]
+visible = false
 offset_left = -30.0
 offset_top = -400.0
 offset_right = 30.0
 color = Color(0.55, 0.55, 0.55, 1)
 
 [node name="Faust" type="ColorRect" parent="Kanone/Figur/Schulter/Armbild" unique_id=1267421040]
+visible = false
 offset_left = -60.0
 offset_top = -435.0
 offset_right = 60.0
 offset_bottom = -395.0
 color = Color(0.6, 0.6, 0.6, 1)
+
+[node name="ForscherArm" parent="Kanone/Figur/Schulter/Armbild" instance=ExtResource("arm_foto")]
 
 [node name="Bild" type="Sprite2D" parent="Kanone/Figur/Schulter/Armbild" unique_id=1591095807]
 position = Vector2(-0.3, -403.9)
