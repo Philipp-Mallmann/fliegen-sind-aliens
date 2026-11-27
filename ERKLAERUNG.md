@@ -7181,3 +7181,22 @@ func rand_abstand(halb: Vector2, richtung: Vector2) -> float:
 	return 1.0 / maxf(sqrt(x * x + y * y), 0.001)
 ```
 Das ist die Formel fuer den Abstand von der Mitte einer Ellipse bis zu ihrem Rand in einer Richtung. Senkrecht (richtung (0, 1)) kommt genau die halbe Hoehe heraus, waagerecht die halbe Breite. `maxf` verhindert eine Teilung durch 0. Dazu kommen `rand_zugabe` (6 Pixel), damit das Stueck sicher ueber den Rand reicht. Im Probebild laeuft der Draht jetzt ohne Unterbrechung aus der Fliege heraus.
+
+## Der Arm aus deinem Foto (`szenen/forscher_arm.tscn`, `szenen/spiel.tscn`, 27.11.2026)
+
+Dein Wunsch: Der rechte Arm, den du in Krita auf die richtige Groesse gezogen hast, kommt einzeln ins Spiel und haelt die Kanone.
+
+**Das Bild (`assets/forscher/arm-rechts.png`).** Dein Arm aus der Krita-Datei, genau deine Pixel. Bei dir hing er nach unten (Faust unten). Im Bild ist er um 180 Grad gedreht: Faust oben, Schulter unten, weil der Arm im Spiel nach oben zeigt. Fast durchsichtige Reste neben dem Arm sind weggeschnitten.
+
+**`szenen/forscher_arm.tscn` - neu.** Eine eigene kleine Szene, damit `spiel.tscn` uebersichtlich bleibt.
+- `ForscherArm` (Node2D): Sein Nullpunkt ist der Drehpunkt an der Schulter.
+- `Foto` (Sprite2D) mit dem Arm. `centered = false` heisst: Die Position meint die linke obere Ecke des Bildes. `scale = 0.935` ist dieselbe Groesse, die du dem Forscher beim Aufstehen gegeben hast (die Fotos kommen aus derselben Kamera). `position = (-63.1, -452.5)`: halbe Bildbreite nach links (135 x 0,935 / 2) und ganze Bildhoehe nach oben (484 x 0,935). So sitzt die Schulter unten mittig auf dem Drehpunkt.
+
+**`szenen/spiel.tscn` - geaendert.**
+- In `Kanone/Figur/Schulter/Armbild` steckt neu `ForscherArm`, vor `Bild` (der Kanone). Was in der Liste weiter unten steht, wird spaeter gezeichnet, also liegt die Kanone vor der Faust.
+- Die grauen Kaesten `Arm` und `Faust` sind ausgeblendet (`visible = false`), nicht geloescht. Du kannst sie zum Vergleich wieder einblenden.
+- Von dir im Editor gesetzt: `Kanone/Aufstehen` steht bei (-130, 1115) mit Groesse 0,935. Dort landet man nach dem Absturz.
+
+**So wurde es angeschaut.** Verify erst FAIL: `forscher_arm.tscn` hatte am Anfang eine unsichtbare Byte-Markierung (BOM), mit der Godot die erste Zeile nicht lesen kann. Entfernt, danach PASS. Probe: Start in der Totale und der Arm um 0,6 gedreht. Der Arm zeigt nach oben, die Kanone sitzt in der Faust, beim Drehen dreht er an der Schulter mit. Nicht angeschaut: ob Drehpunkt und Kanone genau sitzen, das stellst du im Editor nach.
+
+**Fragen.** 1. Warum ist der Arm eine eigene Szene? 2. Wozu `centered = false`? 3. Warum liegt die Kanone vor dem Arm?

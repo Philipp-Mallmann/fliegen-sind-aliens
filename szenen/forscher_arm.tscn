@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://assets/forscher/arm-rechts.png" id="1_arm"]
+
+[node name="ForscherArm" type="Node2D"]
+
+[node name="Foto" type="Sprite2D" parent="."]
+position = Vector2(-63.1, -452.5)
+scale = Vector2(0.935, 0.935)
+texture = ExtResource("1_arm")
+centered = false
