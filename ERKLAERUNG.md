@@ -7200,3 +7200,40 @@ Dein Wunsch: Der rechte Arm, den du in Krita auf die richtige Groesse gezogen ha
 **So wurde es angeschaut.** Verify erst FAIL: `forscher_arm.tscn` hatte am Anfang eine unsichtbare Byte-Markierung (BOM), mit der Godot die erste Zeile nicht lesen kann. Entfernt, danach PASS. Probe: Start in der Totale und der Arm um 0,6 gedreht. Der Arm zeigt nach oben, die Kanone sitzt in der Faust, beim Drehen dreht er an der Schulter mit. Nicht angeschaut: ob Drehpunkt und Kanone genau sitzen, das stellst du im Editor nach.
 
 **Fragen.** 1. Warum ist der Arm eine eigene Szene? 2. Wozu `centered = false`? 3. Warum liegt die Kanone vor dem Arm?
+
+## Die Figur steht mit deinen Fotos (`szenen/spiel.tscn`, 27.11.2026)
+
+Dein Wunsch: Die normale Steh-Animation (deine Bilder 0 bis 2 aus Krita) kommt schon ins Spiel, damit man sieht, wie es ungefaehr aussehen wird. Die Warte-Animation (Bild 3 und 4) noch nicht.
+
+### Die Bilder (`assets/forscher/stehen/`)
+
+- `stehen-koerper-1.png` bis `-3.png`: je Bild Hose und Oberkoerper, so wie du sie in Krita gelegt hast, zu einem Bild zusammengesetzt.
+- `stehen-kopf-1.png` bis `-3.png`: der Kopf (`kopf-01`) in deiner Kopfgroesse. In jedem Bild steht er dort, wo der Hals in diesem Koerperbild ist.
+
+Alle sechs haben denselben Ausschnitt (651 x 1534 Pixel). Darum passen Kopf und Koerper aufeinander, wenn beide Knoten an derselben Stelle stehen.
+
+### `SpriteFrames_koerper` und `SpriteFrames_kopf` - neu
+
+Je eine Animation `stehen` mit drei Bildern, `"speed": 6.0` (6 Bilder pro Sekunde wie in Krita), `"loop": true`.
+
+### `Kanone/Figur/Gesicht` und `Kanone/Figur/Koerper` - neu (AnimatedSprite2D)
+
+- Beide: `position = (-274.4, -1414.7)`, `scale = 0.935` (die Spiel-Groesse deiner Fotos), `centered = false`, `autoplay = "stehen"`. Weil beide gleichzeitig starten und gleich schnell laufen, zeigen sie immer dasselbe Bild.
+- Die Position ist so gerechnet, dass die Mitte zwischen deinen Schuhen auf dem Nullpunkt der Figur steht. Der liegt auf der Wiese.
+- `Gesicht` steht in der Liste vor `Koerper`, wird also zuerst gezeichnet und liegt dahinter, wie bei dir in Krita (Kopf hinter allem). Der Arm (`Schulter`) steht danach und liegt vorn.
+- Der Kopf ist ein eigener Knoten, damit man spaeter den Ausdruck tauscht, ohne den Koerper anzufassen.
+
+### Sonst geaendert
+
+- `Beine`, `Rumpf`, `Kopf` (die grauen Kaesten) sind ausgeblendet.
+- `Schulterpunkt` und `Schulter` stehen bei (-123.9, -847.1): an der Schulter im Foto (auf der Schulterlinie, 40 Pixel vom Rand nach innen). `start_totale.gd` setzt den Arm an den `Schulterpunkt`, darum dreht sich der Arm jetzt an deiner Schulter.
+
+### So wurde es angeschaut
+
+Verify PASS. Probe: drei Bilder je eine Sechstelsekunde auseinander, Koerper und Kopf zeigten jedes Mal dasselbe Bild (0, 1, 2). Die Figur steht mit den Schuhen auf der Wiese, der Arm haelt die Kanone, beim Drehen dreht er an der Schulter. Nicht angeschaut: ob es im Abheben und beim Fang gut aussieht.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum muessen Kopf- und Koerperbilder denselben Ausschnitt haben?
+2. Warum liegt der Kopf hinter dem Koerper, obwohl er oben drauf sitzt?
+3. Was passiert mit dem Arm, wenn man `Schulterpunkt` verschiebt?

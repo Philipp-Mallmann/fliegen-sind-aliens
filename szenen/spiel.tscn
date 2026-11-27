@@ -76,6 +76,12 @@
 [ext_resource type="Texture2D" uid="uid://b51qj80smql6e" path="res://assets/hintergrund/riffel/riffel-8-fast-schwarz.png" id="p08"]
 [ext_resource type="PackedScene" path="res://szenen/wolke_bewegt.tscn" id="w4"]
 [ext_resource type="PackedScene" path="res://szenen/forscher_arm.tscn" id="arm_foto"]
+[ext_resource type="Texture2D" path="res://assets/forscher/stehen/stehen-koerper-1.png" id="st_koerper1"]
+[ext_resource type="Texture2D" path="res://assets/forscher/stehen/stehen-koerper-2.png" id="st_koerper2"]
+[ext_resource type="Texture2D" path="res://assets/forscher/stehen/stehen-koerper-3.png" id="st_koerper3"]
+[ext_resource type="Texture2D" path="res://assets/forscher/stehen/stehen-kopf-1.png" id="st_kopf1"]
+[ext_resource type="Texture2D" path="res://assets/forscher/stehen/stehen-kopf-2.png" id="st_kopf2"]
+[ext_resource type="Texture2D" path="res://assets/forscher/stehen/stehen-kopf-3.png" id="st_kopf3"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_feuer"]
 animations = [{
@@ -185,6 +191,40 @@ colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
 gradient = SubResource("Gradient_taste")
 width = 200
 height = 200
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_koerper"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("st_koerper1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("st_koerper2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("st_koerper3")
+}],
+"loop": true,
+"name": &"stehen",
+"speed": 6.0
+}]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_kopf"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("st_kopf1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("st_kopf2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("st_kopf3")
+}],
+"loop": true,
+"name": &"stehen",
+"speed": 6.0
+}]
 
 [node name="Spiel" type="Node2D" unique_id=218368046]
 script = ExtResource("5_spiel")
@@ -519,12 +559,14 @@ erzeuger = NodePath("../../Erzeuger")
 joystick = NodePath("../../Bedienung/Joystick")
 
 [node name="Beine" type="ColorRect" parent="Kanone/Figur" unique_id=322886175]
+visible = false
 offset_left = -70.0
 offset_top = -470.0
 offset_right = 70.0
 color = Color(0.5, 0.5, 0.5, 1)
 
 [node name="Rumpf" type="ColorRect" parent="Kanone/Figur" unique_id=1427410420]
+visible = false
 offset_left = -150.0
 offset_top = -850.0
 offset_right = 150.0
@@ -532,17 +574,34 @@ offset_bottom = -470.0
 color = Color(0.6, 0.6, 0.6, 1)
 
 [node name="Kopf" type="ColorRect" parent="Kanone/Figur" unique_id=2049528721]
+visible = false
 offset_left = -66.0
 offset_top = -990.0
 offset_right = 66.0
 offset_bottom = -858.0
 color = Color(0.7, 0.7, 0.7, 1)
 
+[node name="Gesicht" type="AnimatedSprite2D" parent="Kanone/Figur"]
+position = Vector2(-274.4, -1414.7)
+scale = Vector2(0.935, 0.935)
+sprite_frames = SubResource("SpriteFrames_kopf")
+animation = &"stehen"
+autoplay = "stehen"
+centered = false
+
+[node name="Koerper" type="AnimatedSprite2D" parent="Kanone/Figur"]
+position = Vector2(-274.4, -1414.7)
+scale = Vector2(0.935, 0.935)
+sprite_frames = SubResource("SpriteFrames_koerper")
+animation = &"stehen"
+autoplay = "stehen"
+centered = false
+
 [node name="Schulterpunkt" type="Marker2D" parent="Kanone/Figur" unique_id=472194480]
-position = Vector2(-130, -812)
+position = Vector2(-123.9, -847.1)
 
 [node name="Schulter" type="Node2D" parent="Kanone/Figur" unique_id=542994082]
-position = Vector2(-130, -812)
+position = Vector2(-123.9, -847.1)
 
 [node name="Armbild" type="Node2D" parent="Kanone/Figur/Schulter" unique_id=486998110]
 
