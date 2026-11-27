@@ -27,7 +27,7 @@ signal getroffen(nadel: Node2D)
 # Wo am halben Nagel der Draht den Kopf verlaesst, gemessen ab der Schnittkante, in Pixeln.
 @export var oese_halb: Vector2 = Vector2(7.2, 45.6)
 # Wie tief die Schnittkante des halben Nagels in der Fliege sitzt, als Anteil ihrer halben Hoehe. 0 ist die Fliegenmitte.
-@export var steck_tiefe: float = 0.0
+@export var steck_tiefe: float = -0.3
 # Wie weit das kurze Drahtstueck vor der Fliege ueber ihren Rand hinausreicht, in Pixeln. Verhindert eine Luecke am Rand.
 @export var rand_zugabe: float = 6.0
 

@@ -7040,7 +7040,7 @@ Neu: `Kanone/Fadenpunkt`, ein `Marker2D` auf dem Griff. Er ist ein Kind der Kano
 ```
 `to_local` rechnet einen Punkt aus Weltkoordinaten in die Koordinaten des Drahts um. Weil der Draht an der Nadel haengt, bewegt er sich mit ihr mit, und das Ende am Nagel bleibt immer am Nagel. Nur das andere Ende (Muendung oder Hand) kann ein Bild hinterherhaengen, das sieht man dort nicht.
 
-**Nagel mittig.** `steck_tiefe` ist jetzt 0: Die Schnittkante des halben Nagels sitzt in der Fliegenmitte. `Nagel` und `NagelHalb` haben `z_index = 3`, sie werden also ueber der Fliege gemalt (die Fliegen haben 1). So sieht es aus, als steckte der Nagel in ihr. In die halbe Hoehe der Fliege rechnet `aufspiessen` jetzt auch die Groesse des obersten Fliegenknotens ein (`getroffene.scale.y`), weil die Fliegen dort inzwischen verkleinert sind.
+**Nagel mittig.** `steck_tiefe` ist jetzt -0,3: Die Schnittkante des halben Nagels sitzt 30 Prozent der halben Fliegenhoehe ueber der Mitte. Minus heisst nach oben. So deckt der Nagel das dunkle Blutloch fast ganz ab. `Nagel` und `NagelHalb` haben `z_index = 3`, sie werden also ueber der Fliege gemalt (die Fliegen haben 1). So sieht es aus, als steckte der Nagel in ihr. In die halbe Hoehe der Fliege rechnet `aufspiessen` jetzt auch die Groesse des obersten Fliegenknotens ein (`getroffene.scale.y`), weil die Fliegen dort inzwischen verkleinert sind.
 
 **Blut statt rotem Kreis.**
 - `szenen/blutfleck.tscn` ist jetzt nur noch ein `Sprite2D` mit `assets/blut/blut.png`, ohne Skript. `scale` 0,125 (seit dem 27.11. halb so gross wie zuerst, 0,25). `skripte/blutfleck.gd` (der wachsende, verblassende Kreis) ist geloescht.
