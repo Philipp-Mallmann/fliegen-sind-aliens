@@ -419,11 +419,12 @@ kanone = NodePath("../Kanone")
 zonen = NodePath("../Zonen")
 schwarm_szenen = Array[PackedScene]([ExtResource("3_fliege"), ExtResource("17_schnell"), ExtResource("18_scheu"), ExtResource("19_koeder"), ExtResource("20_teleport")])
 
-[node name="Hindernisse" type="Node2D" parent="." unique_id=635002288 node_paths=PackedStringArray("kanone", "faecher")]
+[node name="Hindernisse" type="Node2D" parent="." unique_id=635002288 node_paths=PackedStringArray("kanone", "faecher", "hintergrund")]
 script = ExtResource("8_hindernisse")
 hindernis_szene = ExtResource("9_hindernis")
 kanone = NodePath("../Kanone")
 faecher = NodePath("../Kanone/Faecher")
+hintergrund = NodePath("../Hintergrund")
 
 [node name="TonKlotz" type="AudioStreamPlayer" parent="Hindernisse" unique_id=1952512181]
 stream = ExtResource("15_klotz")

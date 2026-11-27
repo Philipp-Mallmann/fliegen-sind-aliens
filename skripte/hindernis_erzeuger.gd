@@ -6,6 +6,8 @@ extends Node2D
 @export var kanone: Node2D
 # Der Faecher. Wird an jedes Hindernis weitergegeben.
 @export var faecher: Node2D
+# Der Hintergrund. Wird an jedes Hindernis weitergegeben, damit es weiss, welche Pappe gerade zu sehen ist.
+@export var hintergrund: Node
 # Die kuerzeste und die laengste Pause zwischen zwei Hindernissen, in Sekunden.
 @export var pause_kurz: float = 6.0
 @export var pause_lang: float = 10.0
@@ -54,6 +56,7 @@ func _process(delta: float) -> void:
 	hindernis.position.x = kanone.position.x + abstand
 	hindernis.kanone = kanone
 	hindernis.faecher = faecher
+	hindernis.hintergrund = hintergrund
 	hindernis.warnzeit = warnzeit_hier()
 	hindernis.volle_warnzeit = warnzeit_spitze
 	add_child(hindernis)

@@ -17,10 +17,14 @@ extends CanvasLayer
 # Wie schnell die Pappe mitlaeuft, wenn die Kanone steigt. 1 heisst: so schnell wie die Welt, 0.5 halb so schnell (weiter weg).
 @export var mitlaufen: float = 0.5
 
+# Die Nummer der Pappe, die gerade zu sehen ist: 0 ist die unterste (blau), 7 die oberste (fast schwarz).
+# Die Hindernisse lesen sie, um die Farbe ihres Schattens zu waehlen.
+var nummer: int = 0
+
 
 func _process(_delta: float) -> void:
 	var hoehe: float = -kanone.position.y / get_parent().hoehe_je_flugkraft
-	var nummer: int = int(hoehe / flugkraft_je_bild)
+	nummer = int(hoehe / flugkraft_je_bild)
 	nummer = clampi(nummer, 0, bilder.size() - 1)
 	var naechste: int = mini(nummer + 1, bilder.size() - 1)
 	$Pappe.texture = bilder[nummer]

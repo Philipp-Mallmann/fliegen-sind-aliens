@@ -27,11 +27,20 @@ extends Node2D
 @export var platt_breite: float = 1.5
 @export var platt_hoehe: float = 0.2
 @export var platt_dauer: float = 0.08
+# Die Farbe der Spalte auf jeder Pappe, von unten (blau) nach oben (fast schwarz). Die vierte Zahl ist die Deckkraft.
+# Auf den hellen Pappen ein Schatten (Schwarz, 50 Prozent), auf der fast schwarzen das Gelb des Warnschilds (20 Prozent),
+# weil man dort einen Schatten nicht saehe.
+@export var spalte_farben: Array[Color] = [
+	Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5),
+	Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5), Color(0.92, 0.73, 0.17, 0.2),
+]
 
 # Die Kanone. Die Warnung bleibt ueber ihr am oberen Bildrand. Setzt der Hindernis-Erzeuger.
 var kanone: Node2D = null
 # Der Faecher. Aus ihm werden getroffene Fliegen entfernt. Setzt der Hindernis-Erzeuger.
 var faecher: Node2D = null
+# Der Hintergrund. Seine Nummer sagt, welche Pappe zu sehen ist. Setzt der Hindernis-Erzeuger.
+var hintergrund: Node = null
 # Wie viele Sekunden schon gewarnt wird.
 var gewarnt: float = 0.0
 # Wie breit und wie hoch der fallende Stein ist, in Pixeln. Kommt aus der Groesse seines Bilds.
@@ -64,6 +73,7 @@ func warnen(delta: float) -> void:
 	var rest: float = warnzeit - gewarnt
 	var anteil: float = clampf(1.0 - rest / volle_warnzeit, 0.0, 1.0)
 	$Warnung.scale = Vector2.ONE * lerpf(groesse_anfang, groesse_ende, anteil)
+	$Spalte.color = spalte_farben[hintergrund.nummer]
 	$Spalte.modulate.a = lerpf(spalte_anfang, 1.0, anteil)
 	var takt: float = lerpf(blinken_anfang, blinken_ende, anteil)
 	var an: bool = fmod(gewarnt, takt) < takt / 2.0

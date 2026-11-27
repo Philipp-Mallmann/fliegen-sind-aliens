@@ -20,7 +20,7 @@ offset_left = -100.0
 offset_right = 100.0
 offset_bottom = 1080.0
 mouse_filter = 2
-color = Color(0, 0, 0, 0.35)
+color = Color(0, 0, 0, 0.5)
 
 [node name="Klotz" type="Sprite2D" parent="."]
 z_index = 2

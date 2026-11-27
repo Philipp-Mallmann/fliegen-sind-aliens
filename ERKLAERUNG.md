@@ -7415,3 +7415,12 @@ Rechnet einen Punkt in der Welt in einen Punkt auf dem Bildschirm um. Die `canva
 - `skripte/punktanzeige.gd`: neu `boss_treffer`. Es zeigt `str(nummer) + "/" + str(von)`, also zum Beispiel "2/3", orange und gross ueber der Trefferstelle, und ruft `spiel.wackeln(...)` auf: 12 Pixel fuer 0,3 Sekunden, beim letzten Treffer 24. `wackeln` gab es in `spiel.gd` schon fuer den Absturz. Den Knoten `spiel` bekommt die Punktanzeige im Inspector (`NodePath("..")`, ihr Elternknoten).
 
 Angeschaut: Schnellcheck PASS, Verify PASS, Probe mit Schuessen auf einen stillstehenden Boss: "1/3", "2/3", "3/3" erscheinen, Wackeln 12, 12, 24, beim dritten kommt "+15".
+
+### Nachtrag: Felsschatten je Pappe, auf der fast schwarzen gelb (27.11.2026)
+
+- `skripte/hintergrund.gd`: `nummer` war eine Variable nur in `_process` (`var nummer` innerhalb der Funktion). Jetzt steht `var nummer: int = 0` oben im Skript, und `_process` schreibt nur noch hinein (`nummer = ...`). So koennen andere Knoten lesen, welche Pappe gerade zu sehen ist: 0 ist blau, 7 fast schwarz.
+- `skripte/hindernis_erzeuger.gd`: neu `@export var hintergrund: Node` (im Inspector auf den Knoten `Hintergrund` gesetzt) und `hindernis.hintergrund = hintergrund`, wie schon bei `faecher`.
+- `skripte/hindernis.gd`: neu `@export var spalte_farben: Array[Color]`, eine Farbe je Pappe. Sieben Mal `Color(0, 0, 0, 0.5)`, Schwarz mit 50 Prozent Deckkraft, und als achte `Color(0.92, 0.73, 0.17, 0.2)`, das Gelb des Steinschlag-Schilds mit 20 Prozent. In `warnen` steht jetzt `$Spalte.color = spalte_farben[hintergrund.nummer]`: Jedes Bild nimmt die Spalte die Farbe der Pappe, die gerade da ist. Das `modulate.a` darunter blendet sie wie bisher am Anfang der Warnung schwaecher ein; beides wird miteinander malgenommen.
+- `szenen/hindernis.tscn`: die Startfarbe der Spalte von 35 auf 50 Prozent.
+
+Angeschaut: Schnellcheck PASS fuer alle drei Skripte, Verify PASS. Bogen mit der Spalte auf allen acht Pappen (nicht im laufenden Spiel): auf allen deutlich zu sehen, auf der fast schwarzen als gruenlich-graue Bahn.
