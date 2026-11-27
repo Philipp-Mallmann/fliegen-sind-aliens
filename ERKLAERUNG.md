@@ -6917,6 +6917,149 @@ Zusammen mit den Zeilen in `spiel.gd` von oben (`$Boden.scroll_offset.x = $Kanon
 ### Nachtrag: Fluegel fuer die Stechfliege (27.11.2026)
 
 Kein Code, nur `szenen/stechfliege.tscn`: tuerkise Fluegel (sie sticht in der Zone Scheue, `Stecher` haengt an `Zonen/Scheue`) und wippender Koerper aus deiner Krita-Datei, gebaut wie bei den anderen. Wenn sie sich auf der Hand hochkant dreht, drehen die Fluegel mit, weil sie Kinder desselben Knotens sind. Neue Bilder: `assets/fluegel/schlag/stech-*.png`, `assets/fliegen/spiel/fliege-ruessel-orange-schlag-1.png` und `-2.png`; dein Original bleibt. Damit haben alle acht Insekten Fluegel.
+
+## Nagel und Draht als Bild (27.11.2026)
+
+Die Nadel war bisher ein weisser Strich mit einer grauen Linie dahinter. Jetzt ist sie der Nagel aus deinem Bild `nagel_mit_draht.png`, und die Linie ist ein Draht, gemalt mit der Spitze deines Krita-Stifts "Draht gruen".
+
+### Die Bilder
+
+- `assets/nadel/nagel_flug.png`: der ganze Nagel mit der Drahtwicklung am Kopf, aus `nagel_mit_draht.png` bis zur Unterkante des Kopfes ausgeschnitten.
+- `assets/nadel/nagel_halb_draht.png`: die hinteren 30 Prozent davon, also Kopf und Wicklung. So viel wie bei `nagel_halb.png`.
+- `assets/nadel/draht_textur.png`: ein Streifen Draht, 240 mal 44 Pixel, aus vielen Abdruecken der Stiftspitze. Er ist so gebaut, dass sein rechtes Ende genau an sein linkes passt: Hintereinandergelegt sieht man keine Naht.
+
+### `szenen/nadel.tscn` - geaendert
+
+- `Strich` (das weisse Rechteck) ist weg.
+- Neu: `Nagel`, ein `Sprite2D` mit `nagel_flug.png`. `scale` 0,1391 macht den Nagel 150 Pixel lang. `centered = false` mit `offset = (-58,5, -2)`: Die Nagelspitze sitzt genau auf dem Nullpunkt der Nadel, denn dort prueft `nadel.gd`, ob eine Fliege getroffen ist. Der Nagel haengt nach unten, weil die Nadel nach oben fliegt.
+- Neu: `NagelHalb` mit `nagel_halb_draht.png`, zuerst unsichtbar.
+- `Oese` sitzt jetzt dort, wo der Draht den Nagelkopf verlaesst: (7,2 / 150).
+- `Faden` ist kein `top_level` mehr (siehe Nachtrag unten) und hat jetzt eine Textur: `texture` ist der Drahtstreifen, `texture_mode = 1` heisst "wiederholen" (der Streifen wird entlang der Linie immer wieder hintereinandergelegt), `texture_repeat = 2` erlaubt Godot, das Bild zu wiederholen. `width` 3: Der Streifen wird auf 3 Pixel Hoehe gedrueckt. `joint_mode = 2` macht die Knicke zwischen den Linienstuecken rund.
+
+### `skripte/nadel.gd` - geaendert
+
+```gdscript
+@export var durchhang_flug: float = 0.02
+@export var durchhang_haengend: float = 0.06
+@export var draht_stuecke: int = 16
+@export var oese_halb: Vector2 = Vector2(7.2, 45.6)
+@export var steck_tiefe: float = 0.6
+```
+Fuenf neue Werte fuer den Inspector: wie stark der Draht durchhaengt (2 Prozent seiner Laenge im Flug, 6 Prozent, wenn er an der Hand haengt), aus wie vielen Stuecken die Drahtlinie besteht, wo am halben Nagel der Draht herauskommt, und wie tief der halbe Nagel in der Fliege steckt.
+
+```gdscript
+	var bild: Sprite2D = getroffene.get_node("Bild")
+	var halbe_hoehe: float = bild.texture.get_size().y * absf(bild.scale.y) / 2.0
+	halb_zeigen(halbe_hoehe * steck_tiefe)
+```
+Neu am Anfang von `aufspiessen`: Wie hoch ist die getroffene Fliege? `texture.get_size().y` ist die Hoehe ihres Bildes in Pixeln, mal ihre Groesse (`scale`), durch 2 ist die halbe Hoehe. `absf` macht eine Zahl positiv, falls das Bild gespiegelt ist. Mit `steck_tiefe` 0 sitzt die Schnittkante des halben Nagels genau in der Fliegenmitte (siehe Nachtrag unten).
+
+```gdscript
+	halb_zeigen(0.0)
+```
+Neu in `stecken_in` (Boss): Dort steckt die Nadel genau an der Trefferstelle.
+
+```gdscript
+func halb_zeigen(tiefe: float) -> void:
+	$Nagel.visible = false
+	$NagelHalb.visible = true
+	$NagelHalb.position.y = tiefe
+	$Oese.position = Vector2(oese_halb.x, tiefe + oese_halb.y)
+```
+Der ganze Nagel verschwindet, der halbe erscheint, `tiefe` Pixel unter der Spitze. Die Oese wandert mit, damit der Draht am Kopf des halben Nagels haengt. Bei jedem Treffer wird das neu gesetzt, weil der Nagel dann in der neuen Fliege steckt.
+
+```gdscript
+	var oben: Vector2 = $Oese.global_position
+	var unten: Vector2 = anker.global_position
+	var bogen: Vector2 = durchbiegung(oben, unten)
+	var punkte: PackedVector2Array = []
+	for nummer in draht_stuecke + 1:
+		punkte.append(faden_punkt(oben, unten, bogen, float(nummer) / draht_stuecke))
+	$Faden.points = punkte
+```
+`faden_spannen` zeichnet den Draht jetzt nicht mehr als eine gerade Linie mit zwei Punkten, sondern mit 17 Punkten auf einer Kurve. `float(nummer) / draht_stuecke` geht von 0 bis 1: 0 ist oben an der Nadel, 1 unten am Anker.
+
+```gdscript
+		var anteil: float = minf(spiess_abstand * global_scale.x * schritte / laenge, 1.0)
+		fliege.global_position = faden_punkt(oben, unten, bogen, anteil)
+```
+Aeltere aufgespiesste Fliegen sitzen auf derselben Kurve wie der Draht, sonst schwebten sie neben ihm. `anteil` rechnet ihren Abstand in einen Anteil der Drahtlaenge um. `minf(..., 1.0)` verhindert, dass eine Fliege hinter den Anker rutscht.
+
+```gdscript
+func durchbiegung(oben: Vector2, unten: Vector2) -> Vector2:
+	var richtung: Vector2 = oben.direction_to(unten)
+	var quer: Vector2 = Vector2.DOWN - richtung * Vector2.DOWN.dot(richtung)
+```
+`Vector2.DOWN` ist die Schwerkraft. `dot` misst, wie viel davon in Drahtrichtung zeigt. Zieht man diesen Teil ab, bleibt nur der Teil, der quer zum Draht zieht: Bei einem waagerechten Draht ist das die ganze Schwerkraft, bei einem senkrechten nichts. Darum haengt ein schraeger Draht durch und ein senkrechter bleibt gerade.
+
+```gdscript
+	return oben.lerp(unten, anteil) + bogen * 4.0 * anteil * (1.0 - anteil)
+```
+`faden_punkt`: `lerp` gibt den Punkt auf der geraden Linie. Dazu kommt der Bogen: `anteil * (1 - anteil)` ist an den Enden 0 und in der Mitte 0,25. Mal 4 ergibt in der Mitte genau den vollen Bogen. Das ist eine Parabel, die fuer einen leicht durchhaengenden Draht gut genug aussieht.
+
+### `skripte/uebergabe.gd` - geaendert
+
+```gdscript
+@export var fadenpunkt: Node2D
+```
+Ein Punkt, der das Drahtende von der Muendung zur Hand traegt.
+
+```gdscript
+		fadenpunkt.global_position = nadel.anker.global_position
+		nadel.anker = fadenpunkt
+		...
+		zurueck.parallel().tween_property(fadenpunkt, "position", griff.position, dauer)
+		await zurueck.finished
+		if is_instance_valid(nadel):
+			nadel.anker = griff
+```
+Bisher sprang das Drahtende am Ende der Fahrt von der Muendung zur Hand. Jetzt setzt sich der Fadenpunkt erst auf die Muendung, der Draht haengt an ihm, und waehrend die Kanone zurueckfaehrt, gleitet er in derselben Zeit zum Griff. Erst danach haengt der Draht wirklich am Griff. `is_instance_valid` fragt, ob es die Nadel noch gibt: Ein Hindernis kann sie in der Zwischenzeit abgeschossen haben.
+
+### `szenen/spiel.tscn` - geaendert
+
+Neu: `Kanone/Fadenpunkt`, ein `Marker2D` auf dem Griff. Er ist ein Kind der Kanone wie der Griff, darum kann er mit `position` (statt `global_position`) zum Griff gleiten, auch wenn die Kanone dabei steigt. `Uebergabe` kennt ihn ueber `fadenpunkt`.
+
+### So wurde es angeschaut
+
+- Schnellcheck PASS fuer `nadel.gd` und `uebergabe.gd`, Verify PASS.
+- Probe in der Luftansicht: Schuss auf zwei Fliegen uebereinander. Die Nadel spiesst beide auf (nach 6 Bildern steckt die erste), der halbe Nagel schaut unter der oberen heraus, die untere sitzt auf dem Draht. Waehrend der Uebergabe laeuft der Draht von der Muendung zur Nadel, danach haengt er im Bogen von der Hand zur Nadel.
+- Nicht angeschaut: ob die Bewegung echt wirkt (dein Blick), die Totale.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum bleibt ein senkrecht gespannter Draht gerade?
+2. Was zeigt `faden_punkt` bei `anteil = 0.5`, und warum steht dort `4.0`?
+3. Warum wird der halbe Nagel bei jedem Treffer neu gesetzt und nicht nur beim ersten?
+
+### Nachtrag: Blut in Zonenfarbe, Nagel mittig, Draht ohne Luecke (27.11.2026)
+
+**Draht ohne Luecke.** Waehrend die Nadel zum Faecher faehrt, war zwischen Nagelkopf und Draht eine Luecke. Gemessen: Die Zahlen stimmten, der erste Drahtpunkt lag genau auf der Oese. Der Grund ist, dass Godot eine `Line2D` erst im naechsten Bild neu zeichnet, wenn sich ihre Punkte aendern. Der Draht war frei im Raum aufgehaengt (`top_level`) und hing deshalb bei jeder Bewegung ein Bild hinterher. Jetzt ist er ein normales Kind der Nadel:
+
+```gdscript
+		punkte.append($Faden.to_local(faden_punkt(oben, unten, bogen, float(nummer) / draht_stuecke)))
+```
+`to_local` rechnet einen Punkt aus Weltkoordinaten in die Koordinaten des Drahts um. Weil der Draht an der Nadel haengt, bewegt er sich mit ihr mit, und das Ende am Nagel bleibt immer am Nagel. Nur das andere Ende (Muendung oder Hand) kann ein Bild hinterherhaengen, das sieht man dort nicht.
+
+**Nagel mittig.** `steck_tiefe` ist jetzt 0: Die Schnittkante des halben Nagels sitzt in der Fliegenmitte. `Nagel` und `NagelHalb` haben `z_index = 3`, sie werden also ueber der Fliege gemalt (die Fliegen haben 1). So sieht es aus, als steckte der Nagel in ihr. In die halbe Hoehe der Fliege rechnet `aufspiessen` jetzt auch die Groesse des obersten Fliegenknotens ein (`getroffene.scale.y`), weil die Fliegen dort inzwischen verkleinert sind.
+
+**Blut statt rotem Kreis.**
+- `szenen/blutfleck.tscn` ist jetzt nur noch ein `Sprite2D` mit `assets/blut/blut.png`, ohne Skript. `skripte/blutfleck.gd` (der wachsende, verblassende Kreis) ist geloescht.
+- `assets/blut/blut-ausgeschnitten.png` ist dein Ausschnitt, beide Ebenen zusammen, mit der abgedunkelten Mitte. `assets/blut/blut.png` ist daraus gemacht: nur noch hell und dunkel (grau), damit man es einfaerben kann. `modulate` multipliziert jede Farbe des Bildes mit einer Farbe: Weiss wird zur Zonenfarbe, Schwarz bleibt schwarz.
+- `skripte/fliege.gd`: neu `@export var blut_farbe: Color`. Jede Fliegenszene hat ihre Zonenfarbe eingetragen: Rosa (normal, schnell), Tuerkis (scheu, Heuschrecke), Violett (Koeder), Orange (Teleport, Boss).
+
+```gdscript
+	var fleck: Node2D = blutfleck_szene.instantiate()
+	fleck.modulate = getroffene.blut_farbe
+	getroffene.add_child(fleck)
+```
+In `aufspiessen`: Der Fleck wird ein Kind der Fliege. Er sitzt damit an ihrer Mitte, dort wo die Nadel einsticht, wird ueber ihr gemalt, aber unter dem Nagel (der hat `z_index` 3). Bei mehreren aufgespiessten Fliegen hat jede ihren eigenen Fleck. Der rote Platzhalter `Loch` wird nicht mehr eingeschaltet.
+
+In `stecken_in` (Boss) wird der Fleck ein Kind des Bosses, an der Stelle, wo die Nadel steckt.
+
+Angeschaut: Schnellcheck PASS, Verify PASS, Probe in der Luftansicht vergroessert an der Nadel beim Treffer, mitten in der Fahrt und im Faecher: keine Luecke mehr, Nagel mittig, Blut rosa mit dunkler Mitte unter dem Nagel.
+
+Fragen: Warum bleibt der Draht am Nagel, seit er ein Kind der Nadel ist? Was wird aus einem schwarzen Bildpunkt, wenn man `modulate` auf Tuerkis setzt?
+
 ## Aufstehen mit deinen Fotos (`szenen/spiel.tscn`, 27.11.2026)
 
 Dein Wunsch: Nach dem Absturz kommt dein Aufprallbild (mit dem Arm hinter dem Koerper), danach das Bild, auf dem du kniest, so wie du es in Krita angeordnet hast.

@@ -59,6 +59,7 @@ _data = {
 z_index = 1
 scale = Vector2(1.5550389, 1.5550389)
 script = ExtResource("1_fliege")
+blut_farbe = Color(0.82, 0.56, 0.29, 1)
 tempo_langsam = 110.0
 tempo_schnell = 130.0
 flugkraft = 15

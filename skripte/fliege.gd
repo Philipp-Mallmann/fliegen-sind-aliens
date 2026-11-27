@@ -12,6 +12,8 @@ extends Node2D
 @export var leben: int = 1
 # true heisst: Der Erzeuger laesst sie fliehen, wenn sie zu tief oder zu hoch im Bild ist. Der Boss flieht nie.
 @export var flieht: bool = true
+# In welcher Farbe ihr Blut ist, wenn der Nagel sie trifft. Wie ihre Fluegel: Jede Zone hat ihre eigene Farbe.
+@export var blut_farbe: Color = Color(0.75, 0.05, 0.05)
 # Wie tief und wie hoch das Summen hoechstens klingt. 1 ist die Tonhoehe der Datei. Jede Fliege wuerfelt ihre eigene.
 @export var tonhoehe_tief: float = 0.8
 @export var tonhoehe_hoch: float = 1.4

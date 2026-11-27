@@ -13,6 +13,16 @@ signal getroffen(nadel: Node2D)
 @export var trefferzugabe: float = 1.125
 # Wie weit die aufgespiessten Fliegen am Faden hintereinander haengen, in Pixeln. Die Fliege ist 100 gross.
 @export var spiess_abstand: float = 110.0
+# Wie weit der Draht in der Mitte durchhaengt, als Anteil seiner Laenge: im Flug und wenn er im Faecher an der Hand haengt.
+# Er haengt nur quer zur Schwerkraft durch: Ist er senkrecht gespannt, bleibt er gerade.
+@export var durchhang_flug: float = 0.02
+@export var durchhang_haengend: float = 0.06
+# Aus wie vielen Stuecken die Drahtlinie besteht. Mehr Stuecke heisst: rundere Kurve.
+@export var draht_stuecke: int = 16
+# Wo am halben Nagel der Draht den Kopf verlaesst, gemessen ab der Schnittkante, in Pixeln.
+@export var oese_halb: Vector2 = Vector2(7.2, 45.6)
+# Wie tief die Schnittkante des halben Nagels in der Fliege sitzt, als Anteil ihrer halben Hoehe. 0 ist die Fliegenmitte.
+@export var steck_tiefe: float = 0.0
 
 # Wie viele Pixel die Nadel schon geflogen ist.
 var geflogen: float = 0.0
@@ -87,6 +97,9 @@ func bildrand_oben() -> float:
 
 
 func aufspiessen(getroffene: Node2D) -> void:
+	var bild: Sprite2D = getroffene.get_node("Bild")
+	var halbe_hoehe: float = bild.texture.get_size().y * absf(bild.scale.y * getroffene.scale.y) / 2.0
+	halb_zeigen(halbe_hoehe * steck_tiefe)
 	aufgespiesste.append(getroffene)
 	getroffene.gefangen = true
 	getroffene.get_node("Summen").stop()
@@ -95,23 +108,25 @@ func aufspiessen(getroffene: Node2D) -> void:
 	getroffene.position = Vector2.ZERO
 	getroffene.rotation = 0.0
 	getroffene.modulate.a = 1.0
-	getroffene.get_node("Loch").visible = true
 	for alte in getroffene.steckende:
 		alte.faden_loesen()
+	# Blut an der Einstichstelle: ein Kind der Fliege, also ueber ihr, aber unter dem Nagel. In ihrer Zonenfarbe.
 	var fleck: Node2D = blutfleck_szene.instantiate()
-	get_parent().add_child(fleck)
-	fleck.global_position = global_position
+	fleck.modulate = getroffene.blut_farbe
+	getroffene.add_child(fleck)
 
 
 # Die Fliege braucht noch mehr Treffer (Boss): Die Nadel bleibt in ihr stecken und fliegt mit ihr mit. Gefangen ist sie noch nicht.
 func stecken_in(grosse: Node2D) -> void:
 	steckt = true
+	halb_zeigen(0.0)
 	grosse.leben -= 1
 	grosse.steckende.append(self)
 	grosse.angeschossen()
 	$TonTreffer.play()
 	var fleck: Node2D = blutfleck_szene.instantiate()
-	get_parent().add_child(fleck)
+	fleck.modulate = grosse.blut_farbe
+	grosse.add_child(fleck)
 	fleck.global_position = global_position
 	reparent(grosse)
 
@@ -134,13 +149,52 @@ func flugkraft() -> int:
 	return summe
 
 
+# Sobald die Nadel in einer Fliege steckt, sieht man nur noch die hintere Haelfte des Nagels:
+# Die Spitze steckt in der Fliege, der Kopf mit dem Draht schaut unten heraus.
+# Bei jedem neuen Treffer steckt sie in der neuen Fliege, darum wird jedes Mal neu gesetzt.
+# tiefe: wie weit unter der Nadelspitze die Schnittkante des halben Nagels sitzt, in Pixeln.
+func halb_zeigen(tiefe: float) -> void:
+	$Nagel.visible = false
+	$NagelHalb.visible = true
+	$NagelHalb.position.y = tiefe
+	$Oese.position = Vector2(oese_halb.x, tiefe + oese_halb.y)
+
+
 func faden_spannen() -> void:
 	if anker == null:
 		return
-	$Faden.points = PackedVector2Array([anker.global_position, $Oese.global_position])
-	var richtung: Vector2 = $Oese.global_position.direction_to(anker.global_position)
+	var oben: Vector2 = $Oese.global_position
+	var unten: Vector2 = anker.global_position
+	var bogen: Vector2 = durchbiegung(oben, unten)
+	var punkte: PackedVector2Array = []
+	for nummer in draht_stuecke + 1:
+		punkte.append($Faden.to_local(faden_punkt(oben, unten, bogen, float(nummer) / draht_stuecke)))
+	# Der Draht ist ein Kind der Nadel, seine Punkte stehen darum in ihren Koordinaten (to_local).
+	# So bewegt er sich mit der Nadel mit und bleibt am Nagelkopf, auch waehrend sie faehrt.
+	# Godot zeichnet eine Linie erst im naechsten Bild neu, wenn sich ihre Punkte aendern;
+	# frei im Raum haette der Draht dabei ein Bild hinterhergehangen, mit einer Luecke am Nagel.
+	$Faden.points = punkte
+	var laenge: float = maxf(oben.distance_to(unten), 1.0)
 	var anzahl: int = aufgespiesste.size()
 	for nummer in anzahl - 1:
 		var fliege: Node2D = aufgespiesste[nummer]
 		var schritte: int = anzahl - 1 - nummer
-		fliege.global_position = $Oese.global_position + richtung * spiess_abstand * global_scale.x * schritte
+		var anteil: float = minf(spiess_abstand * global_scale.x * schritte / laenge, 1.0)
+		fliege.global_position = faden_punkt(oben, unten, bogen, anteil)
+
+
+# Wie weit und wohin der Draht in der Mitte durchhaengt. Die Schwerkraft zieht nach unten,
+# aber nur der Teil, der quer zum Draht zieht, biegt ihn: Ein senkrechter Draht bleibt gerade.
+func durchbiegung(oben: Vector2, unten: Vector2) -> Vector2:
+	var richtung: Vector2 = oben.direction_to(unten)
+	var quer: Vector2 = Vector2.DOWN - richtung * Vector2.DOWN.dot(richtung)
+	var anteil: float = durchhang_flug
+	if haengt:
+		anteil = durchhang_haengend
+	return quer * oben.distance_to(unten) * anteil
+
+
+# Ein Punkt auf dem Draht. anteil 0 ist oben an der Nadel, 1 unten am Anker.
+# Auf der geraden Linie dazwischen, plus der Bogen: in der Mitte am staerksten, an den Enden gar nicht.
+func faden_punkt(oben: Vector2, unten: Vector2, bogen: Vector2, anteil: float) -> Vector2:
+	return oben.lerp(unten, anteil) + bogen * 4.0 * anteil * (1.0 - anteil)

@@ -59,6 +59,7 @@ _data = {
 [node name="Fliege" type="Node2D" groups=["fliegen"]]
 z_index = 1
 script = ExtResource("1_fliege")
+blut_farbe = Color(0.69, 0.3, 0.78, 1)
 tempo_langsam = 120.0
 tempo_schnell = 160.0
 flugkraft = 4

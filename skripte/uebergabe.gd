@@ -15,6 +15,8 @@ signal gefangen(flugkraft: int)
 @export var faecher: Node2D
 # Der Punkt an der rechten Hand, an dem die Faeden der Fliegen im Faecher festhaengen.
 @export var griff: Node2D
+# Ein Punkt, der das Drahtende von der Muendung zur Hand traegt. Muss ein Kind der Kanone sein, wie der Griff.
+@export var fadenpunkt: Node2D
 
 # true heisst: Gerade laeuft eine Uebergabe. Die Kanone faehrt und schiesst dann nicht.
 var laeuft: bool = false
@@ -44,9 +46,16 @@ func uebergeben() -> void:
 		hin.parallel().tween_property(nadel, "position:x", ziel.x, fahrzeit / 2.0).set_delay(verzoegerung + fahrzeit / 2.0)
 		hin.parallel().tween_property(nadel, "scale", Vector2.ONE * faecher.groesse(), fahrzeit).set_delay(verzoegerung)
 		await hin.finished
-		nadel.anker = griff
 		nadel.haengt = true
+		# Das Drahtende springt nicht zur Hand: Es startet an der Muendung und wandert hinueber,
+		# waehrend die Kanone zurueckfaehrt. Erst danach haengt der Draht wirklich am Griff.
+		fadenpunkt.global_position = nadel.anker.global_position
+		nadel.anker = fadenpunkt
 		var zurueck: Tween = create_tween()
 		zurueck.tween_property(arm, "position", Vector2.ZERO, dauer)
+		zurueck.parallel().tween_property(fadenpunkt, "position", griff.position, dauer)
 		await zurueck.finished
+		# Ein Hindernis kann die Nadel in der Zwischenzeit abgeschossen haben, dann gibt es sie nicht mehr.
+		if is_instance_valid(nadel):
+			nadel.anker = griff
 	laeuft = false

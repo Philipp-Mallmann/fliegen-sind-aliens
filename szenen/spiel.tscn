@@ -453,6 +453,9 @@ border_width = 3.0
 [node name="Griff" type="Marker2D" parent="Kanone" unique_id=1784918379]
 position = Vector2(620, -700)
 
+[node name="Fadenpunkt" type="Marker2D" parent="Kanone"]
+position = Vector2(620, -700)
+
 [node name="Faecher" type="Node2D" parent="Kanone" unique_id=1952737731]
 position = Vector2(0, -940)
 script = ExtResource("7_faecher")
@@ -461,11 +464,12 @@ script = ExtResource("7_faecher")
 offset = Vector2(0, -447)
 zoom = Vector2(0.85, 0.85)
 
-[node name="Uebergabe" type="Node" parent="Kanone" unique_id=1847282141 node_paths=PackedStringArray("arm", "faecher", "griff")]
+[node name="Uebergabe" type="Node" parent="Kanone" unique_id=1847282141 node_paths=PackedStringArray("arm", "faecher", "griff", "fadenpunkt")]
 script = ExtResource("4_uebergabe")
 arm = NodePath("../Arm")
 faecher = NodePath("../Faecher")
 griff = NodePath("../Griff")
+fadenpunkt = NodePath("../Fadenpunkt")
 
 [node name="TonArm" type="AudioStreamPlayer" parent="Kanone/Uebergabe" unique_id=290323044]
 stream = ExtResource("11_arm")
