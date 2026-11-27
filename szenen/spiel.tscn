@@ -574,7 +574,7 @@ offset_bottom = -858.0
 color = Color(0.7, 0.7, 0.7, 1)
 
 [node name="Gesicht" type="AnimatedSprite2D" parent="Kanone/Figur"]
-position = Vector2(-274.4, -1414.7)
+position = Vector2(-274.4, -1108.2)
 scale = Vector2(0.935, 0.935)
 sprite_frames = SubResource("SpriteFrames_kopf")
 animation = &"stehen"
@@ -582,7 +582,7 @@ autoplay = "stehen"
 centered = false
 
 [node name="Koerper" type="AnimatedSprite2D" parent="Kanone/Figur"]
-position = Vector2(-274.4, -1414.7)
+position = Vector2(-274.4, -1108.2)
 scale = Vector2(0.935, 0.935)
 sprite_frames = SubResource("SpriteFrames_koerper")
 animation = &"stehen"
@@ -590,10 +590,10 @@ autoplay = "stehen"
 centered = false
 
 [node name="Schulterpunkt" type="Marker2D" parent="Kanone/Figur" unique_id=472194480]
-position = Vector2(-123.9, -847.1)
+position = Vector2(-123.9, -540.6)
 
 [node name="Schulter" type="Node2D" parent="Kanone/Figur" unique_id=542994082]
-position = Vector2(-123.9, -847.1)
+position = Vector2(-123.9, -540.6)
 
 [node name="Armbild" type="Node2D" parent="Kanone/Figur/Schulter" unique_id=486998110]
 

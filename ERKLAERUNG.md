@@ -7246,3 +7246,15 @@ Dein Wunsch: Das dritte Bild (Koerper 2, mit der anderen Hose) kommt raus, das w
 - In `SpriteFrames_koerper` und `SpriteFrames_kopf` steht nur noch je zwei Bilder. Die Animation wechselt also zwischen Koerper 0 und 1, drei Mal pro Sekunde je Bild.
 
 So wurde es angeschaut: Verify PASS. Probe: Koerper und Kopf wechseln gemeinsam zwischen Bild 0 und 1.
+
+### Nachtrag: Die Figur steht auf der Hoehe des Knienden (27.11.2026)
+
+Dein Hinweis: Der Stehende haengt in der Luft. Er soll ungefaehr dort stehen, wo die sichtbare Unterkante der Aufsteh-Animation ist.
+
+Die Schuhe des Knienden (das letzte Aufstehbild) liegen 1518,5 Pixel unter der Kanone: Mitte des Aufstehen-Knotens (1115) plus der Weg von der Bildmitte bis zur Schuhkante im Bild (431,5 Pixel im Bild mal 0,935). Die Schuhe des Stehenden lagen bei 1212, also 306,5 hoeher.
+
+Darum stehen `Gesicht`, `Koerper`, `Schulterpunkt` und `Schulter` jetzt je 306,5 Pixel tiefer: Gesicht und Koerper bei y -1108.2, Schulterpunkt und Schulter bei y -540.6. Der Knoten `Figur` selbst bleibt, wo er ist. Er ist auch der Nullpunkt fuer das Abheben, und den wollte ich nicht verschieben.
+
+Dein Aufstehen war richtig gespeichert und wird so verwendet: `Kanone/Aufstehen` steht bei (-130, 1115) mit Groesse 0,935, kein Skript veraendert diese Lage.
+
+So wurde es angeschaut: Verify PASS. Probe: Start und Knien nebeneinander, die Schuhe stehen auf derselben Hoehe im Gras.
