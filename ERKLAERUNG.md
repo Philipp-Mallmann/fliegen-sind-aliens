@@ -6666,6 +6666,31 @@ Warum sieht man so immer eine? Zur Seite: Von Wolke 1 zu Wolke 2 sind es 1300 Pi
 2. Was wuerde passieren, wenn `repeat_size` (4000, 2000) waere?
 3. Warum liegen die Wolken hinter den Fliegen und nicht davor?
 
+### Nachtrag: die bewegte Wolke aus deinem Video (27.11.2026)
+
+Dein Wunsch: Aus dem Video mit der Wolke vor Blau kommt das Blau heraus, und diese Wolke ist auch immer mindestens einmal am Himmel zu sehen, genauso fest in der Welt.
+
+**Die Bilder (`assets/hintergrund/wolken/bewegt/wolke-001.png` bis `wolke-150.png`).** Godot kann im Browser kein Video mit durchsichtigem Grund zeigen. Darum ist das Video in Einzelbilder zerlegt. Es hat 30 Bilder pro Sekunde und dauert 30 Sekunden, genommen ist jedes sechste Bild: 150 Bilder, 5 pro Sekunde. In jedem Bild ist das Blau herausgerechnet: Die Farbe am Bildrand ist der Hintergrund. Je weiter die Farbe eines Pixels davon entfernt ist, desto deckender ist er. Was dem Blau sehr aehnlich ist, also das Glas der Wolke, bleibt halb durchsichtig. Danach sind alle Bilder auf denselben Ausschnitt geschnitten und auf 320 Pixel Breite verkleinert, damit das Spiel im Browser nicht zu schwer wird. Dein Video ist unveraendert.
+
+**`szenen/wolke_bewegt.tscn` - neu.** Ein einziger Knoten: `WolkeBewegt`, ein `AnimatedSprite2D`, derselbe Typ wie das Feuer und die Drahtrolle der Kanone.
+- `sprite_frames`: die Liste der 150 Bilder, in der Animation `default`.
+- `"speed": 5.0`: 5 Bilder pro Sekunde. 150 Bilder durch 5 sind 30 Sekunden, so lang wie dein Video.
+- `"loop": true`: Nach dem letzten Bild geht es beim ersten weiter. Das letzte und das erste Bild deines Videos passen aneinander, man sieht keinen Sprung.
+- `autoplay = "default"`: Die Animation startet von selbst.
+
+Die Wolke hat eine eigene Szene, damit die 150 Zeilen mit den Bildern nicht in `spiel.tscn` stehen.
+
+**`szenen/spiel.tscn` - `WolkenBewegt` (Parallax2D) und darin `WolkeBewegt`.** Gleich gebaut wie `Wolken`:
+- `repeat_size = (1440, 900)`: Die bewegte Wolke kommt alle 1440 Pixel zur Seite und alle 900 Pixel nach oben wieder. Der Bildschirm ist 1440 breit und 1080 hoch, also liegt immer mindestens eine Wolkenmitte im Bild. 900 statt 1080, damit sie nicht immer im selben Abstand zu den drei anderen Wolken steht.
+- `repeat_times = 5`: wie bei `Wolken`, fuer die Totale.
+- `WolkeBewegt` steht bei (900, 450) mit `scale = 1.7`, also 320 x 1,7 = 544 Pixel breit.
+
+Alle Kopien zeigen dasselbe Bild der Animation, weil es derselbe Knoten ist, der mehrmals gezeichnet wird.
+
+**So wurde es angeschaut.** Verify PASS. Probe wie oben, dazu zweimal dasselbe Bild im Abstand von 3 Sekunden: Die Wolke hat sich dazwischen veraendert, in jedem der 11 Bilder ist eine bewegte Wolke zu sehen. Die Naht zwischen letztem und erstem Bild ist kleiner als ein normaler Schritt (4,6 gegen 6,1, mittlerer Farbunterschied). Nicht angeschaut: ob 5 Bilder pro Sekunde ruckelig wirken, und ob die 150 Bilder auf dem Handy im Browser fluessig laufen.
+
+**Fragen.** 1. Warum ist das Video in Einzelbilder zerlegt? 2. Was aendert sich, wenn `"speed"` 10 ist? 3. Warum bleibt das Glas der Wolke halb durchsichtig?
+
 ## Geaendert: Die schnelle Fliege dreht sich in der Schleife nicht mehr (`skripte/fliege_schnell.gd`, 27.11.2026)
 
 Dein Wunsch: In der Wende fliegt sie die Schleife ab, aber das Bild dreht sich nicht mit. Erst wenn sie wirklich in die andere Richtung fliegt, wird das Bild umgedreht (gespiegelt).

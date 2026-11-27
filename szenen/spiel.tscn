@@ -45,6 +45,7 @@
 [ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/wolke-1.png" id="w1"]
 [ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/wolke-2.png" id="w2"]
 [ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/wolke-3.png" id="w3"]
+[ext_resource type="PackedScene" path="res://szenen/wolke_bewegt.tscn" id="w4"]
 [ext_resource type="PackedScene" path="res://szenen/fliege_heuschrecke.tscn" id="40_heuschrecke"]
 [ext_resource type="PackedScene" path="res://szenen/stechfliege.tscn" id="41_stechfliege"]
 [ext_resource type="Script" path="res://skripte/stecher.gd" id="42_stecher"]
@@ -234,6 +235,14 @@ texture = ExtResource("w2")
 position = Vector2(2800, 520)
 scale = Vector2(0.65, 0.65)
 texture = ExtResource("w3")
+
+[node name="WolkenBewegt" type="Parallax2D" parent="."]
+repeat_size = Vector2(1440, 900)
+repeat_times = 5
+
+[node name="WolkeBewegt" parent="WolkenBewegt" instance=ExtResource("w4")]
+position = Vector2(900, 450)
+scale = Vector2(1.7, 1.7)
 
 [node name="Boden" type="Parallax2D" parent="."]
 scroll_offset = Vector2(0, 1212)

@@ -1,0 +1,614 @@
+[gd_scene load_steps=152 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-001.png" id="b1"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-002.png" id="b2"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-003.png" id="b3"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-004.png" id="b4"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-005.png" id="b5"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-006.png" id="b6"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-007.png" id="b7"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-008.png" id="b8"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-009.png" id="b9"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-010.png" id="b10"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-011.png" id="b11"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-012.png" id="b12"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-013.png" id="b13"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-014.png" id="b14"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-015.png" id="b15"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-016.png" id="b16"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-017.png" id="b17"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-018.png" id="b18"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-019.png" id="b19"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-020.png" id="b20"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-021.png" id="b21"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-022.png" id="b22"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-023.png" id="b23"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-024.png" id="b24"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-025.png" id="b25"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-026.png" id="b26"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-027.png" id="b27"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-028.png" id="b28"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-029.png" id="b29"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-030.png" id="b30"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-031.png" id="b31"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-032.png" id="b32"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-033.png" id="b33"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-034.png" id="b34"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-035.png" id="b35"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-036.png" id="b36"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-037.png" id="b37"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-038.png" id="b38"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-039.png" id="b39"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-040.png" id="b40"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-041.png" id="b41"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-042.png" id="b42"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-043.png" id="b43"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-044.png" id="b44"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-045.png" id="b45"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-046.png" id="b46"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-047.png" id="b47"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-048.png" id="b48"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-049.png" id="b49"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-050.png" id="b50"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-051.png" id="b51"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-052.png" id="b52"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-053.png" id="b53"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-054.png" id="b54"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-055.png" id="b55"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-056.png" id="b56"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-057.png" id="b57"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-058.png" id="b58"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-059.png" id="b59"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-060.png" id="b60"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-061.png" id="b61"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-062.png" id="b62"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-063.png" id="b63"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-064.png" id="b64"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-065.png" id="b65"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-066.png" id="b66"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-067.png" id="b67"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-068.png" id="b68"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-069.png" id="b69"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-070.png" id="b70"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-071.png" id="b71"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-072.png" id="b72"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-073.png" id="b73"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-074.png" id="b74"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-075.png" id="b75"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-076.png" id="b76"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-077.png" id="b77"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-078.png" id="b78"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-079.png" id="b79"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-080.png" id="b80"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-081.png" id="b81"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-082.png" id="b82"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-083.png" id="b83"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-084.png" id="b84"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-085.png" id="b85"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-086.png" id="b86"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-087.png" id="b87"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-088.png" id="b88"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-089.png" id="b89"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-090.png" id="b90"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-091.png" id="b91"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-092.png" id="b92"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-093.png" id="b93"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-094.png" id="b94"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-095.png" id="b95"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-096.png" id="b96"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-097.png" id="b97"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-098.png" id="b98"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-099.png" id="b99"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-100.png" id="b100"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-101.png" id="b101"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-102.png" id="b102"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-103.png" id="b103"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-104.png" id="b104"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-105.png" id="b105"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-106.png" id="b106"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-107.png" id="b107"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-108.png" id="b108"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-109.png" id="b109"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-110.png" id="b110"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-111.png" id="b111"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-112.png" id="b112"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-113.png" id="b113"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-114.png" id="b114"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-115.png" id="b115"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-116.png" id="b116"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-117.png" id="b117"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-118.png" id="b118"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-119.png" id="b119"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-120.png" id="b120"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-121.png" id="b121"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-122.png" id="b122"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-123.png" id="b123"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-124.png" id="b124"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-125.png" id="b125"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-126.png" id="b126"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-127.png" id="b127"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-128.png" id="b128"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-129.png" id="b129"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-130.png" id="b130"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-131.png" id="b131"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-132.png" id="b132"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-133.png" id="b133"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-134.png" id="b134"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-135.png" id="b135"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-136.png" id="b136"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-137.png" id="b137"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-138.png" id="b138"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-139.png" id="b139"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-140.png" id="b140"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-141.png" id="b141"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-142.png" id="b142"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-143.png" id="b143"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-144.png" id="b144"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-145.png" id="b145"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-146.png" id="b146"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-147.png" id="b147"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-148.png" id="b148"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-149.png" id="b149"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/bewegt/wolke-150.png" id="b150"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_wolke"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("b1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b9")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b10")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b11")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b12")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b13")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b14")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b15")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b16")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b17")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b18")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b19")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b20")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b21")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b22")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b23")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b24")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b25")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b26")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b27")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b28")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b29")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b30")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b31")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b32")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b33")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b34")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b35")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b36")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b37")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b38")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b39")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b40")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b41")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b42")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b43")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b44")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b45")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b46")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b47")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b48")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b49")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b50")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b51")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b52")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b53")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b54")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b55")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b56")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b57")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b58")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b59")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b60")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b61")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b62")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b63")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b64")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b65")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b66")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b67")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b68")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b69")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b70")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b71")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b72")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b73")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b74")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b75")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b76")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b77")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b78")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b79")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b80")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b81")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b82")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b83")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b84")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b85")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b86")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b87")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b88")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b89")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b90")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b91")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b92")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b93")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b94")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b95")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b96")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b97")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b98")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b99")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b100")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b101")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b102")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b103")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b104")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b105")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b106")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b107")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b108")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b109")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b110")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b111")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b112")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b113")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b114")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b115")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b116")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b117")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b118")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b119")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b120")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b121")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b122")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b123")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b124")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b125")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b126")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b127")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b128")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b129")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b130")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b131")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b132")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b133")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b134")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b135")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b136")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b137")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b138")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b139")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b140")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b141")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b142")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b143")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b144")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b145")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b146")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b147")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b148")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b149")
+}, {
+"duration": 1.0,
+"texture": ExtResource("b150")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="WolkeBewegt" type="AnimatedSprite2D"]
+sprite_frames = SubResource("SpriteFrames_wolke")
+autoplay = "default"
