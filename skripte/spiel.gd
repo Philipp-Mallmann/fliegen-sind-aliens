@@ -47,6 +47,8 @@ func _ready() -> void:
 	$Kanone/Kamera.offset.y = versatz_totale
 	$Kanone/Arm.visible = false
 	$Kanone/RechteHand.visible = false
+	# Im Editor ist der Forscher sichtbar, damit man ihn hinziehen kann. Im Spiel erst beim Absturz.
+	$Kanone/Aufstehen.visible = false
 	$Kanone.set_process(false)
 	$Hindernisse.set_process(false)
 	fliege_abstand = $Einstellungsfliege.position.x - $Kanone.position.x
@@ -132,10 +134,19 @@ func fliege_verlieren(weg: int) -> void:
 	wackeln(wackeln_fall, strecke / falltempo)
 	if flugkraft <= 0:
 		steigen.tween_callback(aufstehen)
+		fallen()
 		kamera_fahren(zoom_totale, versatz_totale, strecke / falltempo)
 		$Musik.leise()
 	else:
 		steigen.tween_callback(entsperren)
+
+
+# Der Absturz bis auf den Boden: Statt Kanone und Figur faellt der Forscher, bis er aufschlaegt.
+func fallen() -> void:
+	$Kanone/Arm.visible = false
+	$Kanone/Figur.visible = false
+	$Kanone/Aufstehen.visible = true
+	$Kanone/Aufstehen.play("fallen")
 
 
 func aufstehen() -> void:

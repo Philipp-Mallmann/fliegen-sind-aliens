@@ -7094,3 +7094,40 @@ Vorher drei graue Kaesten (liegt, kniet, steht). Die drei grauen Verlaeufe dafue
 1. Warum haben beide Bilder denselben Ausschnitt?
 2. Was aendert `"duration": 2.0` am ersten Bild?
 3. Wie kommt man auf `position.y = 802`?
+
+### Nachtrag: Fallen bis zum Boden, und du ziehst den Forscher selbst hin (`skripte/spiel.gd`, `szenen/spiel.tscn`, 27.11.2026)
+
+Dein Wunsch: Beim Absturz bis auf den Boden faellt der Forscher (mit dem Verlauf nach oben, der staerker und schwaecher wird) und landet genau dort, wo du ihn im Godot-Editor hinziehst.
+
+**Die Bilder (`assets/forscher/aufstehen/`).** Neu sind `fallen-1.png` bis `fallen-6.png`: deine zwei Fallbilder in je drei Staerken, in der Reihenfolge aus Krita (4 mittel, 5 stark, 4 schwach, 5 mittel, 4 stark, 5 schwach). Alle acht Bilder (6 x Fallen, Aufprall, Knien) haben jetzt denselben Ausschnitt (1097 x 1079 Pixel). Darum liegen `aufprall.png` und `kniend.png` neu da, 15 Pixel breiter, sonst gleich. Der gemeinsame Ausschnitt heisst: Fallen, Aufprall und Knien sitzen zueinander so, wie du sie in Krita angeordnet hast. Ziehst du den Knoten, wandert alles zusammen.
+
+**`SpriteFrames_aufstehen` - zweite Animation `fallen`.** Neben `aufstehen` gibt es `fallen`: die sechs Bilder, `"speed": 12.0` (12 Bilder pro Sekunde, wie in der Krita-Datei), `"loop": true`. Weil sie sich wiederholt, meldet sie nie `animation_finished`. Das Spiel startet also nicht mitten im Fallen neu.
+
+**`Kanone/Aufstehen` - geaendert.** Die Zeile `visible = false` ist weg: Im Editor siehst du den Forscher jetzt und kannst ihn ziehen. `position` ist (136, 802), sechs Pixel weiter rechts als vorher, weil der Ausschnitt links breiter geworden ist. So liegt der Liegende an derselben Stelle.
+
+**`skripte/spiel.gd` - geaendert.**
+
+```gdscript
+	$Kanone/Aufstehen.visible = false
+```
+Neu in `_ready`. Weil der Knoten in der Szene sichtbar ist, wird er beim Spielstart versteckt.
+
+```gdscript
+		fallen()
+```
+Neu in `fliege_verlieren`, im Zweig `if flugkraft <= 0:`. Nur wenn man ganz abstuerzt, faellt der Forscher.
+
+```gdscript
+func fallen() -> void:
+	$Kanone/Arm.visible = false
+	$Kanone/Figur.visible = false
+	$Kanone/Aufstehen.visible = true
+	$Kanone/Aufstehen.play("fallen")
+```
+Neu. Kanone und graue Figur verschwinden, der Forscher erscheint und spielt `fallen`. Er haengt an der Kanone und faellt mit ihr nach unten. Kommt die Kanone unten an, ruft der Tween wie bisher `aufstehen()`, und das spielt `aufstehen`: Aufprall, dann Knien. Faengt man im Fallen noch eine Fliege, macht `aufstehen_abbrechen()` alles wieder rueckgaengig, wie vorher.
+
+**So ziehst du ihn hin.** In `spiel.tscn` den Knoten `Kanone` > `Aufstehen` auswaehlen und verschieben. Im Editor sieht man das Aufprallbild. Die Wiese liegt 1212 Pixel unter der Kanone.
+
+**So wurde es angeschaut.** Schnellcheck PASS fuer `spiel.gd`, Verify PASS. Probe: hochgesprungen, alles verloren, Bilder aufgenommen. Am Start ist der Forscher unsichtbar. Im Fallen laeuft `fallen`, er kommt beim Herauszoomen von unten ins Bild, dann liegt er und kniet. Nicht angeschaut: wie sich das im Spiel anfuehlt.
+
+**Fragen.** 1. Warum meldet `fallen` nie `animation_finished`? 2. Warum muessen alle acht Bilder denselben Ausschnitt haben? 3. Warum wird der Knoten in `_ready` versteckt und nicht in der Szene?

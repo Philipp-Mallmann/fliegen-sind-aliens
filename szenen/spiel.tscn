@@ -36,6 +36,12 @@
 [ext_resource type="Script" uid="uid://8b4vnukwtk4a" path="res://skripte/hintergrund.gd" id="38_hintergrund"]
 [ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/aufprall.png" id="a1"]
 [ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/kniend.png" id="a2"]
+[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/fallen-1.png" id="f1_fallen"]
+[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/fallen-2.png" id="f2_fallen"]
+[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/fallen-3.png" id="f3_fallen"]
+[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/fallen-4.png" id="f4_fallen"]
+[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/fallen-5.png" id="f5_fallen"]
+[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/fallen-6.png" id="f6_fallen"]
 [ext_resource type="PackedScene" path="res://szenen/fliege_heuschrecke.tscn" id="40_heuschrecke"]
 [ext_resource type="PackedScene" path="res://szenen/stechfliege.tscn" id="41_stechfliege"]
 [ext_resource type="Script" uid="uid://bcvwcnsiwex35" path="res://skripte/stecher.gd" id="42_stecher"]
@@ -146,6 +152,29 @@ animations = [{
 "loop": 0,
 "name": &"aufstehen",
 "speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("f1_fallen")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f2_fallen")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f3_fallen")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f4_fallen")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f5_fallen")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f6_fallen")
+}],
+"loop": true,
+"name": &"fallen",
+"speed": 12.0
 }]
 
 [sub_resource type="Gradient" id="Gradient_taste"]
@@ -416,8 +445,7 @@ texture = ExtResource("45_tonne")
 position = Vector2(0, -230.7)
 
 [node name="Aufstehen" type="AnimatedSprite2D" parent="Kanone" unique_id=1527670631]
-visible = false
-position = Vector2(130, 802)
+position = Vector2(136, 802)
 scale = Vector2(0.76, 0.76)
 sprite_frames = SubResource("SpriteFrames_aufstehen")
 animation = &"aufstehen"
