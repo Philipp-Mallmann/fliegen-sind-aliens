@@ -3,5 +3,5 @@
 [ext_resource type="Texture2D" path="res://assets/blut/blut.png" id="1_blut"]
 
 [node name="Blutfleck" type="Sprite2D"]
-scale = Vector2(0.25, 0.25)
+scale = Vector2(0.125, 0.125)
 texture = ExtResource("1_blut")

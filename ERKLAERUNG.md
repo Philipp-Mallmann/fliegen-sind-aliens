@@ -7043,7 +7043,7 @@ Neu: `Kanone/Fadenpunkt`, ein `Marker2D` auf dem Griff. Er ist ein Kind der Kano
 **Nagel mittig.** `steck_tiefe` ist jetzt 0: Die Schnittkante des halben Nagels sitzt in der Fliegenmitte. `Nagel` und `NagelHalb` haben `z_index = 3`, sie werden also ueber der Fliege gemalt (die Fliegen haben 1). So sieht es aus, als steckte der Nagel in ihr. In die halbe Hoehe der Fliege rechnet `aufspiessen` jetzt auch die Groesse des obersten Fliegenknotens ein (`getroffene.scale.y`), weil die Fliegen dort inzwischen verkleinert sind.
 
 **Blut statt rotem Kreis.**
-- `szenen/blutfleck.tscn` ist jetzt nur noch ein `Sprite2D` mit `assets/blut/blut.png`, ohne Skript. `skripte/blutfleck.gd` (der wachsende, verblassende Kreis) ist geloescht.
+- `szenen/blutfleck.tscn` ist jetzt nur noch ein `Sprite2D` mit `assets/blut/blut.png`, ohne Skript. `scale` 0,125 (seit dem 27.11. halb so gross wie zuerst, 0,25). `skripte/blutfleck.gd` (der wachsende, verblassende Kreis) ist geloescht.
 - `assets/blut/blut-ausgeschnitten.png` ist dein Ausschnitt, beide Ebenen zusammen, mit der abgedunkelten Mitte. `assets/blut/blut.png` ist daraus gemacht: nur noch hell und dunkel (grau), damit man es einfaerben kann. `modulate` multipliziert jede Farbe des Bildes mit einer Farbe: Weiss wird zur Zonenfarbe, Schwarz bleibt schwarz.
 - `skripte/fliege.gd`: neu `@export var blut_farbe: Color`. Jede Fliegenszene hat ihre Zonenfarbe eingetragen: Rosa (normal, schnell), Tuerkis (scheu, Heuschrecke), Violett (Koeder), Orange (Teleport, Boss).
 
