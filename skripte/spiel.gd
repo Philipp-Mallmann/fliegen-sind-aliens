@@ -33,6 +33,8 @@ var kamerafahrt: Tween = null
 var wackel_staerke: float = 0.0
 # Wie viele Sekunden sie noch wackelt. 0 oder weniger heisst: Sie steht still.
 var wackel_zeit: float = 0.0
+# Wie weit die Einstellungsfliege am Anfang rechts von der Kanone steht, in Pixeln. Wird in _ready gemessen.
+var fliege_abstand: float = 0.0
 
 
 func _ready() -> void:
@@ -47,6 +49,7 @@ func _ready() -> void:
 	$Kanone/RechteHand.visible = false
 	$Kanone.set_process(false)
 	$Hindernisse.set_process(false)
+	fliege_abstand = $Einstellungsfliege.position.x - $Kanone.position.x
 	anzeige_schreiben()
 
 
@@ -56,6 +59,9 @@ func _process(delta: float) -> void:
 		$Kanone/Kamera.position = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * wackel_staerke
 	else:
 		$Kanone/Kamera.position = Vector2.ZERO
+	# Die Wiese und die Einstellungsfliege fahren zur Seite mit der Kanone mit. So landet man immer an derselben Stelle.
+	$Boden.scroll_offset.x = $Kanone.position.x
+	$Einstellungsfliege.position.x = $Kanone.position.x + fliege_abstand
 
 
 func wackeln(staerke: float, dauer: float) -> void:

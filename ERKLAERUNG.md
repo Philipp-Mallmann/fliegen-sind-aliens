@@ -6854,3 +6854,43 @@ Kein Code, nur `szenen/fliege_teleport.tscn`: orange Fluegel (Zone Boss) und wip
 Kein Code, nur `szenen/fliege_boss.tscn`: orange Fluegel (Zone Boss) und Koerper aus deiner Krita-Datei. Du hast in Krita den hinteren Fluegel ueber den Koerper gelegt. Darum steht `FluegelHinten` hier in der Liste **nach** `Bild` (vor `FluegelVorn`): Was weiter unten in der Liste steht, wird spaeter und damit weiter vorn gemalt, also liegen beide Fluegel vor dem Koerper. Neue Bilder: `assets/fluegel/schlag/boss-*.png`, `assets/fliegen/spiel/bockkaefer-skizze-schlag-1.png` und `-2.png`; dein Original bleibt.
 
 Damit haben alle sieben Fliegen der Zonen Fluegel, die schlagen.
+
+## Die Wiese bleibt unter der Kanone: man landet immer an derselben Stelle (`skripte/spiel.gd`, 27.11.2026)
+
+Dein Wunsch: Wer hochfliegt, zur Seite faehrt und dann ganz abstuerzt, soll nicht irgendwo auf der Wiese landen, sondern immer genau dort, wo er gestartet ist.
+
+Vorher stand die Wiese fest in der Welt. Fuhr die Kanone in der Luft 3000 Pixel nach rechts, lag der Startplatz mit den Pfosten und der Einstellungsfliege 3000 Pixel links von ihr. Jetzt faehrt die Wiese zur Seite einfach mit. Nach oben und unten bleibt sie, wo sie ist.
+
+```gdscript
+var fliege_abstand: float = 0.0
+```
+Neu, oben bei den Variablen. Wie weit die Einstellungsfliege am Anfang rechts von der Kanone steht.
+
+```gdscript
+	fliege_abstand = $Einstellungsfliege.position.x - $Kanone.position.x
+```
+Neu, in `_ready`. Der Abstand wird einmal am Anfang gemessen: 700 - 0 = 700 Pixel. Er steht nicht als feste Zahl im Skript, damit du die Fliege in der Szene verschieben kannst, ohne das Skript zu aendern.
+
+```gdscript
+	$Boden.scroll_offset.x = $Kanone.position.x
+```
+Neu, am Ende von `_process`, also in jedem Bild. `scroll_offset` verschiebt alles, was in `Boden` liegt: Wiese, Pfosten und Nummern. Steht die Kanone bei x = 3000, ist auch der Boden um 3000 nach rechts geschoben. Nur `.x` wird gesetzt, die Hoehe (1212) bleibt.
+
+```gdscript
+	$Einstellungsfliege.position.x = $Kanone.position.x + fliege_abstand
+```
+Neu, direkt darunter. Die Einstellungsfliege liegt nicht in `Boden`, darum bekommt sie ihre eigene Zeile: immer 700 Pixel rechts von der Kanone.
+
+Warum so und nicht die Kanone beim Absturz zurueck zur Mitte schieben? Dann wuerden Fliegen und Wolken im Fallen zur Seite wegrutschen. So bleibt in der Luft alles, wie es war, und nur der Boden kommt mit. Die Wiese wiederholt sich weiter nach links und rechts, aber nur, damit das breite Bild der Totale gefuellt ist. Hinfahren kann man zu den Kopien nicht mehr.
+
+### So wurde es angeschaut
+
+- Schnellcheck PASS fuer `spiel.gd`, Verify PASS.
+- Probe: Start aufgenommen, auf 5 Flugkraft gesprungen, die Kanone einmal 3777 Pixel nach rechts und einmal 9123 nach links gestellt, alles verloren, Landung aufgenommen. In beiden Landungen stehen die Pfosten 0 bis 7 und die Einstellungsfliege an derselben Stelle neben der Figur wie beim Start. Gemessen: `Boden.scroll_offset.x` gleich Kanonen-x, Fliege genau 700 daneben.
+- Nicht angeschaut: wie es sich im Spiel anfuehlt, wenn man knapp ueber dem Boden zur Seite faehrt.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum wird `fliege_abstand` in `_ready` gemessen und nicht als 700 hingeschrieben?
+2. Warum wird nur `scroll_offset.x` gesetzt und nicht der ganze `scroll_offset`?
+3. Was wuerde man sehen, wenn die Zeile mit `$Einstellungsfliege` fehlt?
