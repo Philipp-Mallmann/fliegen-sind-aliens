@@ -242,14 +242,14 @@ scale = Vector2(1.7, 1.7)
 
 [node name="Boden" type="Parallax2D" parent="." unique_id=1568352170]
 scroll_offset = Vector2(0, 1212)
-repeat_size = Vector2(6694, 0)
-repeat_times = 4
 
 [node name="Wiese" type="Sprite2D" parent="Boden" unique_id=331214229]
-position = Vector2(0, -429)
-scale = Vector2(5.23, 5.23)
+position = Vector2(-1705.6, -429)
+scale = Vector2(5.33, 5.33)
 texture = ExtResource("37_wiese")
 centered = false
+region_enabled = true
+region_rect = Rect2(0, 0, 640, 640)
 
 [node name="Pfosten1" type="ColorRect" parent="Boden" unique_id=343638219]
 offset_top = -60.0

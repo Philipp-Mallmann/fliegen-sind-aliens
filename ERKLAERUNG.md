@@ -6894,3 +6894,22 @@ Warum so und nicht die Kanone beim Absturz zurueck zur Mitte schieben? Dann wuer
 1. Warum wird `fliege_abstand` in `_ready` gemessen und nicht als 700 hingeschrieben?
 2. Warum wird nur `scroll_offset.x` gesetzt und nicht der ganze `scroll_offset`?
 3. Was wuerde man sehen, wenn die Zeile mit `$Einstellungsfliege` fehlt?
+
+### Nachtrag: nur noch das eine Wiesenbild, ohne Spiegelung und ohne Wiederholung (`szenen/spiel.tscn`, 27.11.2026)
+
+Dein Wunsch: Die Figur stand genau ueber der Stelle, an der die Wiese gedoppelt ist. Du willst nur das eine Wiesenbild sehen, so wie oben im Einstellungsmenue, und es soll sich nie zur Seite bewegen.
+
+Was los war: `wiese.png` ist 1280 Pixel breit und besteht aus zwei Haelften. Links das Wiesenbild, rechts dasselbe Bild gespiegelt. Dazu wiederholte `Boden` das Ganze alle 6694 Pixel. Die Figur stand genau auf einer dieser Naehte.
+
+Geaendert, nur in der Szene:
+
+- `Boden`: `repeat_size` und `repeat_times` sind weg. Die Wiese wird nicht mehr wiederholt, es gibt sie genau einmal.
+- `Boden/Wiese`: `region_enabled = true` und `region_rect = Rect2(0, 0, 640, 640)`. Das Sprite zeigt nur noch einen Ausschnitt der Datei: ab der linken oberen Ecke 640 Pixel breit und 640 hoch. Das ist die linke Haelfte, also das eine Bild ohne Spiegelung. Die Datei selbst ist unveraendert.
+- `scale = 5.33` statt 5,23: 640 x 5,33 = 3411 Pixel. In der Totale zeigt die Kamera 3349 Pixel Breite. Das Bild ist also 31 Pixel breiter auf jeder Seite. Das reicht fuer das Wackeln beim Aufprall (hoechstens 28 Pixel).
+- `position = (-1705.6, -429)`: die halbe Breite nach links, damit das Bild genau mittig unter der Kanone liegt.
+
+Zusammen mit den Zeilen in `spiel.gd` von oben (`$Boden.scroll_offset.x = $Kanone.position.x`) heisst das: Es ist immer dasselbe Bild, immer an derselben Stelle im Bild, egal wie weit man in der Luft zur Seite gefahren ist.
+
+**So wurde es angeschaut.** Verify PASS. Probe wie oben (3777 nach rechts, 9123 nach links, abstuerzen): Der Wiesenstreifen ist beim Start und nach beiden Landungen Pixel fuer Pixel gleich (Unterschied 0,0). Links und rechts im Bild ist keine Spiegelung mehr (Unterschied der Haelften 46,7, bei einer Spiegelung waere es 0), und die Wiese reicht bis an beide Bildraender.
+
+**Fragen.** 1. Was macht `region_rect`? 2. Warum ist das Bild etwas breiter als das, was die Kamera zeigt? 3. Warum steht bei `position` eine negative Zahl?
