@@ -129,6 +129,9 @@ func aufspiessen(getroffene: Node2D) -> void:
 	aufgespiesste.append(getroffene)
 	halbe_groessen.append(halbe_groesse)
 	getroffene.gefangen = true
+	if getroffene.leben_voll > 1:
+		# Der letzte Treffer auf den Boss: "3/3".
+		get_tree().call_group("punktanzeige", "boss_treffer", global_position, getroffene.leben_voll, getroffene.leben_voll)
 	getroffene.get_node("Summen").stop()
 	$TonTreffer.play()
 	getroffene.reparent(self)
@@ -149,6 +152,8 @@ func stecken_in(grosse: Node2D) -> void:
 	halb_zeigen(0.0)
 	grosse.leben -= 1
 	grosse.steckende.append(self)
+	# Zeigt "1/3", "2/3" und laesst das Bild wackeln (punktanzeige.gd).
+	get_tree().call_group("punktanzeige", "boss_treffer", global_position, grosse.leben_voll - grosse.leben, grosse.leben_voll)
 	grosse.angeschossen()
 	$TonTreffer.play()
 	var fleck: Node2D = blutfleck_szene.instantiate()

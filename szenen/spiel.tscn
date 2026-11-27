@@ -887,7 +887,8 @@ zonen = NodePath("../Zonen")
 zone = NodePath("../Zonen/Scheue")
 stichstelle = NodePath("../Kanone/RechteHand/Stichstelle")
 
-[node name="Punktanzeige" type="CanvasLayer" parent="." groups=["punktanzeige"]]
+[node name="Punktanzeige" type="CanvasLayer" parent="." node_paths=PackedStringArray("spiel") groups=["punktanzeige"]]
 layer = 3
 script = ExtResource("punkt_skript")
 zahl_szene = ExtResource("zahl_szene")
+spiel = NodePath("..")

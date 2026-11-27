@@ -7407,3 +7407,11 @@ Rechnet einen Punkt in der Welt in einen Punkt auf dem Bildschirm um. Die `canva
 1. Warum liegt die Punktanzeige in einem `CanvasLayer` und nicht in der Welt?
 2. Welches Wort erscheint bei 7 Fliegen auf einmal, und warum?
 3. Was macht `call_group`, und warum ist das hier praktisch?
+
+### Nachtrag: Treffer auf den Boss, 1/3 bis 3/3 und Wackeln (27.11.2026)
+
+- `skripte/fliege.gd`: neu `var leben_voll`, in `_ready` auf `leben` gesetzt. So weiss man spaeter noch, wie viele Leben die Fliege am Anfang hatte (der Boss hat 3).
+- `skripte/nadel.gd`: In `stecken_in` (der Boss lebt noch) und in `aufspiessen` (der letzte Treffer, wenn `leben_voll` groesser als 1 ist) steht jetzt `get_tree().call_group("punktanzeige", "boss_treffer", global_position, nummer, von)`. `nummer` ist der wievielte Treffer: `leben_voll - leben`, beim letzten `leben_voll` selbst.
+- `skripte/punktanzeige.gd`: neu `boss_treffer`. Es zeigt `str(nummer) + "/" + str(von)`, also zum Beispiel "2/3", orange und gross ueber der Trefferstelle, und ruft `spiel.wackeln(...)` auf: 12 Pixel fuer 0,3 Sekunden, beim letzten Treffer 24. `wackeln` gab es in `spiel.gd` schon fuer den Absturz. Den Knoten `spiel` bekommt die Punktanzeige im Inspector (`NodePath("..")`, ihr Elternknoten).
+
+Angeschaut: Schnellcheck PASS, Verify PASS, Probe mit Schuessen auf einen stillstehenden Boss: "1/3", "2/3", "3/3" erscheinen, Wackeln 12, 12, 24, beim dritten kommt "+15".

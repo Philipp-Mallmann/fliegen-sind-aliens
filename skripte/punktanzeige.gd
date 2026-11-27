@@ -17,6 +17,14 @@ extends CanvasLayer
 @export var kombo_groesse: float = 1.5
 # Wo das Kombo-Wort auf dem Bildschirm steht, in Pixeln. Das Bild ist 1440 breit und 1080 hoch.
 @export var kombo_ort: Vector2 = Vector2(720, 330)
+# Das Spiel (spiel.gd). Seine Funktion wackeln laesst das Bild wackeln.
+@export var spiel: Node
+# Die Treffer-Anzeige am Boss ("1/3"): Farbe, Groesse und wie stark das Bild wackelt, in Pixeln und Sekunden.
+@export var farbe_boss: Color = Color(1.0, 0.6, 0.25)
+@export var boss_groesse: float = 1.6
+@export var boss_wackeln: float = 12.0
+@export var boss_wackeln_letzter: float = 24.0
+@export var boss_wackel_dauer: float = 0.3
 
 
 # Eine Nadel hat getroffen und wird uebergeben: Flugkraft als "+N", bei mehreren Fliegen dazu das Kombo-Wort.
@@ -26,6 +34,15 @@ func gefangen(nadel: Node2D) -> void:
 	if anzahl >= 2:
 		var nummer: int = mini(anzahl - 2, kombo_woerter.size() - 1)
 		zeigen(kombo_ort, kombo_woerter[nummer], farbe_kombo, kombo_groesse)
+
+
+# Ein Treffer auf den Boss: "1/3", "2/3", "3/3" an der Trefferstelle, dazu wackelt das Bild, beim letzten staerker.
+func boss_treffer(ort: Vector2, nummer: int, von: int) -> void:
+	zeigen(im_bild(ort) + Vector2(0, -80), str(nummer) + "/" + str(von), farbe_boss, boss_groesse)
+	var staerke: float = boss_wackeln
+	if nummer >= von:
+		staerke = boss_wackeln_letzter
+	spiel.wackeln(staerke, boss_wackel_dauer)
 
 
 # Ein Stein hat gefangene Fliegen zermatscht: so viel Flugkraft geht verloren, als "-N" an der Stelle.
