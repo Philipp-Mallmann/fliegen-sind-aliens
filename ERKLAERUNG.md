@@ -7261,4 +7261,4 @@ So wurde es angeschaut: Verify PASS. Probe: Start und Knien nebeneinander, die S
 
 ### Nachtrag: Teleport-Fliege erholt sich laenger (27.11.2026)
 
-Nur eine Zahl in `skripte/fliege_teleport.gd`: `erholzeit` von 2,5 auf 5 Sekunden. So lange springt sie nach ihren drei Spruengen nicht und laesst sich fangen. Die Szene ueberschreibt den Wert nicht, darum gilt die Zahl im Skript.
+Nur eine Zahl in `skripte/fliege_teleport.gd`: `erholzeit` von 2,5 auf 4 Sekunden (erst 5, dann auf deinen Wunsch 4). So lange springt sie nach ihren drei Spruengen nicht und laesst sich fangen. Die Szene ueberschreibt den Wert nicht, darum gilt die Zahl im Skript.

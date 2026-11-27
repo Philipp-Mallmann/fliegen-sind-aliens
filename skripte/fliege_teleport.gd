@@ -14,7 +14,7 @@ extends "res://skripte/fliege.gd"
 # Wie oft sie hintereinander springen kann, bevor sie sich erholen muss.
 @export var spruenge: int = 3
 # Wie viele Sekunden sie sich danach erholt. So lange springt sie nicht.
-@export var erholzeit: float = 5.0
+@export var erholzeit: float = 4.0
 # Wie viele Sekunden vor dem Sprung sie flackert.
 @export var flacker_zeit: float = 0.2
 # Wie lange ein Flackern dauert, in Sekunden: die Haelfte davon blass, die Haelfte voll.
