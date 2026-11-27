@@ -7341,3 +7341,7 @@ Der Spritzer in ihrer Farbe entsteht an derselben Stelle am Fels. Er wird nach d
 1. Warum wird die Fliege aus der Gruppe `fliegen` genommen?
 2. Warum werden die Fliegen erst an den Fels gehaengt und dann die Nadel geloescht, nicht umgekehrt?
 3. Wann wird der Spritzer geloescht?
+
+### Nachtrag: Schatten statt gelber Spalte (27.11.2026)
+
+Nur `szenen/hindernis.tscn`: Die Spalte, in der der Fels faellt, war Gelb mit 15 Prozent Deckkraft und auf den hellen Pappen kaum zu sehen. Jetzt ist sie ein Schatten: `color = Color(0, 0, 0, 0.35)`, also Schwarz mit 35 Prozent Deckkraft. Wie vorher beginnt sie schwaecher (`spalte_anfang` 0,3 mal so kraeftig) und wird bis zum Fallen voll. Auf der fast schwarzen Pappe sieht man den Schatten kaum.

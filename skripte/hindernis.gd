@@ -14,7 +14,7 @@ extends Node2D
 # Wie gross das Warnschild am Anfang und am Ende der Warnung ist. 1 ist die Groesse aus der Szene.
 @export var groesse_anfang: float = 0.25
 @export var groesse_ende: float = 1.5
-# Wie kraeftig die gelbe Spalte am Anfang der Warnung zu sehen ist. 1 heisst: voll, wie am Ende.
+# Wie kraeftig die Spalte (der Schatten unter dem fallenden Stein) am Anfang der Warnung zu sehen ist. 1 heisst: voll, wie am Ende.
 @export var spalte_anfang: float = 0.3
 # Wie laut der Warnton am Anfang und am Ende der Warnung piept, in Dezibel. 0 ist die Lautstaerke der Datei.
 @export var ton_leise: float = -30.0
