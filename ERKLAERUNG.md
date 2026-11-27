@@ -7237,3 +7237,12 @@ Verify PASS. Probe: drei Bilder je eine Sechstelsekunde auseinander, Koerper und
 1. Warum muessen Kopf- und Koerperbilder denselben Ausschnitt haben?
 2. Warum liegt der Kopf hinter dem Koerper, obwohl er oben drauf sitzt?
 3. Was passiert mit dem Arm, wenn man `Schulterpunkt` verschiebt?
+
+### Nachtrag: nur Koerper 0 und 1 (27.11.2026)
+
+Dein Wunsch: Das dritte Bild (Koerper 2, mit der anderen Hose) kommt raus, das wird spaeter fuers Fliegen ueberarbeitet. Im Spiel stehen nur Koerper 0 und 1.
+
+- `stehen-koerper-3.png` und `stehen-kopf-3.png` sind geloescht, die zwei anderen neu geschnitten. Der Ausschnitt ist jetzt 651 x 1516, unten kuerzer, weil die laengere Hose fehlt. Oben links ist er gleich geblieben, darum stimmt `position` (-274.4, -1414.7) weiter.
+- In `SpriteFrames_koerper` und `SpriteFrames_kopf` steht nur noch je zwei Bilder. Die Animation wechselt also zwischen Koerper 0 und 1, drei Mal pro Sekunde je Bild.
+
+So wurde es angeschaut: Verify PASS. Probe: Koerper und Kopf wechseln gemeinsam zwischen Bild 0 und 1.
