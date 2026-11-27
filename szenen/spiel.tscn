@@ -42,9 +42,6 @@
 [ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-7-nachtblau.png" id="p07"]
 [ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-8-fast-schwarz.png" id="p08"]
 [ext_resource type="Script" path="res://skripte/hintergrund.gd" id="38_hintergrund"]
-[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/wolke-1.png" id="w1"]
-[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/wolke-2.png" id="w2"]
-[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/wolke-3.png" id="w3"]
 [ext_resource type="PackedScene" path="res://szenen/wolke_bewegt.tscn" id="w4"]
 [ext_resource type="PackedScene" path="res://szenen/fliege_heuschrecke.tscn" id="40_heuschrecke"]
 [ext_resource type="PackedScene" path="res://szenen/stechfliege.tscn" id="41_stechfliege"]
@@ -218,30 +215,29 @@ expand_mode = 1
 stretch_mode = 1
 
 [node name="Wolken" type="Parallax2D" parent="."]
-repeat_size = Vector2(4000, 1080)
-repeat_times = 5
+repeat_size = Vector2(2600, 1600)
+repeat_times = 4
 
-[node name="Wolke1" type="Sprite2D" parent="Wolken"]
-position = Vector2(200, 250)
-scale = Vector2(0.65, 0.65)
-texture = ExtResource("w1")
+[node name="AnfangNormal" parent="Wolken" instance=ExtResource("w4")]
+position = Vector2(300, 300)
+scale = Vector2(1.7, 1.7)
 
-[node name="Wolke2" type="Sprite2D" parent="Wolken"]
-position = Vector2(1500, 800)
-scale = Vector2(0.65, 0.65)
-texture = ExtResource("w2")
+[node name="MitteKopf" parent="Wolken" instance=ExtResource("w4")]
+position = Vector2(1700, 420)
+rotation = 3.1415927
+scale = Vector2(1.7, 1.7)
+animation = &"mitte"
+autoplay = "mitte"
 
-[node name="Wolke3" type="Sprite2D" parent="Wolken"]
-position = Vector2(2800, 520)
-scale = Vector2(0.65, 0.65)
-texture = ExtResource("w3")
+[node name="MitteNormal" parent="Wolken" instance=ExtResource("w4")]
+position = Vector2(1000, 1180)
+scale = Vector2(1.7, 1.7)
+animation = &"mitte"
+autoplay = "mitte"
 
-[node name="WolkenBewegt" type="Parallax2D" parent="."]
-repeat_size = Vector2(1440, 900)
-repeat_times = 5
-
-[node name="WolkeBewegt" parent="WolkenBewegt" instance=ExtResource("w4")]
-position = Vector2(900, 450)
+[node name="AnfangKopf" parent="Wolken" instance=ExtResource("w4")]
+position = Vector2(2250, 1040)
+rotation = 3.1415927
 scale = Vector2(1.7, 1.7)
 
 [node name="Boden" type="Parallax2D" parent="."]

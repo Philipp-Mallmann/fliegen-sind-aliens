@@ -6691,6 +6691,38 @@ Alle Kopien zeigen dasselbe Bild der Animation, weil es derselbe Knoten ist, der
 
 **Fragen.** 1. Warum ist das Video in Einzelbilder zerlegt? 2. Was aendert sich, wenn `"speed"` 10 ist? 3. Warum bleibt das Glas der Wolke halb durchsichtig?
 
+### Nachtrag: nur noch die bewegte Wolke, in vier Fassungen (27.11.2026)
+
+Dein Wunsch: Es bleibt bei der bewegten Wolke. Davon gibt es vier Fassungen: zwei laufen am Anfang der Animation, zwei in der Mitte, und je eine davon steht auf dem Kopf. Steigt man auf oder faehrt zur Seite, kommt erst einmal eine andere. Sie liegen nicht in einer Reihe, sondern versetzt, und trotzdem ist immer mindestens eine im Bild.
+
+**Was weg ist.** Die drei stehenden Wolken `Wolke1` bis `Wolke3`, ihre Bilder `wolke-1.png` bis `wolke-3.png` und der Knoten `WolkenBewegt`. Was oben zu ihnen steht, gilt nicht mehr. Es gibt wieder nur einen `Parallax2D` mit dem Namen `Wolken`.
+
+**`szenen/wolke_bewegt.tscn` - zweite Animation `mitte`.** In `sprite_frames` stehen jetzt zwei Animationen. `default` zeigt die Bilder 1 bis 150. `mitte` zeigt dieselben Bilder, faengt aber bei Bild 76 an: 76 bis 150, dann 1 bis 75. Beide sind gleich lang und gleich schnell. Eine Wolke mit `mitte` ist der anderen also immer genau eine halbe Runde (15 Sekunden) voraus. Dafuer braucht es kein Skript.
+
+**`szenen/spiel.tscn` - `Wolken` (Parallax2D).**
+- `repeat_size = (2600, 1600)`: Das Muster aus vier Wolken wiederholt sich alle 2600 Pixel zur Seite und alle 1600 nach oben.
+- `repeat_times = 4`: reicht auch fuer die Totale (3349 x 2512 Pixel).
+
+Darin vier Mal die Szene `wolke_bewegt.tscn`, alle mit `scale = 1.7`:
+
+| Knoten | Ort | Animation | auf dem Kopf |
+|---|---|---|---|
+| `AnfangNormal` | (300, 300) | `default` | nein |
+| `MitteKopf` | (1700, 420) | `mitte` | ja |
+| `MitteNormal` | (1000, 1180) | `mitte` | nein |
+| `AnfangKopf` | (2250, 1040) | `default` | ja |
+
+- `rotation = 3.1415927` bei den zwei Kopf-Wolken: Das ist Pi, eine halbe Drehung. Die Wolke steht auf dem Kopf.
+- `animation = &"mitte"` und `autoplay = "mitte"` bei den zwei Mitte-Wolken: Sie zeigen und starten die zweite Animation. Bei den anderen steht nichts, sie nehmen `default` aus der Wolkenszene.
+
+**Das Muster.** Es sind zwei Reihen. Die obere Reihe liegt bei etwa 300 bis 420, die untere bei etwa 1040 bis 1180, und die untere ist zur Seite um etwa eine halbe Luecke verschoben, wie Ziegel in einer Mauer. Neben `AnfangNormal` liegt `MitteKopf`, darueber und darunter liegen `MitteNormal` und `AnfangKopf`: In jede Richtung kommt zuerst eine andere Fassung.
+
+**Warum ist immer eine im Bild?** Zur Seite: In der oberen Reihe sind die Luecken 1400 und 1200 Pixel (300 bis 1700, 1700 bis 2900), in der unteren 1250 und 1350. Alle sind kleiner als die Bildbreite 1440. Nach oben: Von der Oberkante einer Reihe bis zur Unterkante der naechsten sind es hoechstens 980 Pixel (1040 bis 2020), das Bild ist 1080 hoch. Also liegt immer eine ganze Reihe in der Hoehe des Bildes, und in dieser Reihe liegt immer eine Wolkenmitte in der Breite.
+
+**So wurde es angeschaut.** Verify PASS. Probe: Kanone an zehn Orte gestellt, auch je eine Luecke weiter zur Seite und eine Reihe hoeher, dazu die Totale. In allen 13 Bildern ist mindestens eine Wolke, und nebeneinander sieht man verschiedene Formen und Lagen. Nicht angeschaut: wie es sich beim Fliegen anfuehlt.
+
+**Fragen.** 1. Warum laufen `default` und `mitte` nie auseinander? 2. Was passiert, wenn `MitteKopf` bei (2000, 420) steht? 3. Warum reicht fuer "auf dem Kopf" eine Zahl bei `rotation`?
+
 ## Geaendert: Die schnelle Fliege dreht sich in der Schleife nicht mehr (`skripte/fliege_schnell.gd`, 27.11.2026)
 
 Dein Wunsch: In der Wende fliegt sie die Schleife ab, aber das Bild dreht sich nicht mit. Erst wenn sie wirklich in die andere Richtung fliegt, wird das Bild umgedreht (gespiegelt).
