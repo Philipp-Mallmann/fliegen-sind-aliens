@@ -6384,6 +6384,108 @@ Rechnung fuer die Muendung: Unterkante der Triebwerke plus 6 Pixel Rand liegt au
 
 Frage: Warum muss die Muendung hoeher rutschen, wenn die Kanone groesser wird, obwohl der Bildrand gleich bleibt?
 
+## Fluegel, die schlagen: normale Fliege (27.11.2026)
+
+Die normale Fliege hat jetzt zwei Fluegel aus deinem ausgeschnittenen Foto, und ein `AnimationPlayer` laesst sie schlagen. Die Farbe ist Magenta statt Blau, damit sie sich von allen Pappen abhebt (gemessen, siehe unten).
+
+### Die Bilder
+
+- `assets/fluegel/fluegel-blau.png`: dein Ausschnitt, unveraendert.
+- `assets/fluegel/fluegel-rosa.png`, `-tuerkis.png`, `-violett.png`, `-orange.png`: dieselbe Datei, aber nur die blauen Felder zwischen den Adern haben einen anderen Farbton (gedreht, zum Beispiel um 130 Grad von Blau nach Rosa). Adern, Rand und Glanz behalten ihre Farbe, Saettigung und Helligkeit bleiben wie im Foto, darum schimmert der Fluegel weiter. Ausserdem ist der leere Rand abgeschnitten.
+
+Warum Magenta: Fuer jede Pappe wurde der Farbabstand zwischen Fluegel und Pappe gemessen (OKLab, eine Farbskala, in der gleiche Zahlen auch fuer das Auge gleich weit auseinander liegen). Das blaue Original hatte auf der blauen Pappe nur 0,13, kaum zu sehen. Magenta ist auf keiner Pappe schwaecher als 0,23. Rosa, Orange, Violett und Tuerkis haben jeweils eine Pappe, auf der sie fast verschwinden.
+
+### `szenen/fliege_normal.tscn` - geaendert
+
+- Neu: `FluegelHinten` (vor `Bild` in der Liste, also hinter dem Koerper gemalt) und `FluegelVorn` (nach `Bild`, also davor). Beide sind `Sprite2D` mit `fluegel-magenta.png`.
+- `centered = false` und `offset = Vector2(-1, -23)`: Normalerweise sitzt der Drehpunkt eines Bildes in seiner Mitte. Hier soll sich der Fluegel um seine Wurzel drehen, wie ein echter Fluegel am Ruecken. Die Wurzel liegt im Bild bei Pixel (1, 23), der `offset` schiebt das Bild so, dass genau dieser Pixel auf dem Drehpunkt liegt.
+- `flip_h = true` spiegelt das Bild, weil die Wurzel im Foto rechts ist, die Fliege aber nach links schaut und die Fluegel nach hinten (rechts) zeigen sollen.
+- `position = Vector2(-18, -14)`: Dort ist die Wurzel auf dem Ruecken. `scale` 0,093: Der Fluegel ist rund 90 Pixel lang. `modulate` mit 0,85 Deckkraft: leicht durchscheinend.
+- Neu: `Flattern`, ein `AnimationPlayer`. Er veraendert Werte anderer Knoten ueber die Zeit. Seine Animation `flattern` ist 0,12 Sekunden lang und wiederholt sich (`loop_mode = 1`). Sie hat zwei Spuren: die Drehung (`rotation`) von `FluegelVorn` und von `FluegelHinten`. Bei 0 Sekunden steht der vordere Fluegel auf -0,8 (Bogenmass, etwa 46 Grad), bei 0,06 Sekunden auf -1,5 (etwa 86 Grad), dann wieder zurueck. Der hintere schlaegt genauso, nur etwas steiler. `autoplay` startet die Animation, sobald die Fliege ins Spiel kommt.
+- Der alte graue Platzhalter `Fluegel` (unsichtbar) ist noch da.
+
+Die Animation ist im Editor zu sehen und zu aendern: Knoten `Flattern` anklicken, unten erscheint die Zeitleiste mit den beiden Spuren.
+
+### `skripte/nadel.gd` - geaendert
+
+```gdscript
+	if getroffene.has_node("Flattern"):
+		getroffene.get_node("Flattern").pause()
+```
+In `aufspiessen`, direkt nach dem Abschalten des Summens: Hat die getroffene Fliege einen Knoten `Flattern`, haelt er an. Eine aufgespiesste Fliege schlaegt nicht mehr mit den Fluegeln. (Am 27.11. wieder entfernt, siehe unten: die Fluegel schlagen jetzt weiter.) `has_node` fragt zuerst, ob es den Knoten gibt, denn bisher hat nur die normale Fliege Fluegel. Ohne die Frage gaebe es bei allen anderen einen Fehler.
+
+### So wurde es angeschaut
+
+- Schnellcheck PASS fuer `nadel.gd`, Verify PASS.
+- Probe ausserhalb des Spielordners: die normale Fliege fuenffach vergroessert, vier Bilder ueber einen Fluegelschlag. Die Fluegel drehen sich um die Wurzel auf dem Ruecken.
+- Nicht angeschaut: ob das Anhalten beim Treffer im Spiel wirklich greift (nicht nachgestellt), wie gross und wie schnell die Fluegel wirken sollen (dein Blick).
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum braucht der Fluegel `centered = false` und einen `offset`?
+2. Was passiert mit der Fluegelstellung, wenn die Animation 0,09 Sekunden laeuft?
+3. Warum steht in `nadel.gd` zuerst `has_node`?
+
+## Zonen genau an den Pappen, Fluegelfarbe je Zone (27.11.2026)
+
+Jede Zone gehoert jetzt zu genau zwei Pappen: Anfang = Blau und Gelb, Scheue = Creme und Weiss, Koeder = Gruen und Indigo, Boss = Nachtblau und Fast-Schwarz. Fliegen einer Zone gibt es nur dort.
+
+### Woher die Grenzen 24,1 / 49,1 / 74,1 kommen
+
+Der Hintergrund wechselt alle 12,5 Flugkraft die Pappe (`flugkraft_je_bild` in `spiel.tscn`). Die naechste Pappe wird 1,8 Flugkraft vorher eingeblendet (`uebergang`). Der Wechsel von Gelb zu Creme laeuft also von 23,2 bis 25. Die Mitte davon ist 24,1, dort beginnt jetzt die Zone `Scheue`. Genauso 49,1 (Weiss zu Gruen) und 74,1 (Indigo zu Nachtblau).
+
+Wichtig: Aendert jemand `flugkraft_je_bild` oder `uebergang`, muessen diese drei Zahlen neu gerechnet werden. Sie stehen im Inspector an `Zonen/Scheue`, `Zonen/Koeder` und `Zonen/Boss` (`ab_flugkraft`).
+
+### `skripte/erzeuger.gd` - geaendert
+
+```gdscript
+		fremde_fliehen_lassen(zone)
+```
+Neue Zeile in `_process`, dort, wo der Erzeuger merkt, dass man in einer neuen Zone ist. Neue Fliegen kamen schon vorher nur aus der aktuellen Zone. Aber die Fliegen der alten Zone blieben einfach da. Jetzt werden sie weggeschickt.
+
+```gdscript
+func fremde_fliehen_lassen(zone: Node) -> void:
+	for fliege in get_children():
+		if fliege.flucht != Vector2.ZERO or not fliege.flieht:
+			continue
+```
+Jede Fliege, die der Erzeuger gemacht hat, wird angeschaut. Flieht sie schon (`flucht` ist nicht null) oder darf sie gar nicht fliehen (der Boss), geht es mit der naechsten weiter (`continue`).
+
+```gdscript
+		var gehoert_dazu: bool = false
+		for szene in zone.fliegen + zone.einmalig:
+			if szene.resource_path == fliege.scene_file_path:
+				gehoert_dazu = true
+```
+`zone.fliegen + zone.einmalig` haengt die beiden Listen der Zone aneinander. `resource_path` ist der Dateipfad einer Szene, zum Beispiel `res://szenen/fliege_normal.tscn`. `scene_file_path` ist der Pfad der Szene, aus der die Fliege gemacht wurde. Sind beide gleich, gehoert die Fliege zur Zone.
+
+```gdscript
+		if not gehoert_dazu:
+			if fliege.position.x < kanone.position.x:
+				fliege.flucht = Vector2.LEFT
+			else:
+				fliege.flucht = Vector2.RIGHT
+```
+Gehoert sie nicht dazu, fliegt sie zum naeheren Rand davon, genau wie eine Fliege, die zu tief im Bild ist (`fliehen_lassen`). Ausserhalb des Bildes loescht `aufraeumen` sie.
+
+Das gilt in beide Richtungen: Faellt man nach einem Treffer in eine tiefere Zone, fliehen die Fliegen der hoeheren.
+
+### Fluegelfarbe je Zone
+
+Rosa fuer Anfang (Blau, Gelb), Tuerkis fuer Scheue (Creme, Weiss), Violett fuer Koeder (Gruen, Indigo), Orange fuer Boss (Nachtblau, Fast-Schwarz). Jede Fliegenart gehoert zu genau einer Zone, darum bekommt jede Art einfach die Fluegel ihrer Zone in ihrer Szene. Bisher hat nur die normale Fliege Fluegel, sie fliegt in der Zone Anfang und hat darum `fluegel-rosa.png`.
+
+### So wurde es angeschaut
+
+- Schnellcheck PASS fuer `erzeuger.gd`, Verify PASS.
+- Probe ausserhalb des Spielordners: Kanone knapp unter und knapp ueber jede Grenze gesetzt. Bei 24,0 ist die Creme-Pappe zu 44 Prozent eingeblendet, Zone Anfang, nur normale und schnelle Fliegen. Bei 24,2 sind es 56 Prozent, Zone Scheue, neue Fliegen sind Heuschrecken und scheue, die vier alten fliehen. Bei 49,1 und 74,1 genauso. Rueckweg nach unten ebenfalls richtig.
+- Nicht angeschaut: wie es sich spielt.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum liegt die Grenze bei 24,1 und nicht bei 25?
+2. Woran erkennt `fremde_fliehen_lassen`, ob eine Fliege zur Zone gehoert?
+3. Warum flieht der Boss nicht, auch wenn man unter seine Zone faellt?
+
 ## Geaendert in Abschnitt 10: Steine als Hindernisse, Warnschild als Bild (`skripte/hindernis.gd`, `szenen/hindernis.tscn`)
 
 Deine fuenf ausgeschnittenen Fotos (`assets/hintergrund/hindernisse/stein-1.png` bis `stein-5.png`) fallen jetzt statt des grauen Klotzes. Fuer das Spiel liegen angepasste Kopien in `assets/hintergrund/hindernisse/spiel/`: zugeschnitten, Stein 1 und Stein 5 (der Turm) um 90 Grad gedreht, damit sie quer liegen, und in der Breite angeglichen, damit sie nicht so unterschiedlich sind: Stein 1 270, Stein 2 220, Stein 3 300, Stein 4 240, Stein 5 260 Pixel breit (vorher 62 bis 655). Stein 1 und 3 sind dabei kleiner geworden, Stein 5 breiter. Stein 2, 4 und 5 waren als Ausschnitt kleiner und sind vergroessert, darum etwas weicher. Das Warndreieck ist dein ausgeschnittenes Warnschild, 120 Pixel breit (`spiel/warnschild.png`).
@@ -6428,7 +6530,94 @@ Frage zur Selbstkontrolle: Warum muss `$Klotz.position.y` auf `-hoehe / 2.0` ste
 
 Nur Bilder und zwei Pfade, kein Code. Die Skizzen sind 600 Pixel breit und werden im Spiel auf knapp ein Viertel verkleinert (`scale` 0,2333). Dabei verschwimmen duenne, helle Striche fast ganz. Darum gibt es zwei neue Dateien, die Originale bleiben unveraendert:
 
-- `assets/fliegen/spiel/insekt-bleistift-skizze-kraeftig.png` (normale Fliege): Papier fast weiss, Bleistiftstriche schwarz und auf etwa 5 Pixel verdickt.
-- `assets/fliegen/spiel/fliege-skizze-kraeftig.png` (schnelle Fliege): Papier fast weiss, Kugelschreiberstriche dunkler und satter blau, nur wenig verdickt (3 Pixel), weil die Schraffur dicht ist und sonst zu einer Flaeche zusammenlaeuft.
+- `assets/fliegen/spiel/insekt-bleistift-skizze-kraeftig.png` (normale Fliege): Papier fast weiss, Bleistiftstriche schwarz und auf etwa 7 Pixel verdickt.
+- `assets/fliegen/spiel/fliege-skizze-kraeftig.png` (schnelle Fliege): Papier fast weiss, Kugelschreiberstriche sehr dunkel und satt blau, nur wenig verdickt (3 Pixel), weil die Schraffur dicht ist und sonst zu einer Flaeche zusammenlaeuft.
 
-`fliege_normal.tscn` und `fliege_schnell.tscn` zeigen jetzt auf die neuen Dateien. Die Trefferflaeche bleibt gleich, die Bilder sind gleich gross wie vorher.
+Die Schnittkante des Ausschnitts zaehlt nicht als Strich: Nur wo das Bild 2 Pixel ringsum ganz deckt, wird dunkel gefaerbt, und verdickte Striche wachsen nicht ueber den Ausschnitt hinaus. Sonst entsteht ein schwarzer Rand um die ganze Fliege. Folge: sehr duenne Teile (der Fuehler) bleiben hell. Ganz schwache Graustufen gelten als Papierstruktur und werden weiss, sonst wuerde die Verstaerkung das Papier fleckig machen.
+
+- `assets/fliegen/spiel/heuschrecke-skizze-kraeftig.png` (Heuschrecke): wie die blaue Fliege, aber schwaecher (Stufe 1). Der Bockkaefer bleibt, wie er ist, er ist schon fast schwarz-weiss.
+
+`fliege_normal.tscn`, `fliege_schnell.tscn` und `fliege_heuschrecke.tscn` zeigen jetzt auf die neuen Dateien. Die Trefferflaeche bleibt gleich, die Bilder sind gleich gross wie vorher.
+
+### Nachtrag: Fluegelschlag aus deiner Krita-Datei (27.11.2026)
+
+Kein Code, nur `szenen/fliege_normal.tscn` und vier Bilder. Du hast den Schlag in Krita selbst gezeichnet: Bild 1 mit den Fluegeln steil nach oben, Bild 2 flach auf dem Ruecken. Diese Bilder sind jetzt genau so im Spiel:
+
+- `assets/fluegel/schlag/normal-vorn-1.png`, `normal-vorn-2.png`, `normal-hinten-1.png`, `normal-hinten-2.png`. Je Fluegel sind beide Bilder gleich gross ausgeschnitten, damit sie beim Wechsel genau an derselben Stelle liegen.
+- `FluegelVorn` und `FluegelHinten` sind jetzt einfache `Sprite2D` ohne Drehung: `scale` 0,2333 wie der Koerper (die Krita-Leinwand hatte die Pixel des Koerperbilds), `position` so, dass sie wie in Krita auf dem Ruecken sitzen.
+- Die Animation `flattern` dreht nichts mehr, sie wechselt das Bild: Ihre zwei Spuren setzen `texture` bei 0 Sekunden auf Bild 1 und bei 0,06 Sekunden auf Bild 2. `"update": 1` heisst: Der Wert springt, statt weich ueberzugehen (Bilder kann man nicht halb zeigen). Nach 0,12 Sekunden beginnt sie von vorn.
+- Das Anhalten beim Treffer (`nadel.gd`) bleibt, wie es war.
+
+Gemessen in einer Probe: Der Fluegel wechselt 17-mal pro Sekunde das Bild (geplant: alle 0,06 Sekunden, also 16,7-mal).
+
+Frage: Was wuerde passieren, wenn `"update"` 0 waere?
+
+## Hintergrund laeuft nach oben mit, normale Fliege dreht schneller, Fluegel schlagen weiter (27.11.2026)
+
+Deine Wuensche: Die Pappe bewegt sich nicht zur Seite, aber nach oben, damit man sieht, dass man steigt. Die normale Fliege dreht sich doppelt so schnell. Der Fluegelschlag ist so schnell, dass man das Drehen zwischen den zwei Bildern nicht mehr sieht, und er geht weiter, wenn die Fliege gefangen ist.
+
+### Die Pappen (`assets/hintergrund/riffel/`)
+
+Jede Pappe ist jetzt doppelt so hoch: das Bild und darunter dasselbe Bild auf den Kopf gestellt (gespiegelt). So passt die Unterkante genau an die Oberkante der naechsten Kopie, und die Pappe kann sich endlos nach oben wiederholen, ohne dass man eine Naht sieht. Zur Seite wiederholt sie sich nie.
+
+### `szenen/spiel.tscn` - `Hintergrund/Pappe` und `Hintergrund/Naechste`
+
+Vorher waren beide ueber die vier `anchor`-Zeilen genau so gross wie der Bildschirm, das Bild darauf gezogen. Jetzt:
+- `offset_right = 592` und `offset_bottom = 2352`: Der Kasten ist so breit wie das Bild und zwei Bilder hoch.
+- `scale = (2.4324, 1.8367)`: 592 x 2,4324 = 1440, also genau die Bildschirmbreite. 1,8367 ist dieselbe senkrechte Vergroesserung wie vorher (588 auf 1080), damit die Rillen gleich dick aussehen.
+- `stretch_mode = 1` (Kacheln): Das Bild wird untereinander wiederholt statt gezogen.
+
+### `skripte/hintergrund.gd` - geaendert
+
+```gdscript
+@export var mitlaufen: float = 0.5
+```
+Neu. Wie schnell die Pappe mitlaeuft. 0,5 heisst: halb so schnell wie die Welt. Das wirkt, als waere die Pappe weiter weg.
+
+```gdscript
+	var kachel: float = $Pappe.texture.get_height() * $Pappe.scale.y
+```
+Neu, am Ende von `_process`. Wie hoch eine Pappe auf dem Bildschirm ist: Bildhoehe mal Vergroesserung, 1176 x 1,8367 = 2160 Pixel.
+
+```gdscript
+	var schieben: float = fposmod(-kanone.position.y * mitlaufen, kachel)
+```
+Neu. Wie weit die Pappe nach unten geschoben ist. Steigt die Kanone, wird `-kanone.position.y` groesser, also wandert die Pappe nach unten. `fposmod` ist der Rest beim Teilen, immer zwischen 0 und `kachel`: Nach einer ganzen Pappenhoehe faengt die Zahl wieder bei 0 an. Weil die Pappe sich wiederholt, sieht man diesen Sprung nicht.
+
+```gdscript
+	$Pappe.position.y = schieben - kachel
+	$Naechste.position.y = schieben - kachel
+```
+Neu. Beide Pappen stehen um eine Pappenhoehe weiter oben und werden dann nach unten geschoben. So ist der Bildschirm immer ganz bedeckt: Der Kasten ist zwei Pappen hoch, oben ragt hoechstens eine ueber den Rand. Beide bekommen denselben Wert, damit das Muster beim Ueberblenden genau aufeinanderliegt.
+
+### `skripte/fliege_normal.gd` - geaendert
+
+```gdscript
+@export var drehtempo: float = 25.12
+```
+Vorher 12,56 (zwei Umdrehungen pro Sekunde), jetzt doppelt so viel: vier Umdrehungen pro Sekunde.
+
+### `szenen/fliege_normal.tscn` - Animation `flattern`
+
+Die Animation ist jetzt 0,034 Sekunden lang statt 0,12, der Wechsel auf Bild 2 kommt bei 0,017 Sekunden statt 0,06. 0,017 Sekunden ist ungefaehr ein Bild bei 60 Bildern pro Sekunde: Die Fluegel wechseln also in jedem Bild. Vorher drehte sich die Fliege waehrend eines Fluegelbilds um etwa 40 Grad, jetzt um etwa 25 (bei doppeltem Drehtempo), und es wechselt so schnell, dass das Auge nur noch ein Flimmern sieht.
+
+### `skripte/nadel.gd` - geaendert
+
+Die zwei Zeilen
+```gdscript
+	if getroffene.has_node("Flattern"):
+		getroffene.get_node("Flattern").pause()
+```
+sind wieder weg. Eine aufgespiesste Fliege schlaegt jetzt weiter mit den Fluegeln, auch oben an der Hand. Der `AnimationPlayer` laeuft fuer sich weiter, unabhaengig davon, dass die Fliege selbst nicht mehr fliegt.
+
+### So wurde es angeschaut
+
+- Schnellcheck PASS fuer `hintergrund.gd`, `fliege_normal.gd`, `nadel.gd`, Verify PASS.
+- Probe: Kanone in 10 Sekunden gleichmaessig von 0 auf 16 Flugkraft hochgefahren, Bilder gespeichert. Zwischen zwei Bildern wandern die Rillen 8 Pixel nach unten (im halb so grossen Bild, also 16 Pixel im Spiel), an vier verschiedenen Stellen gemessen. Gerechnet: 16 Flugkraft in 150 Bildern x 300 Pixel x 0,5 = 16 Pixel. Keine Naht gesehen. Das Video liegt auf dem Desktop (`fliegen-look.mp4`).
+- Nicht angeschaut: ob der schnelle Fluegelschlag am Handy und im Browser (oft 60 Bilder pro Sekunde, manchmal weniger) noch wie Flimmern wirkt.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum muessen `Pappe` und `Naechste` immer genau denselben `position.y` haben?
+2. Was macht `fposmod`, und warum sieht man nicht, wenn die Zahl wieder bei 0 anfaengt?
+3. Warum ist die Pappe jetzt gespiegelt doppelt so hoch?

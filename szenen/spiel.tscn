@@ -195,25 +195,23 @@ bilder = Array[Texture2D]([ExtResource("p01"), ExtResource("p02"), ExtResource("
 flugkraft_je_bild = 12.5
 
 [node name="Pappe" type="TextureRect" parent="Hintergrund"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_right = 592.0
+offset_bottom = 2352.0
+scale = Vector2(2.4324, 1.8367)
 mouse_filter = 2
 texture = ExtResource("p01")
 expand_mode = 1
+stretch_mode = 1
 
 [node name="Naechste" type="TextureRect" parent="Hintergrund"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_right = 592.0
+offset_bottom = 2352.0
+scale = Vector2(2.4324, 1.8367)
 mouse_filter = 2
 modulate = Color(1, 1, 1, 0)
 texture = ExtResource("p02")
 expand_mode = 1
+stretch_mode = 1
 
 [node name="Boden" type="Parallax2D" parent="."]
 scroll_offset = Vector2(0, 1212)
@@ -569,18 +567,18 @@ fliegen = Array[PackedScene]([ExtResource("3_fliege"), ExtResource("17_schnell")
 
 [node name="Scheue" type="Node" parent="Zonen"]
 script = ExtResource("23_zone")
-ab_flugkraft = 25.0
+ab_flugkraft = 24.1
 fliegen = Array[PackedScene]([ExtResource("18_scheu"), ExtResource("40_heuschrecke")])
 
 [node name="Koeder" type="Node" parent="Zonen"]
 script = ExtResource("23_zone")
-ab_flugkraft = 50.0
+ab_flugkraft = 49.1
 fliegen = Array[PackedScene]([ExtResource("19_koeder")])
 mindestens = 3
 
 [node name="Boss" type="Node" parent="Zonen"]
 script = ExtResource("23_zone")
-ab_flugkraft = 75.0
+ab_flugkraft = 74.1
 fliegen = Array[PackedScene]([ExtResource("20_teleport")])
 einmalig = Array[PackedScene]([ExtResource("21_boss")])
 mindestens = 3

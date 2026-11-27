@@ -71,6 +71,7 @@ func _process(_delta: float) -> void:
 		if zone.ab_flugkraft > letzte_zone.ab_flugkraft:
 			for szene in zone.einmalig:
 				hereinfliegen(szene)
+		fremde_fliehen_lassen(zone)
 		letzte_zone = zone
 	if freie_in_der_naehe() < zone.mindestens:
 		hereinfliegen(zone.fliegen.pick_random())
@@ -104,6 +105,23 @@ func fliehen_lassen() -> void:
 			continue
 		var ueber: float = kanone.position.y - fliege.grund_y
 		if ueber < flucht_unten or ueber > flucht_oben:
+			if fliege.position.x < kanone.position.x:
+				fliege.flucht = Vector2.LEFT
+			else:
+				fliege.flucht = Vector2.RIGHT
+
+
+# Beim Wechsel in eine neue Zone: Jede freie Fliege, die nicht zu dieser Zone gehoert, fliegt zum naeheren Rand davon.
+# Zur Zone gehoert sie, wenn ihre Szene in der Liste fliegen oder einmalig der Zone steht.
+func fremde_fliehen_lassen(zone: Node) -> void:
+	for fliege in get_children():
+		if fliege.flucht != Vector2.ZERO or not fliege.flieht:
+			continue
+		var gehoert_dazu: bool = false
+		for szene in zone.fliegen + zone.einmalig:
+			if szene.resource_path == fliege.scene_file_path:
+				gehoert_dazu = true
+		if not gehoert_dazu:
 			if fliege.position.x < kanone.position.x:
 				fliege.flucht = Vector2.LEFT
 			else:

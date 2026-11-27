@@ -1,9 +1,47 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://skripte/fliege_normal.gd" id="1_fliege"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/summen.ogg" id="2_summen"]
 
-[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/insekt-bleistift-skizze.png" id="9_bild"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/insekt-bleistift-skizze-kraeftig.png" id="9_bild"]
+[ext_resource type="Texture2D" path="res://assets/fluegel/schlag/normal-vorn-1.png" id="f_vorn_1"]
+[ext_resource type="Texture2D" path="res://assets/fluegel/schlag/normal-vorn-2.png" id="f_vorn_2"]
+[ext_resource type="Texture2D" path="res://assets/fluegel/schlag/normal-hinten-1.png" id="f_hinten_1"]
+[ext_resource type="Texture2D" path="res://assets/fluegel/schlag/normal-hinten-2.png" id="f_hinten_2"]
+
+[sub_resource type="Animation" id="Animation_flattern"]
+resource_name = "flattern"
+length = 0.034
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("FluegelVorn:texture")
+tracks/0/interp = 0
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.017),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("f_vorn_1"), ExtResource("f_vorn_2")]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("FluegelHinten:texture")
+tracks/1/interp = 0
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.017),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("f_hinten_1"), ExtResource("f_hinten_2")]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_fluegel"]
+_data = {
+&"flattern": SubResource("Animation_flattern")
+}
 
 [node name="Fliege" type="Node2D" groups=["fliegen"]]
 z_index = 1
@@ -27,9 +65,25 @@ offset_bottom = 50.0
 mouse_filter = 2
 color = Color(0.1, 0.1, 0.1, 1)
 
+[node name="FluegelHinten" type="Sprite2D" parent="."]
+position = Vector2(-15.6, -62.4)
+scale = Vector2(0.2333, 0.2333)
+texture = ExtResource("f_hinten_1")
+
 [node name="Bild" type="Sprite2D" parent="."]
 scale = Vector2(0.2333, 0.2333)
 texture = ExtResource("9_bild")
+
+[node name="FluegelVorn" type="Sprite2D" parent="."]
+position = Vector2(-4.5, -67.3)
+scale = Vector2(0.2333, 0.2333)
+texture = ExtResource("f_vorn_1")
+
+[node name="Flattern" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_fluegel")
+}
+autoplay = &"flattern"
 
 [node name="Art" type="Label" parent="."]
 visible = false

@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://skripte/fliege_schnell.gd" id="1_fliege"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/summen.ogg" id="2_summen"]
 
-[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/fliege-skizze.png" id="9_bild"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/fliege-skizze-kraeftig.png" id="9_bild"]
 
 [node name="Fliege" type="Node2D" groups=["fliegen"]]
 z_index = 1

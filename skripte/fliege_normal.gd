@@ -5,7 +5,7 @@ extends "res://skripte/fliege.gd"
 # Wie weit die Fliege von ihrer Mitte nach links und nach rechts fliegt, in Pixeln.
 @export var strecke: float = 300.0
 # Wie schnell sich die Fliege um sich selbst dreht, im Bogenmass pro Sekunde. 6.28 ist eine Umdrehung pro Sekunde.
-@export var drehtempo: float = 12.56
+@export var drehtempo: float = 25.12
 # Wie weit die Fliege hoch und runter wippt, in Pixeln.
 @export var wipp_hoehe: float = 50.0
 # Wie schnell sie wippt. 4 heisst: ein Auf und Ab dauert etwa 1,6 Sekunden.
