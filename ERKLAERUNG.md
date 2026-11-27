@@ -6917,3 +6917,37 @@ Zusammen mit den Zeilen in `spiel.gd` von oben (`$Boden.scroll_offset.x = $Kanon
 ### Nachtrag: Fluegel fuer die Stechfliege (27.11.2026)
 
 Kein Code, nur `szenen/stechfliege.tscn`: tuerkise Fluegel (sie sticht in der Zone Scheue, `Stecher` haengt an `Zonen/Scheue`) und wippender Koerper aus deiner Krita-Datei, gebaut wie bei den anderen. Wenn sie sich auf der Hand hochkant dreht, drehen die Fluegel mit, weil sie Kinder desselben Knotens sind. Neue Bilder: `assets/fluegel/schlag/stech-*.png`, `assets/fliegen/spiel/fliege-ruessel-orange-schlag-1.png` und `-2.png`; dein Original bleibt. Damit haben alle acht Insekten Fluegel.
+## Aufstehen mit deinen Fotos (`szenen/spiel.tscn`, 27.11.2026)
+
+Dein Wunsch: Nach dem Absturz kommt dein Aufprallbild (mit dem Arm hinter dem Koerper), danach das Bild, auf dem du kniest, so wie du es in Krita angeordnet hast.
+
+### Die Bilder (`assets/forscher/aufstehen/aufprall.png` und `kniend.png`)
+
+Beide sind aus deiner Krita-Datei gelesen, mit genau einem gemeinsamen Ausschnitt (1082 x 1079 Pixel). Darum liegen sie im Spiel zueinander genau so wie bei dir in Krita: Der Kniende steht dort, wo du ihn hingeschoben hast. Das dritte Bild (`aufstehend-65`) hattest du aus der Zeitleiste genommen, es ist nicht dabei.
+
+### `SpriteFrames_aufstehen` - geaendert
+
+Vorher drei graue Kaesten (liegt, kniet, steht). Die drei grauen Verlaeufe dafuer sind geloescht, sie wurden nur hier benutzt. Jetzt:
+
+- erstes Bild `aufprall.png` mit `"duration": 2.0`: Es bleibt zwei Bilder lang stehen. In Krita hattest du es auf Bild 0 und 1 der Zeitleiste.
+- zweites Bild `kniend.png` mit `"duration": 1.0`.
+- `"speed": 6.0`: 6 Bilder pro Sekunde, wie in deiner Krita-Datei. Das Ganze dauert also 3 / 6 = 0,5 Sekunden.
+
+### `Kanone/Aufstehen` - geaendert
+
+- `scale = 0.76`: Das Bild ist 76 Prozent so gross wie das Foto. Der Kniende ist dann etwa 740 Pixel hoch, drei Viertel der grauen Figur (990), weil ein Kniender etwa drei Viertel so hoch ist wie ein Stehender.
+- `position = (130, 802)`: x 130 ist die Mitte der Figur. Die Unterkante des Bildes liegt auf dem Boden: 802 + 1079 x 0,76 / 2 = 1212, und 1212 unter der Kanone ist die Wiese.
+
+`spiel.gd` ist unveraendert: `aufstehen()` zeigt den Knoten und spielt `aufstehen`, am Ende startet das Spiel neu.
+
+### So wurde es angeschaut
+
+- Verify PASS.
+- Probe: hochgesprungen, alles verloren, beim Aufprall und 0,4 Sekunden spaeter ein Bild aufgenommen. Erst liegt der Forscher an den Pfosten, dann kniet er. Der Kniende schwebt etwa 80 Pixel ueber der Bodenlinie, weil er in deiner Krita-Datei hoeher steht als der Liegende.
+- Nicht angeschaut: ob 0,5 Sekunden zu kurz sind, bevor das Spiel neu startet.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum haben beide Bilder denselben Ausschnitt?
+2. Was aendert `"duration": 2.0` am ersten Bild?
+3. Wie kommt man auf `position.y = 802`?

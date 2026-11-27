@@ -34,6 +34,8 @@
 [ext_resource type="AudioStream" uid="uid://dqny740xkicao" path="res://assets/audio/musik/musik_ende.ogg" id="32_ende"]
 [ext_resource type="Texture2D" uid="uid://bpkstdm7xn4af" path="res://assets/hintergrund/wiese.png" id="37_wiese"]
 [ext_resource type="Script" uid="uid://8b4vnukwtk4a" path="res://skripte/hintergrund.gd" id="38_hintergrund"]
+[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/aufprall.png" id="a1"]
+[ext_resource type="Texture2D" path="res://assets/forscher/aufstehen/kniend.png" id="a2"]
 [ext_resource type="PackedScene" path="res://szenen/fliege_heuschrecke.tscn" id="40_heuschrecke"]
 [ext_resource type="PackedScene" path="res://szenen/stechfliege.tscn" id="41_stechfliege"]
 [ext_resource type="Script" uid="uid://bcvwcnsiwex35" path="res://skripte/stecher.gd" id="42_stecher"]
@@ -132,49 +134,18 @@ animations = [{
 "speed": 12.0
 }]
 
-[sub_resource type="Gradient" id="Gradient_liegt"]
-offsets = PackedFloat32Array(0, 0.8, 0.8, 1)
-colors = PackedColorArray(0, 0, 0, 0, 0, 0, 0, 0, 0.6, 0.6, 0.6, 1, 0.6, 0.6, 0.6, 1)
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_liegt"]
-gradient = SubResource("Gradient_liegt")
-width = 80
-height = 200
-fill_to = Vector2(0, 1)
-
-[sub_resource type="Gradient" id="Gradient_kniet"]
-offsets = PackedFloat32Array(0, 0.5, 0.5, 1)
-colors = PackedColorArray(0, 0, 0, 0, 0, 0, 0, 0, 0.6, 0.6, 0.6, 1, 0.6, 0.6, 0.6, 1)
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_kniet"]
-gradient = SubResource("Gradient_kniet")
-width = 80
-height = 200
-fill_to = Vector2(0, 1)
-
-[sub_resource type="Gradient" id="Gradient_steht"]
-colors = PackedColorArray(0.6, 0.6, 0.6, 1, 0.6, 0.6, 0.6, 1)
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_steht"]
-gradient = SubResource("Gradient_steht")
-width = 80
-height = 200
-
 [sub_resource type="SpriteFrames" id="SpriteFrames_aufstehen"]
 animations = [{
 "frames": [{
-"duration": 1.0,
-"texture": SubResource("GradientTexture2D_liegt")
+"duration": 2.0,
+"texture": ExtResource("a1")
 }, {
 "duration": 1.0,
-"texture": SubResource("GradientTexture2D_kniet")
-}, {
-"duration": 1.0,
-"texture": SubResource("GradientTexture2D_steht")
+"texture": ExtResource("a2")
 }],
 "loop": 0,
 "name": &"aufstehen",
-"speed": 5.0
+"speed": 6.0
 }]
 
 [sub_resource type="Gradient" id="Gradient_taste"]
@@ -446,8 +417,8 @@ position = Vector2(0, -230.7)
 
 [node name="Aufstehen" type="AnimatedSprite2D" parent="Kanone" unique_id=1527670631]
 visible = false
-position = Vector2(130, 717)
-scale = Vector2(3.5, 4.95)
+position = Vector2(130, 802)
+scale = Vector2(0.76, 0.76)
 sprite_frames = SubResource("SpriteFrames_aufstehen")
 animation = &"aufstehen"
 
