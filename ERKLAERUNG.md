@@ -6622,6 +6622,50 @@ sind wieder weg. Eine aufgespiesste Fliege schlaegt jetzt weiter mit den Fluegel
 2. Was macht `fposmod`, und warum sieht man nicht, wenn die Zahl wieder bei 0 anfaengt?
 3. Warum ist die Pappe jetzt gespiegelt doppelt so hoch?
 
+## Wolken, die an ihrem Ort bleiben (`szenen/spiel.tscn`, 27.11.2026)
+
+Dein Wunsch: Die drei Wolkenbilder kommen ins Spiel. Egal wo man ist, sieht man immer mindestens eine. Die Wolken sind fest: Faehrt man nach rechts, wandern sie im Bild nach links, weil sie bleiben, wo sie sind.
+
+Dafuer ist kein Skript noetig, nur vier neue Knoten in der Szene.
+
+### Die Bilder (`assets/hintergrund/wolken/wolke-1.png` bis `wolke-3.png`)
+
+Deine drei Bilder hatten einen weissen Grund. Das Weiss ist herausgerechnet: Reines Weiss ist ganz durchsichtig, alles, was mindestens 44 Stufen dunkler ist als Weiss (von 255), ist ganz deckend, dazwischen wird es weich durchsichtig. Danach ist der leere Rand abgeschnitten. Deine Originale sind unveraendert, das Rechnen hat ein kleines Hilfsskript gemacht, das nicht im Spielordner liegt.
+
+Wichtig zu wissen: Auch das Weiss mitten in der Wolke ist jetzt durchsichtig. Dort schaut die Pappe durch.
+
+### `Wolken` (Parallax2D) - neu
+
+Derselbe Knotentyp wie `Boden`. Ein `Parallax2D` kann seinen Inhalt endlos wiederholen.
+
+- `repeat_size = (4000, 1080)`: Alles, was in `Wolken` liegt, wiederholt sich alle 4000 Pixel zur Seite und alle 1080 Pixel nach oben und unten. 1080 ist genau die Hoehe des Bildschirms.
+- `repeat_times = 5`: So viele Kopien werden nebeneinander und uebereinander gezeichnet. Fuer das normale Bild wuerde weniger reichen, aber in der Totale am Boden ist die Kamera weit weg und zeigt 3349 x 2512 Pixel.
+- `scroll_scale` steht nicht da, also gilt der Standard 1: Die Wolken bewegen sich genau so schnell wie die Welt. Das heisst, sie stehen in der Welt fest. Zum Vergleich: Die Pappe laeuft nur halb so schnell mit (`mitlaufen` 0,5).
+
+`Wolken` steht in der Liste zwischen `Hintergrund` und `Boden`. Darum werden die Wolken vor der Pappe gezeichnet, aber hinter der Wiese, den Fliegen und der Kanone.
+
+### `Wolke1`, `Wolke2`, `Wolke3` (Sprite2D) - neu
+
+Je ein Bild, mit `scale = 0.65` etwa 500 bis 580 Pixel breit. Die Orte:
+
+- `Wolke1` bei (200, 250)
+- `Wolke2` bei (1500, 800)
+- `Wolke3` bei (2800, 520)
+
+Warum sieht man so immer eine? Zur Seite: Von Wolke 1 zu Wolke 2 sind es 1300 Pixel, von 2 zu 3 auch 1300, von 3 zur naechsten Kopie von Wolke 1 (bei 4200) sind es 1400. Der Bildschirm ist 1440 breit, also breiter als jede Luecke: Mindestens eine Wolkenmitte liegt immer in der Breite des Bildes. Nach oben: Jede Wolke kommt alle 1080 Pixel wieder, und das Bild ist 1080 hoch. Also liegt diese Wolke auch in der Hoehe immer im Bild.
+
+### So wurde es angeschaut
+
+- Verify PASS.
+- Probe: Kanone an acht Orte gestellt (zur Seite von 0 bis 123456, in der Hoehe bis 28000) und je ein Bild gespeichert, dazu die Totale. In jedem Bild ist mindestens eine Wolke. Auf der weissen Pappe sieht man die Wolken als graue Flecken, auf den dunklen Pappen leuchten sie hell.
+- Nicht angeschaut: ob die Wolken beim Spielen von den Fliegen ablenken.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum bleiben die Wolken in der Welt stehen, obwohl sie in einem `Parallax2D` liegen?
+2. Was wuerde passieren, wenn `repeat_size` (4000, 2000) waere?
+3. Warum liegen die Wolken hinter den Fliegen und nicht davor?
+
 ## Geaendert: Die schnelle Fliege dreht sich in der Schleife nicht mehr (`skripte/fliege_schnell.gd`, 27.11.2026)
 
 Dein Wunsch: In der Wende fliegt sie die Schleife ab, aber das Bild dreht sich nicht mit. Erst wenn sie wirklich in die andere Richtung fliegt, wird das Bild umgedreht (gespiegelt).

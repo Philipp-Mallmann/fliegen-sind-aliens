@@ -42,6 +42,9 @@
 [ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-7-nachtblau.png" id="p07"]
 [ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-8-fast-schwarz.png" id="p08"]
 [ext_resource type="Script" path="res://skripte/hintergrund.gd" id="38_hintergrund"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/wolke-1.png" id="w1"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/wolke-2.png" id="w2"]
+[ext_resource type="Texture2D" path="res://assets/hintergrund/wolken/wolke-3.png" id="w3"]
 [ext_resource type="PackedScene" path="res://szenen/fliege_heuschrecke.tscn" id="40_heuschrecke"]
 [ext_resource type="PackedScene" path="res://szenen/stechfliege.tscn" id="41_stechfliege"]
 [ext_resource type="Script" path="res://skripte/stecher.gd" id="42_stecher"]
@@ -212,6 +215,25 @@ modulate = Color(1, 1, 1, 0)
 texture = ExtResource("p02")
 expand_mode = 1
 stretch_mode = 1
+
+[node name="Wolken" type="Parallax2D" parent="."]
+repeat_size = Vector2(4000, 1080)
+repeat_times = 5
+
+[node name="Wolke1" type="Sprite2D" parent="Wolken"]
+position = Vector2(200, 250)
+scale = Vector2(0.65, 0.65)
+texture = ExtResource("w1")
+
+[node name="Wolke2" type="Sprite2D" parent="Wolken"]
+position = Vector2(1500, 800)
+scale = Vector2(0.65, 0.65)
+texture = ExtResource("w2")
+
+[node name="Wolke3" type="Sprite2D" parent="Wolken"]
+position = Vector2(2800, 520)
+scale = Vector2(0.65, 0.65)
+texture = ExtResource("w3")
 
 [node name="Boden" type="Parallax2D" parent="."]
 scroll_offset = Vector2(0, 1212)
