@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/blut/blut.png" id="1_blut"]
+[ext_resource type="Script" path="res://skripte/matsch.gd" id="2_matsch"]
+
+[node name="Matsch" type="Sprite2D"]
+texture = ExtResource("1_blut")
+script = ExtResource("2_matsch")

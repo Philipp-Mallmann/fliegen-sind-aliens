@@ -23,6 +23,10 @@ extends Node2D
 @export var weg_unter: float = 300.0
 # Die Szene des Matsches. Bei jeder zermatschten Fliege entsteht daraus ein Fleck.
 @export var matsch_szene: PackedScene
+# Wie die zermatschte Fliege platt gedrueckt wird: so viel breiter und so viel flacher, in dieser Zeit (Sekunden).
+@export var platt_breite: float = 1.5
+@export var platt_hoehe: float = 0.2
+@export var platt_dauer: float = 0.08
 
 # Die Kanone. Die Warnung bleibt ueber ihr am oberen Bildrand. Setzt der Hindernis-Erzeuger.
 var kanone: Node2D = null
@@ -90,16 +94,38 @@ func im_klotz(fliege: Node2D) -> bool:
 
 
 func zermatschen(fliege: Node2D) -> void:
+	# Alle Fliegen, die der Stein mitnimmt: eine freie Fliege allein, eine gefangene mit allen an ihrem Draht.
+	var opfer: Array[Node2D] = []
 	if fliege.gefangen:
 		var nadel: Node2D = fliege.get_parent()
 		if not nadel.haengt:
 			return
 		nadel.haengt = false
 		faecher.entfernen(nadel)
+		opfer.append_array(nadel.aufgespiesste)
+		for gefangene in opfer:
+			plattmachen(gefangene)
 		nadel.queue_free()
 	else:
-		fliege.queue_free()
+		plattmachen(fliege)
 	get_parent().get_node("TonMatsch").play()
+
+
+# Die Fliege klebt platt gedrueckt unten am Stein und faellt mit ihm aus dem Bild, dazu ein Spritzer in ihrer Farbe.
+# Sie zaehlt dann nicht mehr als Fliege (Gruppe weg, nichts bewegt sie mehr). Mit dem Stein wird sie geloescht.
+func plattmachen(fliege: Node2D) -> void:
+	fliege.remove_from_group("fliegen")
+	fliege.gefangen = true
+	fliege.set_process(false)
+	fliege.get_node("Summen").stop()
+	if fliege.has_node("Flattern"):
+		fliege.get_node("Flattern").pause()
+	fliege.reparent(self)
+	fliege.position.y = 0.0
+	fliege.rotation = 0.0
 	var matsch: Node2D = matsch_szene.instantiate()
-	get_parent().add_child(matsch)
-	matsch.global_position = fliege.global_position
+	matsch.modulate = fliege.blut_farbe
+	add_child(matsch)
+	matsch.position = fliege.position
+	var platt: Tween = fliege.create_tween()
+	platt.tween_property(fliege, "scale", Vector2(fliege.scale.x * platt_breite, fliege.scale.y * platt_hoehe), platt_dauer)

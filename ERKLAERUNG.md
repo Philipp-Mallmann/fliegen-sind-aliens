@@ -7262,3 +7262,82 @@ So wurde es angeschaut: Verify PASS. Probe: Start und Knien nebeneinander, die S
 ### Nachtrag: Teleport-Fliege erholt sich laenger (27.11.2026)
 
 Nur eine Zahl in `skripte/fliege_teleport.gd`: `erholzeit` von 2,5 auf 4 Sekunden (erst 5, dann auf deinen Wunsch 4). So lange springt sie nach ihren drei Spruengen nicht und laesst sich fangen. Die Szene ueberschreibt den Wert nicht, darum gilt die Zahl im Skript.
+
+## Felsen zermatschen sichtbar, Kanone schneller (27.11.2026)
+
+Bisher verschwand eine Fliege einfach, wenn ein Fels sie traf. Den Matsch dazu hatte der Fels aus derselben Szene wie der Blutfleck am Nagel genommen, und seit der zum kleinen, ungefaerbten Punkt geworden war, sah man fast nichts mehr. Jetzt wird die Fliege platt gedrueckt, klebt unten am Fels und faellt mit ihm aus dem Bild, dazu spritzt Blut in ihrer Zonenfarbe auf.
+
+### `szenen/matsch.tscn` und `skripte/matsch.gd` - neu
+
+Ein `Sprite2D` mit dem Blutbild. Das Skript laesst es beim Erscheinen schnell aufspritzen:
+
+```gdscript
+func _ready() -> void:
+	scale = Vector2.ONE * groesse_anfang
+	var spritzen: Tween = create_tween()
+	spritzen.tween_property(self, "scale", Vector2.ONE * groesse_ende, dauer)
+```
+Es beginnt klein (0,15) und waechst in 0,12 Sekunden auf 1,3. Danach bleibt es stehen. Es haengt am Fels, und wenn der Fels unten aus dem Bild ist und geloescht wird, verschwindet es mit ihm. `szenen/hindernis.tscn` benutzt jetzt diese Szene statt `blutfleck.tscn`.
+
+### `skripte/hindernis.gd` - geaendert
+
+```gdscript
+@export var platt_breite: float = 1.5
+@export var platt_hoehe: float = 0.2
+@export var platt_dauer: float = 0.08
+```
+Drei neue Werte: Die Fliege wird anderthalbmal so breit und auf ein Fuenftel ihrer Hoehe gedrueckt, in 0,08 Sekunden.
+
+```gdscript
+	var opfer: Array[Node2D] = []
+	if fliege.gefangen:
+		...
+		opfer.append_array(nadel.aufgespiesste)
+		for gefangene in opfer:
+			plattmachen(gefangene)
+		nadel.queue_free()
+	else:
+		plattmachen(fliege)
+```
+`zermatschen`: Trifft der Fels eine gefangene Fliege, gehen alle Fliegen an diesem Draht mit (`append_array` haengt eine ganze Liste an). Erst werden sie plattgemacht und an den Fels gehaengt, dann wird die Nadel geloescht. Andersherum wuerden die Fliegen mit der Nadel verschwinden.
+
+```gdscript
+func plattmachen(fliege: Node2D) -> void:
+	fliege.remove_from_group("fliegen")
+	fliege.gefangen = true
+	fliege.set_process(false)
+```
+Die Fliege zaehlt nicht mehr als Fliege: Sie ist nicht mehr in der Gruppe `fliegen` (sonst traefe der Fels sie im naechsten Bild noch einmal, und Nadeln koennten sie treffen), und nichts bewegt sie mehr. Summen und Fluegelschlag halten an.
+
+```gdscript
+	fliege.reparent(self)
+	fliege.position.y = 0.0
+	fliege.rotation = 0.0
+```
+Sie wird ein Kind des Felses. `position.y = 0` ist seine Unterkante (das Steinbild sitzt darueber). Seitlich bleibt sie, wo sie war.
+
+```gdscript
+	var matsch: Node2D = matsch_szene.instantiate()
+	matsch.modulate = fliege.blut_farbe
+	add_child(matsch)
+	matsch.position = fliege.position
+	var platt: Tween = fliege.create_tween()
+	platt.tween_property(fliege, "scale", Vector2(fliege.scale.x * platt_breite, fliege.scale.y * platt_hoehe), platt_dauer)
+```
+Der Spritzer in ihrer Farbe entsteht an derselben Stelle am Fels. Er wird nach dem Stein gemalt (also davor) und vor der Fliege (die hat `z_index` 1). Dann wird die Fliege platt gedrueckt.
+
+### `skripte/kanone.gd` - geaendert
+
+`tempo` 300 -> 360 und `beschleunigung` 600 -> 720: Die Kanone faehrt 20 Prozent schneller hin und her und kommt genauso schnell auf Touren wie vorher.
+
+### So wurde es angeschaut
+
+- Schnellcheck PASS fuer `hindernis.gd`, `matsch.gd`, `kanone.gd`, Verify PASS.
+- Probe mit fester Kamera: Fels faellt auf eine normale und eine Koeder-Fliege. Beide werden platt unter den Fels gedrueckt, darunter spritzt Rosa und Violett auf, alles faellt mit dem Fels weiter.
+- Nicht angeschaut: der Fall im Faecher im echten Spiel (die Probe dort war wegen der mitfahrenden Kamera unbrauchbar), wie es sich spielt.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum wird die Fliege aus der Gruppe `fliegen` genommen?
+2. Warum werden die Fliegen erst an den Fels gehaengt und dann die Nadel geloescht, nicht umgekehrt?
+3. Wann wird der Spritzer geloescht?

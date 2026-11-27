@@ -1,7 +1,7 @@
 [gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://skripte/hindernis.gd" id="1_hindernis"]
-[ext_resource type="PackedScene" path="res://szenen/blutfleck.tscn" id="2_blutfleck"]
+[ext_resource type="PackedScene" path="res://szenen/matsch.tscn" id="2_matsch"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/warnung.wav" id="3_warnung"]
 [ext_resource type="Texture2D" path="res://assets/hintergrund/hindernisse/spiel/stein-1.png" id="4_stein1"]
 [ext_resource type="Texture2D" path="res://assets/hintergrund/hindernisse/spiel/stein-2.png" id="5_stein2"]
@@ -13,7 +13,7 @@
 [node name="Hindernis" type="Node2D" groups=["hindernisse"]]
 script = ExtResource("1_hindernis")
 steine = Array[Texture2D]([ExtResource("4_stein1"), ExtResource("5_stein2"), ExtResource("6_stein3"), ExtResource("7_stein4"), ExtResource("8_stein5")])
-matsch_szene = ExtResource("2_blutfleck")
+matsch_szene = ExtResource("2_matsch")
 
 [node name="Spalte" type="ColorRect" parent="."]
 offset_left = -100.0

@@ -1,9 +1,9 @@
 extends Node2D
 
 # Hoechstes Tempo der Kanone, in Pixeln pro Sekunde.
-@export var tempo: float = 300.0
+@export var tempo: float = 360.0
 # Wie schnell die Kanone anfaehrt und abbremst, in Pixeln pro Sekunde pro Sekunde.
-@export var beschleunigung: float = 600.0
+@export var beschleunigung: float = 720.0
 # Welcher Teil des Tempos waehrend Uebergabe und Steigen bleibt. 0 heisst: Man lenkt dann gar nicht, 0.5 hiesse halb so schnell.
 @export var steig_anteil: float = 0.0
 # Die Szene der Nadel. Bei jedem Schuss entsteht daraus eine neue Nadel.
