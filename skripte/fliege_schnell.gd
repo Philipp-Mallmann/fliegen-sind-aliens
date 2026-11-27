@@ -27,6 +27,7 @@ var gelenkt: float = 0.0
 func losfliegen() -> void:
 	if richtung < 0.0:
 		winkel = PI
+	bild_richten()
 
 
 func fliegen(delta: float) -> void:
@@ -45,12 +46,17 @@ func fliegen(delta: float) -> void:
 		winkel -= schritt * richtung
 	else:
 		winkel += schritt * richtung
-	rotation = richtung * TAU * gelenkt / WENDE_GANZ
 	if gelenkt >= WENDE_GANZ:
 		wendet = false
 		richtung = -richtung
-		rotation = 0.0
+		bild_richten()
 		position.y = grund_y
 		winkel = 0.0
 		if richtung < 0.0:
 			winkel = PI
+
+
+# Das Bild schaut nach links (der Kopf ist links). Fliegt sie nach rechts, wird es gespiegelt.
+# In der Schleife dreht es sich nicht mit, es wird erst umgedreht, wenn sie wirklich in die andere Richtung fliegt.
+func bild_richten() -> void:
+	$Bild.flip_h = richtung > 0.0

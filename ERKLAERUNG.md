@@ -6621,3 +6621,28 @@ sind wieder weg. Eine aufgespiesste Fliege schlaegt jetzt weiter mit den Fluegel
 1. Warum muessen `Pappe` und `Naechste` immer genau denselben `position.y` haben?
 2. Was macht `fposmod`, und warum sieht man nicht, wenn die Zahl wieder bei 0 anfaengt?
 3. Warum ist die Pappe jetzt gespiegelt doppelt so hoch?
+
+## Geaendert: Die schnelle Fliege dreht sich in der Schleife nicht mehr (`skripte/fliege_schnell.gd`, 27.11.2026)
+
+Dein Wunsch: In der Wende fliegt sie die Schleife ab, aber das Bild dreht sich nicht mit. Erst wenn sie wirklich in die andere Richtung fliegt, wird das Bild umgedreht (gespiegelt).
+
+Weg ist in `fliegen` die Zeile
+```gdscript
+	rotation = richtung * TAU * gelenkt / WENDE_GANZ
+```
+Sie hat die ganze Fliege waehrend der Schleife einmal im Kreis gedreht. Ebenso weg: `rotation = 0.0` am Ende der Schleife, weil es nichts mehr zurueckzustellen gibt.
+
+Neu am Ende der Schleife, direkt nach `richtung = -richtung`, und am Ende von `losfliegen`:
+```gdscript
+		bild_richten()
+```
+Neu am Ende des Skripts:
+```gdscript
+func bild_richten() -> void:
+	$Bild.flip_h = richtung > 0.0
+```
+Das Bild der schnellen Fliege schaut nach links (der Kopf mit dem Auge ist links). `flip_h` spiegelt es waagrecht. Fliegt sie nach rechts (`richtung` groesser als 0), wird es gespiegelt und schaut nach rechts. Beim Start (`losfliegen`) und nach jeder Schleife wird das neu eingestellt.
+
+Angeschaut (Probe ohne Bildschirm, eine Fliege mit festem Tempo beobachtet): Drehung bleibt die ganze Zeit 0, auch in der Schleife. Gespiegelt beim Flug nach rechts, nach der Schleife (64 Bilder spaeter) nicht mehr gespiegelt und auf dem Rueckweg nach links. Schnellcheck PASS.
+
+Frage zur Selbstkontrolle: Warum steht `bild_richten()` nach `richtung = -richtung` und nicht davor?
