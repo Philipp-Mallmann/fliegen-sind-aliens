@@ -102,6 +102,8 @@ func zermatschen(fliege: Node2D) -> void:
 			return
 		nadel.haengt = false
 		faecher.entfernen(nadel)
+		# Zeigt "-N" an der Stelle: Man sieht, dass der Stein die Fliegen trifft und das Hoehe kostet.
+		get_tree().call_group("punktanzeige", "verloren", fliege.global_position, nadel.flugkraft())
 		opfer.append_array(nadel.aufgespiesste)
 		for gefangene in opfer:
 			plattmachen(gefangene)

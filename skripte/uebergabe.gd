@@ -27,6 +27,8 @@ var warteschlange: Array[Node2D] = []
 func starten(nadel: Node2D) -> void:
 	nadel.reparent(faecher)
 	gefangen.emit(nadel.flugkraft())
+	# Zeigt "+N" und bei mehreren Fliegen das Kombo-Wort (punktanzeige.gd).
+	get_tree().call_group("punktanzeige", "gefangen", nadel)
 	warteschlange.append(nadel)
 	if not laeuft:
 		uebergeben()

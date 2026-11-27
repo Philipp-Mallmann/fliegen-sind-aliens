@@ -80,6 +80,8 @@
 [ext_resource type="Texture2D" path="res://assets/forscher/stehen/stehen-koerper-2.png" id="st_koerper2"]
 [ext_resource type="Texture2D" path="res://assets/forscher/stehen/stehen-kopf-1.png" id="st_kopf1"]
 [ext_resource type="Texture2D" path="res://assets/forscher/stehen/stehen-kopf-2.png" id="st_kopf2"]
+[ext_resource type="Script" path="res://skripte/punktanzeige.gd" id="punkt_skript"]
+[ext_resource type="PackedScene" path="res://szenen/zahl.tscn" id="zahl_szene"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_feuer"]
 animations = [{
@@ -884,3 +886,8 @@ kanone = NodePath("../Kanone")
 zonen = NodePath("../Zonen")
 zone = NodePath("../Zonen/Scheue")
 stichstelle = NodePath("../Kanone/RechteHand/Stichstelle")
+
+[node name="Punktanzeige" type="CanvasLayer" parent="." groups=["punktanzeige"]]
+layer = 3
+script = ExtResource("punkt_skript")
+zahl_szene = ExtResource("zahl_szene")

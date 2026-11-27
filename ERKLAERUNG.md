@@ -7345,3 +7345,65 @@ Der Spritzer in ihrer Farbe entsteht an derselben Stelle am Fels. Er wird nach d
 ### Nachtrag: Schatten statt gelber Spalte (27.11.2026)
 
 Nur `szenen/hindernis.tscn`: Die Spalte, in der der Fels faellt, war Gelb mit 15 Prozent Deckkraft und auf den hellen Pappen kaum zu sehen. Jetzt ist sie ein Schatten: `color = Color(0, 0, 0, 0.35)`, also Schwarz mit 35 Prozent Deckkraft. Wie vorher beginnt sie schwaecher (`spalte_anfang` 0,3 mal so kraeftig) und wird bis zum Fallen voll. Auf der fast schwarzen Pappe sieht man den Schatten kaum.
+
+## Punkte, Kombos und Steinschlag-Schild (27.11.2026)
+
+Beim Fang sieht man jetzt, wie viel Flugkraft er bringt ("+4"), bei mehreren Fliegen auf einmal ein Kombo-Wort ("Double Kill"). Zermatscht ein Stein gefangene Fliegen, steht dort, wie viel verloren geht ("-4"). So wird klar, dass der Stein die Fliegen trifft und nicht dich, und dass dich das Hoehe kostet. Das Warnschild ueber der Felsbahn ist jetzt ein Steinschlag-Schild statt des Ausrufezeichens.
+
+### `szenen/zahl.tscn` und `skripte/zahl.gd` - neu
+
+Ein `Label` (ein Textfeld) in deiner Schrift Freckle Face, Groesse 56, mit schwarzem Rand (`outline_size` 14), damit es auf jeder Pappe lesbar ist. `pivot_offset` (200, 40) ist die Mitte des Feldes: Um diesen Punkt wird vergroessert.
+
+```gdscript
+func _ready() -> void:
+	var ablauf: Tween = create_tween()
+	ablauf.set_parallel(true)
+	ablauf.tween_property(self, "position:y", position.y - steigen, dauer)
+	ablauf.tween_property(self, "modulate:a", 0.0, dauer / 2.0).set_delay(dauer / 2.0)
+	ablauf.chain().tween_callback(queue_free)
+```
+`set_parallel(true)`: Die folgenden Bewegungen laufen gleichzeitig. Der Text steigt in 1,2 Sekunden um 90 Pixel, und in der zweiten Haelfte wird er durchsichtig (`modulate:a` ist die Deckkraft). `chain()` haengt danach etwas hinten an: Wenn alles fertig ist, loescht sich der Text (`queue_free`).
+
+### `skripte/punktanzeige.gd` - neu, Knoten `Punktanzeige` in `szenen/spiel.tscn`
+
+Ein `CanvasLayer` (Ebene 3): Was darin liegt, steht fest auf dem Bildschirm und faehrt nicht mit der Kamera. Zuerst lagen die Zahlen in der Welt; dann blieben sie nach einem Fang zurueck, weil die Kamera mit der Kanone steigt. Der Knoten ist in der Gruppe `punktanzeige`.
+
+```gdscript
+func gefangen(nadel: Node2D) -> void:
+	zeigen(im_bild(nadel.global_position) + Vector2(70, 0), "+" + str(nadel.flugkraft()), farbe_plus, 1.0)
+	var anzahl: int = nadel.aufgespiesste.size()
+	if anzahl >= 2:
+		var nummer: int = mini(anzahl - 2, kombo_woerter.size() - 1)
+		zeigen(kombo_ort, kombo_woerter[nummer], farbe_kombo, kombo_groesse)
+```
+Gruen "+N" rechts neben der Nadel. `str` macht aus der Zahl Text. Stecken zwei oder mehr Fliegen an der Nadel, kommt das Kombo-Wort dazu, gross und gelb oben in der Mitte. Bei 2 Fliegen ist `nummer` 0 ("Double Kill"), bei 3 ist es 1 ("Triple Kill") und so weiter; `mini` sorgt dafuer, dass ab 5 Fliegen immer das letzte Wort kommt ("Mega Kill"). Die Woerter stehen im Inspector in `kombo_woerter`.
+
+```gdscript
+func im_bild(ort: Vector2) -> Vector2:
+	return get_viewport().get_canvas_transform() * ort
+```
+Rechnet einen Punkt in der Welt in einen Punkt auf dem Bildschirm um. Die `canvas_transform` ist das, was die Kamera mit der Welt macht (verschieben, zoomen); damit multipliziert landet der Punkt dort, wo man ihn gerade sieht.
+
+`verloren(ort, flugkraft)` zeigt rot "-N", `zeigen` baut den Text aus der Szene und setzt Text, Farbe und Groesse.
+
+### Aufrufe
+
+- `skripte/uebergabe.gd`, in `starten`: `get_tree().call_group("punktanzeige", "gefangen", nadel)`. `call_group` ruft die Funktion `gefangen` bei jedem Knoten der Gruppe auf. So muss die Uebergabe den Knoten nicht kennen.
+- `skripte/hindernis.gd`, in `zermatschen`, wenn der Stein gefangene Fliegen trifft: `get_tree().call_group("punktanzeige", "verloren", fliege.global_position, nadel.flugkraft())`. Das steht vor dem Plattmachen, solange die Nadel ihre Fliegen noch kennt.
+
+### Steinschlag-Schild
+
+`assets/hintergrund/hindernisse/spiel/steinschlag.png`: das Steinschlag-Schild, auf die Groesse des alten Schilds verkleinert (120 Pixel breit). `szenen/hindernis.tscn` zeigt es statt `warnschild.png`.
+
+### So wurde es angeschaut
+
+- Schnellcheck PASS fuer `zahl.gd`, `punktanzeige.gd`, `uebergabe.gd`, `hindernis.gd`, Verify PASS.
+- Probe: ein Schuss spiesst zwei Fliegen auf. "Double Kill" steht gross oben in der Mitte, "+4" gruen neben der Nadel, beides bleibt im Bild, waehrend die Kamera steigt.
+- Probe: Ein Stein trifft die beiden gefangenen Fliegen im Faecher. Rot "-4" erscheint oben an der Stelle, danach stuerzt die Figur ab (Flugkraft 0).
+- Nicht angeschaut: das Steinschlag-Schild im Spiel.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum liegt die Punktanzeige in einem `CanvasLayer` und nicht in der Welt?
+2. Welches Wort erscheint bei 7 Fliegen auf einmal, und warum?
+3. Was macht `call_group`, und warum ist das hier praktisch?
