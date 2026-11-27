@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/nadel/draht_textur.png" id="1_draht"]
+
+[node name="DrahtVorn" type="Line2D"]
+z_index = 2
+texture_repeat = 2
+width = 3.0
+texture = ExtResource("1_draht")
+texture_mode = 1
+joint_mode = 2

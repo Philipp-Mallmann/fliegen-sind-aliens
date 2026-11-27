@@ -6925,14 +6925,14 @@ Die Nadel war bisher ein weisser Strich mit einer grauen Linie dahinter. Jetzt i
 ### Die Bilder
 
 - `assets/nadel/nagel_flug.png`: der ganze Nagel mit der Drahtwicklung am Kopf, aus `nagel_mit_draht.png` bis zur Unterkante des Kopfes ausgeschnitten.
-- `assets/nadel/nagel_halb_draht.png`: die hinteren 30 Prozent davon, also Kopf und Wicklung. So viel wie bei `nagel_halb.png`.
+- `assets/nadel/nagel_halb_rund.png`: die hinteren 30 Prozent davon, also Kopf und Wicklung (so viel wie bei `nagel_halb.png`), von dir in Photoshop an der Schnittkante abgerundet.
 - `assets/nadel/draht_textur.png`: ein Streifen Draht, 240 mal 44 Pixel, aus vielen Abdruecken der Stiftspitze. Er ist so gebaut, dass sein rechtes Ende genau an sein linkes passt: Hintereinandergelegt sieht man keine Naht.
 
 ### `szenen/nadel.tscn` - geaendert
 
 - `Strich` (das weisse Rechteck) ist weg.
 - Neu: `Nagel`, ein `Sprite2D` mit `nagel_flug.png`. `scale` 0,1391 macht den Nagel 150 Pixel lang. `centered = false` mit `offset = (-58,5, -2)`: Die Nagelspitze sitzt genau auf dem Nullpunkt der Nadel, denn dort prueft `nadel.gd`, ob eine Fliege getroffen ist. Der Nagel haengt nach unten, weil die Nadel nach oben fliegt.
-- Neu: `NagelHalb` mit `nagel_halb_draht.png`, zuerst unsichtbar.
+- Neu: `NagelHalb` mit `nagel_halb_rund.png`, zuerst unsichtbar.
 - `Oese` sitzt jetzt dort, wo der Draht den Nagelkopf verlaesst: (7,2 / 150).
 - `Faden` ist kein `top_level` mehr (siehe Nachtrag unten) und hat jetzt eine Textur: `texture` ist der Drahtstreifen, `texture_mode = 1` heisst "wiederholen" (der Streifen wird entlang der Linie immer wieder hintereinandergelegt), `texture_repeat = 2` erlaubt Godot, das Bild zu wiederholen. `width` 3: Der Streifen wird auf 3 Pixel Hoehe gedrueckt. `joint_mode = 2` macht die Knicke zwischen den Linienstuecken rund.
 
@@ -7131,3 +7131,53 @@ Neu. Kanone und graue Figur verschwinden, der Forscher erscheint und spielt `fal
 **So wurde es angeschaut.** Schnellcheck PASS fuer `spiel.gd`, Verify PASS. Probe: hochgesprungen, alles verloren, Bilder aufgenommen. Am Start ist der Forscher unsichtbar. Im Fallen laeuft `fallen`, er kommt beim Herauszoomen von unten ins Bild, dann liegt er und kniet. Nicht angeschaut: wie sich das im Spiel anfuehlt.
 
 **Fragen.** 1. Warum meldet `fallen` nie `animation_finished`? 2. Warum muessen alle acht Bilder denselben Ausschnitt haben? 3. Warum wird der Knoten in `_ready` versteckt und nicht in der Szene?
+
+### Nachtrag: Draht durch die Fliegen, Nadel trifft auch bei Rucklern (27.11.2026)
+
+**Draht durch die Fliegen** (dein Nachtrag zu Abschnitt 10 vom 21.11.: Fliegen in zwei Teile teilen, damit der Faden zwischen ihnen durchlaeuft). Statt jedes Fliegenbild in zwei Dateien zu zerschneiden, macht das die Reihenfolge beim Malen: Der ganze Draht (`Faden`, `z_index` 0) liegt hinter den Fliegen (`z_index` 1). Vor der unteren Haelfte jeder aelteren Fliege liegt ein kurzes Drahtstueck (`z_index` 2), von ihrer Mitte bis zu ihrem unteren Rand. Man sieht also den Draht unten ueber der Fliege, er verschwindet im dunklen Blutloch in der Mitte und kommt oben hinter ihr wieder heraus. Die oberste Fliege braucht das nicht, in ihr steckt der Nagel.
+
+- Neu: `szenen/draht_vorn.tscn`, eine `Line2D` mit derselben Drahttextur und `z_index = 2`. `nadel.tscn` kennt sie ueber `draht_vorn_szene`.
+- `nadel.gd`: neue Listen `halbe_groessen` (halbe Breite und halbe Hoehe jeder aufgespiessten Fliege, beim Aufspiessen gemerkt) und `vorn_stuecke` (die kurzen Drahtstuecke).
+
+```gdscript
+func vorn_spannen(nummer: int, oben: Vector2, unten: Vector2, bogen: Vector2, anfang: float, stueck_anteil: float) -> void:
+	while vorn_stuecke.size() <= nummer:
+		var neues: Line2D = draht_vorn_szene.instantiate()
+		add_child(neues)
+		vorn_stuecke.append(neues)
+```
+Fuer die Fliege Nummer `nummer` braucht es ein Drahtstueck. Gibt es noch keines, entsteht es aus der Szene. `while` statt `if`, damit auch mehrere fehlende auf einmal entstehen.
+
+```gdscript
+	for schritt in 5:
+		var anteil: float = minf(anfang + stueck_anteil * schritt / 4.0, 1.0)
+		punkte.append(stueck.to_local(faden_punkt(oben, unten, bogen, anteil)))
+```
+Fuenf Punkte auf derselben Kurve wie der Draht, von der Fliegenmitte (`anfang`) bis knapp ueber ihren Rand hinaus, zum Anker hin. So liegt das Stueck genau auf dem Draht. `faden_loesen` leert auch die Stuecke.
+
+**Nadel trifft auch bei Rucklern.** In der Probe dauerte das erste Bild nach dem Schuss deutlich laenger. Die Nadel sprang in einem Satz von 337 auf 791 Pixel ueber der Muendung und flog ueber zwei Fliegen hinweg, ohne sie zu treffen. Im Browser oder auf dem Handy kann so ein Ruckler auch vorkommen. Darum legt die Nadel ihre Strecke jetzt in Schritten von hoechstens 40 Pixeln zurueck (`schritt_weite`) und prueft nach jedem Schritt:
+
+```gdscript
+	var strecke: float = tempo * delta
+	var schritte: int = maxi(1, ceili(strecke / schritt_weite))
+	for schritt in schritte:
+		position += richtung * strecke / schritte
+		geflogen += strecke / schritte
+		if fliegen_pruefen():
+			break
+```
+`ceili` rundet auf: 100 Pixel in Schritten von 40 sind 3 Schritte. `maxi(1, ...)` sorgt fuer mindestens einen Schritt. Was vorher direkt in `_process` stand (Treffer, stecken bleiben, verschwinden), steht jetzt in `fliegen_pruefen`. Die Funktion gibt `true` zurueck, wenn die Nadel nicht weiterfliegt; dann bricht `break` die Schleife ab.
+
+Angeschaut: Schnellcheck PASS, Verify PASS. Probe mit dem Ruckler dreimal: jedes Mal beide Fliegen aufgespiesst (vorher keine). Bild im Faecher vergroessert: Der Draht laeuft durch die untere Fliege wie beschrieben.
+
+Fragen: Warum braucht die oberste Fliege kein Drahtstueck? Wie viele Schritte macht die Nadel in einem Bild, das 0,14 Sekunden dauert?
+
+**Luecke am Fliegenrand.** Zuerst war das kurze Stueck so lang wie die halbe Fliegenhoehe. Laeuft der Draht schraeg, ist die Fliege in dieser Richtung aber breiter, und zwischen dem Ende des Stuecks und ihrem Rand war der Draht verdeckt (dein Bild). Jetzt rechnet `rand_abstand` den Weg bis zum Rand in Drahtrichtung, die Fliege als Ellipse gedacht:
+
+```gdscript
+func rand_abstand(halb: Vector2, richtung: Vector2) -> float:
+	var x: float = richtung.x / maxf(halb.x, 1.0)
+	var y: float = richtung.y / maxf(halb.y, 1.0)
+	return 1.0 / maxf(sqrt(x * x + y * y), 0.001)
+```
+Das ist die Formel fuer den Abstand von der Mitte einer Ellipse bis zu ihrem Rand in einer Richtung. Senkrecht (richtung (0, 1)) kommt genau die halbe Hoehe heraus, waagerecht die halbe Breite. `maxf` verhindert eine Teilung durch 0. Dazu kommen `rand_zugabe` (6 Pixel), damit das Stueck sicher ueber den Rand reicht. Im Probebild laeuft der Draht jetzt ohne Unterbrechung aus der Fliege heraus.

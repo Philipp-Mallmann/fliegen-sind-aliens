@@ -1,15 +1,17 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://skripte/nadel.gd" id="1_nadel"]
 [ext_resource type="PackedScene" path="res://szenen/blutfleck.tscn" id="2_blutfleck"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/treffer.wav" id="3_treffer"]
 [ext_resource type="Texture2D" path="res://assets/nadel/draht_textur.png" id="4_draht"]
 [ext_resource type="Texture2D" path="res://assets/nadel/nagel_flug.png" id="5_nagel"]
-[ext_resource type="Texture2D" path="res://assets/nadel/nagel_halb_draht.png" id="6_halb"]
+[ext_resource type="Texture2D" path="res://assets/nadel/nagel_halb_rund.png" id="6_halb"]
+[ext_resource type="PackedScene" path="res://szenen/draht_vorn.tscn" id="7_vorn"]
 
 [node name="Nadel" type="Node2D" groups=["nadeln"]]
 script = ExtResource("1_nadel")
 blutfleck_szene = ExtResource("2_blutfleck")
+draht_vorn_szene = ExtResource("7_vorn")
 
 [node name="Faden" type="Line2D" parent="."]
 texture_repeat = 2

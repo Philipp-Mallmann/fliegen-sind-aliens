@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://drbfxue08u743"
-path="res://.godot/imported/nagel_halb_draht.png-cd76c41cc7da7509e9823b49ee3dc9c2.ctex"
+uid="uid://dn3et0n7chuq1"
+path="res://.godot/imported/nagel_halb_rund.png-d096c66675480eeda4bc55c72558cd27.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/nadel/nagel_halb_draht.png"
-dest_files=["res://.godot/imported/nagel_halb_draht.png-cd76c41cc7da7509e9823b49ee3dc9c2.ctex"]
+source_file="res://assets/nadel/nagel_halb_rund.png"
+dest_files=["res://.godot/imported/nagel_halb_rund.png-d096c66675480eeda4bc55c72558cd27.ctex"]
 
 [params]
 
