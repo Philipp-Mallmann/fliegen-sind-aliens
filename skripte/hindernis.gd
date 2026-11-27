@@ -4,8 +4,9 @@ extends Node2D
 @export var warnzeit: float = 3.0
 # Die Steine, die fallen koennen. Bei jedem Hindernis wird einer ausgewuerfelt.
 @export var steine: Array[Texture2D] = []
-# Wie schnell der Gegenstand faellt, in Pixeln pro Sekunde. Muss schneller sein als der Absturz (falltempo in spiel.gd, 2400).
-@export var falltempo: float = 3000.0
+# Wie schnell der Gegenstand faellt, in Pixeln pro Sekunde. Stuerzt die Kanone gerade ab, kommt ihr Tempo dazu (siehe fallen):
+# Sonst wuerde der Faecher den Stein von oben einholen.
+@export var falltempo: float = 1500.0
 # Wie lange ein Blinken der Warnung dauert, am Anfang und am Ende, in Sekunden. Kleiner heisst schneller.
 @export var blinken_anfang: float = 1.0
 @export var blinken_ende: float = 0.1
@@ -23,16 +24,12 @@ extends Node2D
 @export var weg_unter: float = 300.0
 # Die Szene des Matsches. Bei jeder zermatschten Fliege entsteht daraus ein Fleck.
 @export var matsch_szene: PackedScene
-# Wie die zermatschte Fliege platt gedrueckt wird: so viel breiter und so viel flacher, in dieser Zeit (Sekunden).
-@export var platt_breite: float = 1.5
-@export var platt_hoehe: float = 0.2
-@export var platt_dauer: float = 0.08
 # Die Farbe der Spalte auf jeder Pappe, von unten (blau) nach oben (fast schwarz). Die vierte Zahl ist die Deckkraft.
-# Auf den hellen Pappen ein Schatten (Schwarz, 50 Prozent), auf der fast schwarzen das Gelb des Warnschilds (20 Prozent),
+# Auf den hellen Pappen ein Schatten (Schwarz, 50 Prozent), ab Indigo das Gelb des Warnschilds (20 Prozent),
 # weil man dort einen Schatten nicht saehe.
 @export var spalte_farben: Array[Color] = [
 	Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5),
-	Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5), Color(0.92, 0.73, 0.17, 0.2),
+	Color(0, 0, 0, 0.5), Color(0.92, 0.73, 0.17, 0.2), Color(0.92, 0.73, 0.17, 0.2), Color(0.92, 0.73, 0.17, 0.2),
 ]
 
 # Die Kanone. Die Warnung bleibt ueber ihr am oberen Bildrand. Setzt der Hindernis-Erzeuger.
@@ -49,6 +46,8 @@ var breite: float = 200.0
 var hoehe: float = 120.0
 # Die laengste Warnzeit, die vorkommt. Daran haengt das Aussehen: Gleiche Restzeit heisst gleiches Schild. Setzt der Hindernis-Erzeuger.
 var volle_warnzeit: float = 9.0
+# Wo die Kanone im letzten Bild war (Hoehe). Daran sieht der Stein, ob und wie schnell sie gerade abstuerzt.
+var kanone_vorher: float = 0.0
 
 
 func _ready() -> void:
@@ -70,6 +69,7 @@ func _process(delta: float) -> void:
 func warnen(delta: float) -> void:
 	gewarnt += delta
 	position.y = kanone.position.y - bildrand
+	kanone_vorher = kanone.position.y
 	var rest: float = warnzeit - gewarnt
 	var anteil: float = clampf(1.0 - rest / volle_warnzeit, 0.0, 1.0)
 	$Warnung.scale = Vector2.ONE * lerpf(groesse_anfang, groesse_ende, anteil)
@@ -88,7 +88,10 @@ func warnen(delta: float) -> void:
 func fallen(delta: float) -> void:
 	$Warnung.visible = false
 	$Spalte.visible = false
-	position.y += falltempo * delta
+	# Sinkt die Kanone (Absturz), faellt der Stein um dasselbe Stueck mehr. So bleibt er immer schneller als der Faecher.
+	var kanone_sinkt: float = maxf(kanone.position.y - kanone_vorher, 0.0)
+	kanone_vorher = kanone.position.y
+	position.y += falltempo * delta + kanone_sinkt
 	for fliege in get_tree().get_nodes_in_group("fliegen"):
 		if im_klotz(fliege):
 			zermatschen(fliege)
@@ -123,21 +126,12 @@ func zermatschen(fliege: Node2D) -> void:
 	get_parent().get_node("TonMatsch").play()
 
 
-# Die Fliege klebt platt gedrueckt unten am Stein und faellt mit ihm aus dem Bild, dazu ein Spritzer in ihrer Farbe.
-# Sie zaehlt dann nicht mehr als Fliege (Gruppe weg, nichts bewegt sie mehr). Mit dem Stein wird sie geloescht.
+# Von der Fliege bleibt nur ein Blutfleck in ihrer Farbe, unten am Stein. Er faellt mit dem Stein aus dem Bild.
+# Die Fliege selbst verschwindet (aus der Gruppe sofort, geloescht am Ende des Bilds).
 func plattmachen(fliege: Node2D) -> void:
 	fliege.remove_from_group("fliegen")
-	fliege.gefangen = true
-	fliege.set_process(false)
-	fliege.get_node("Summen").stop()
-	if fliege.has_node("Flattern"):
-		fliege.get_node("Flattern").pause()
-	fliege.reparent(self)
-	fliege.position.y = 0.0
-	fliege.rotation = 0.0
 	var matsch: Node2D = matsch_szene.instantiate()
 	matsch.modulate = fliege.blut_farbe
 	add_child(matsch)
-	matsch.position = fliege.position
-	var platt: Tween = fliege.create_tween()
-	platt.tween_property(fliege, "scale", Vector2(fliege.scale.x * platt_breite, fliege.scale.y * platt_hoehe), platt_dauer)
+	matsch.position = Vector2(to_local(fliege.global_position).x, 0.0)
+	fliege.queue_free()

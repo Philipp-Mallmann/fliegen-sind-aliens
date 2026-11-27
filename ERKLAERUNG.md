@@ -7424,3 +7424,42 @@ Angeschaut: Schnellcheck PASS, Verify PASS, Probe mit Schuessen auf einen stills
 - `szenen/hindernis.tscn`: die Startfarbe der Spalte von 35 auf 50 Prozent.
 
 Angeschaut: Schnellcheck PASS fuer alle drei Skripte, Verify PASS. Bogen mit der Spalte auf allen acht Pappen (nicht im laufenden Spiel): auf allen deutlich zu sehen, auf der fast schwarzen als gruenlich-graue Bahn.
+
+### Nachtrag: Matsch nur als Fleck, Steine langsamer, Leuchtringe der Teleport-Fliege (27.11.2026)
+
+**Matsch** (`skripte/hindernis.gd`, `plattmachen`): Die Fliege wird nicht mehr platt gedrueckt, sie verschwindet. Uebrig bleibt nur der Blutfleck in ihrer Farbe, unten am Stein.
+
+```gdscript
+	fliege.remove_from_group("fliegen")
+	var matsch: Node2D = matsch_szene.instantiate()
+	matsch.modulate = fliege.blut_farbe
+	add_child(matsch)
+	matsch.position = Vector2(to_local(fliege.global_position).x, 0.0)
+	fliege.queue_free()
+```
+`to_local` rechnet die Stelle der Fliege in die Sicht des Steins um. Der Fleck kommt dorthin, aber auf Hoehe 0, an die Unterkante des Steins. `queue_free` loescht die Fliege am Ende des Bilds. Die Werte `platt_breite`, `platt_hoehe` und `platt_dauer` sind weg.
+
+**Steine langsamer** (`skripte/hindernis.gd`): `falltempo` von 3000 auf 1500, halb so schnell. Das gab ein Problem: Stuerzt man ab, faellt die Kanone mit 2400 (`spiel.gd`), also schneller als der Stein, und der Faecher haette den Stein von oben eingeholt. Deshalb merkt sich der Stein in `kanone_vorher`, wo die Kanone im letzten Bild war:
+
+```gdscript
+	var kanone_sinkt: float = maxf(kanone.position.y - kanone_vorher, 0.0)
+	kanone_vorher = kanone.position.y
+	position.y += falltempo * delta + kanone_sinkt
+```
+Sinkt die Kanone (y wird groesser), faellt der Stein um genau dieses Stueck mehr. Steigt sie, ist der Unterschied negativ, und `maxf` macht daraus 0. In `warnen` wird `kanone_vorher` jedes Bild gesetzt, damit der Wert beim Losfallen stimmt.
+
+**Felsschatten**: In `spalte_farben` sind jetzt die Pappen 6 bis 8 (Indigo, Nachtblau, fast schwarz) gelb, vorher nur die achte.
+
+**Leuchtringe der Teleport-Fliege** (`szenen/fliege_teleport.tscn`, `skripte/fliege_teleport.gd`): Der runde Schimmer (ein Farbverlauf hinter ihr) ist weg. Neu ist ein Knoten `Leuchten` mit drei Bildern, `Ring1` (innen) bis `Ring3` (aussen). Jeder Ring folgt ihrem Umriss. Die Bilder `assets/fliegen/spiel/teleport-leuchten-1.png` bis `-3.png` sind weiss; die Farbe kommt erst im Spiel ueber `modulate` dazu, weiss mal Farbe ergibt die Farbe. Gemacht sind sie ausserhalb des Spielordners mit einem kleinen Python-Programm: Koerper und beide Fluegelbilder uebereinander gelegt, daraus die Umrissflaeche, die dreimal um 7 Pixel geweitet, und jeder Ring ist der Streifen zwischen zwei Weitungen, leicht weichgezeichnet. Weil `Leuchten` die Groesse 0.5 hat, sind die Bilder doppelt so fein gerechnet.
+
+```gdscript
+func leuchten_zeigen(ladung: float) -> void:
+	var ringe: float = ladung * 3.0
+	for nummer in 3:
+		var ring: Sprite2D = $Leuchten.get_child(nummer)
+		ring.modulate = leucht_farben[nummer]
+		ring.modulate.a = clampf(ringe - nummer, 0.0, 1.0)
+```
+`ladung` kommt aus `ladung_jetzt()`: 1 bei drei Spruengen, 2/3 bei zwei, 1/3 bei einem. Mal 3 ergibt das 3, 2 oder 1. Ring 0 (innen) ist sichtbar, sobald `ringe` mindestens 1 ist; Ring 2 (aussen) erst bei 3. So verschwindet bei jedem Sprung der aeusserste. Waehrend der Erholung waechst `ladung` gleitend von 0 bis 1: Zuerst blendet der innere Ring ein, dann der mittlere, dann der aeussere. Die Farben stehen im Inspector in `leucht_farben`.
+
+Angeschaut: Schnellcheck PASS fuer `hindernis.gd`, `fliege_teleport.gd`, `spiel.gd`, Verify PASS. Probe: Ringe bei 3, 2, 1 Spruengen und bei halber Erholung (innen voll, Mitte halb, aussen aus), Umriss sitzt; ein Stein auf eine freie Fliege: Fliege weg, Fleck da. Nicht angeschaut: ein Absturz mit fallendem Stein im echten Spiel.

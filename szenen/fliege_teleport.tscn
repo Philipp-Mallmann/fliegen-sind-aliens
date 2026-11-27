@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://skripte/fliege_teleport.gd" id="1_fliege"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/summen.ogg" id="2_summen"]
@@ -9,17 +9,9 @@
 [ext_resource type="Texture2D" path="res://assets/fluegel/schlag/teleport-hinten-2.png" id="f_hinten_2"]
 [ext_resource type="Texture2D" path="res://assets/fliegen/spiel/fliege-1-schlag-1.png" id="k_1"]
 [ext_resource type="Texture2D" path="res://assets/fliegen/spiel/fliege-1-schlag-2.png" id="k_2"]
-
-[sub_resource type="Gradient" id="Gradient_schimmer"]
-colors = PackedColorArray(0.4, 0.9, 1, 0.8, 0.4, 0.9, 1, 0)
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_schimmer"]
-gradient = SubResource("Gradient_schimmer")
-width = 240
-height = 240
-fill = 1
-fill_from = Vector2(0.5, 0.5)
-fill_to = Vector2(0.5, 0)
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/teleport-leuchten-1.png" id="l_1"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/teleport-leuchten-2.png" id="l_2"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/teleport-leuchten-3.png" id="l_3"]
 
 [sub_resource type="Animation" id="Animation_flattern"]
 resource_name = "flattern"
@@ -75,8 +67,18 @@ tempo_langsam = 100.0
 tempo_schnell = 180.0
 flugkraft = 6
 
-[node name="Schimmer" type="Sprite2D" parent="."]
-texture = SubResource("GradientTexture2D_schimmer")
+[node name="Leuchten" type="Node2D" parent="."]
+position = Vector2(0, -20)
+scale = Vector2(0.5, 0.5)
+
+[node name="Ring1" type="Sprite2D" parent="Leuchten"]
+texture = ExtResource("l_1")
+
+[node name="Ring2" type="Sprite2D" parent="Leuchten"]
+texture = ExtResource("l_2")
+
+[node name="Ring3" type="Sprite2D" parent="Leuchten"]
+texture = ExtResource("l_3")
 
 [node name="Fluegel" type="ColorRect" parent="."]
 visible = false

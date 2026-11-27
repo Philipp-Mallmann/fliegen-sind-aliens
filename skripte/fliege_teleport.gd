@@ -3,9 +3,9 @@ extends "res://skripte/fliege.gd"
 # Die Teleport-Fliege: fliegt hin und her. Kommt die Kanone unter sie, flackert sie kurz und springt zur Seite.
 # Sobald sie flackert, ist sie schon entkommen: Die Nadel fliegt durch sie hindurch. Das Flackern ist nur zum Ansehen.
 # Das kann sie ein paarmal hintereinander, dann muss sie sich erholen. In dieser Pause kann man sie fangen.
-# Wie viele Spruenge sie noch hat, sieht man am Schimmer um sie herum und hoert man an ihrem Summen:
-# Mit jedem Sprung wird der Schimmer schwaecher und das Summen tiefer.
-# Ist der Schimmer ganz weg, erholt sie sich, und beides kommt langsam zurueck.
+# Wie viele Spruenge sie noch hat, sieht man an den Leuchtringen um ihren Umriss und hoert man an ihrem Summen:
+# Jeder Sprung kostet den aeussersten Ring, und das Summen wird tiefer.
+# Sind alle Ringe weg, erholt sie sich: Die Ringe kommen einer nach dem anderen zurueck, von innen nach aussen.
 
 # Wie weit die Fliege von ihrer Mitte nach links und nach rechts fliegt, in Pixeln.
 @export var strecke: float = 150.0
@@ -26,6 +26,8 @@ extends "res://skripte/fliege.gd"
 @export var sprung_weit: float = 350.0
 # Wie tief das Summen ohne Spruenge klingt, als Anteil ihrer eigenen Tonhoehe. 0.6 heisst: deutlich tiefer.
 @export var tonhoehe_leer: float = 0.6
+# Die Farben der drei Leuchtringe, von innen nach aussen. Genommen aus ihren eigenen Farben (Fluegel, Koerper).
+@export var leucht_farben: Array[Color] = [Color(1.0, 0.85, 0.25), Color(1.0, 0.55, 0.15), Color(0.45, 0.95, 0.3)]
 
 # Wie viele Spruenge sie noch hat. 0 heisst: Sie erholt sich gerade.
 var uebrig: int = 0
@@ -50,7 +52,7 @@ func fliegen(delta: float) -> void:
 		richtung = 1.0
 	modulate.a = 1.0
 	var ladung: float = ladung_jetzt()
-	$Schimmer.modulate.a = ladung
+	leuchten_zeigen(ladung)
 	$Summen.pitch_scale = eigene_tonhoehe * lerpf(tonhoehe_leer, 1.0, ladung)
 	if uebrig == 0:
 		erholt_in -= delta
@@ -88,3 +90,13 @@ func ladung_jetzt() -> float:
 	if uebrig == 0:
 		return 1.0 - erholt_in / erholzeit
 	return float(uebrig) / float(spruenge)
+
+
+# Zeigt so viele Ringe, wie sie Spruenge hat. ladung 1 heisst alle drei, 2/3 heisst die inneren zwei, 0 heisst keiner.
+# Dazwischen (waehrend der Erholung) wird der naechste Ring gerade eingeblendet.
+func leuchten_zeigen(ladung: float) -> void:
+	var ringe: float = ladung * 3.0
+	for nummer in 3:
+		var ring: Sprite2D = $Leuchten.get_child(nummer)
+		ring.modulate = leucht_farben[nummer]
+		ring.modulate.a = clampf(ringe - nummer, 0.0, 1.0)

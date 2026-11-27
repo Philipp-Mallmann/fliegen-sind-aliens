@@ -7,7 +7,7 @@ extends Node2D
 # Wie lange das Gleiten nach oben dauert, in Sekunden.
 @export var steigdauer: float = 0.8
 # Wie schnell man abstuerzt, in Pixeln pro Sekunde. Wer mehr verliert, faellt tiefer und darum laenger.
-# Muss langsamer sein als ein Hindernis faellt (falltempo in hindernis.gd), sonst holt der Faecher es ein.
+# Ein Hindernis faellt beim Absturz um dieses Tempo schneller mit (hindernis.gd, fallen), sonst holte der Faecher es ein.
 @export var falltempo: float = 2400.0
 # Wie stark die Kamera beim Fallen und beim Aufprall auf dem Boden wackelt, hoechstens so viele Pixel zur Seite.
 @export var wackeln_fall: float = 5.0
