@@ -6913,3 +6913,7 @@ Zusammen mit den Zeilen in `spiel.gd` von oben (`$Boden.scroll_offset.x = $Kanon
 **So wurde es angeschaut.** Verify PASS. Probe wie oben (3777 nach rechts, 9123 nach links, abstuerzen): Der Wiesenstreifen ist beim Start und nach beiden Landungen Pixel fuer Pixel gleich (Unterschied 0,0). Links und rechts im Bild ist keine Spiegelung mehr (Unterschied der Haelften 46,7, bei einer Spiegelung waere es 0), und die Wiese reicht bis an beide Bildraender.
 
 **Fragen.** 1. Was macht `region_rect`? 2. Warum ist das Bild etwas breiter als das, was die Kamera zeigt? 3. Warum steht bei `position` eine negative Zahl?
+
+### Nachtrag: Fluegel fuer die Stechfliege (27.11.2026)
+
+Kein Code, nur `szenen/stechfliege.tscn`: tuerkise Fluegel (sie sticht in der Zone Scheue, `Stecher` haengt an `Zonen/Scheue`) und wippender Koerper aus deiner Krita-Datei, gebaut wie bei den anderen. Wenn sie sich auf der Hand hochkant dreht, drehen die Fluegel mit, weil sie Kinder desselben Knotens sind. Neue Bilder: `assets/fluegel/schlag/stech-*.png`, `assets/fliegen/spiel/fliege-ruessel-orange-schlag-1.png` und `-2.png`; dein Original bleibt. Damit haben alle acht Insekten Fluegel.
