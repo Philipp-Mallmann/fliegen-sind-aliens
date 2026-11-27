@@ -1,80 +1,136 @@
-[gd_scene load_steps=78 format=3]
+[gd_scene format=3 uid="uid://wg51b2gjvyak"]
 
-[ext_resource type="Script" path="res://skripte/kanone.gd" id="1_kanone"]
+[ext_resource type="Script" uid="uid://pwwrl2b28cbe" path="res://skripte/kanone.gd" id="1_kanone"]
 [ext_resource type="PackedScene" path="res://szenen/nadel.tscn" id="2_nadel"]
 [ext_resource type="PackedScene" path="res://szenen/fliege_normal.tscn" id="3_fliege"]
-[ext_resource type="Script" path="res://skripte/uebergabe.gd" id="4_uebergabe"]
-[ext_resource type="Script" path="res://skripte/spiel.gd" id="5_spiel"]
-[ext_resource type="Script" path="res://skripte/erzeuger.gd" id="6_erzeuger"]
-[ext_resource type="Script" path="res://skripte/faecher.gd" id="7_faecher"]
-[ext_resource type="Script" path="res://skripte/hindernis_erzeuger.gd" id="8_hindernisse"]
+[ext_resource type="Script" uid="uid://b8u3ao06b1w0l" path="res://skripte/uebergabe.gd" id="4_uebergabe"]
+[ext_resource type="Script" uid="uid://de8sfqsm6fwn" path="res://skripte/spiel.gd" id="5_spiel"]
+[ext_resource type="Script" uid="uid://dusnn0tjsnqa1" path="res://skripte/erzeuger.gd" id="6_erzeuger"]
+[ext_resource type="Script" uid="uid://dc7nnihgi8ldy" path="res://skripte/faecher.gd" id="7_faecher"]
+[ext_resource type="Script" uid="uid://07oxijanbn7t" path="res://skripte/hindernis_erzeuger.gd" id="8_hindernisse"]
 [ext_resource type="PackedScene" path="res://szenen/hindernis.tscn" id="9_hindernis"]
-[ext_resource type="AudioStream" path="res://assets/audio/sfx/schuss.wav" id="10_schuss"]
-[ext_resource type="AudioStream" path="res://assets/audio/sfx/arm.wav" id="11_arm"]
-[ext_resource type="AudioStream" path="res://assets/audio/sfx/steigen.ogg" id="12_steigen"]
-[ext_resource type="AudioStream" path="res://assets/audio/sfx/aufstehen.wav" id="13_aufstehen"]
-[ext_resource type="AudioStream" path="res://assets/audio/sfx/sieg.ogg" id="14_sieg"]
-[ext_resource type="AudioStream" path="res://assets/audio/sfx/klotz.wav" id="15_klotz"]
-[ext_resource type="AudioStream" path="res://assets/audio/sfx/matsch.wav" id="16_matsch"]
+[ext_resource type="AudioStream" uid="uid://1eijcdy26jg2" path="res://assets/audio/sfx/schuss.wav" id="10_schuss"]
+[ext_resource type="AudioStream" uid="uid://c85s6spwagi6t" path="res://assets/audio/sfx/arm.wav" id="11_arm"]
+[ext_resource type="AudioStream" uid="uid://dnejqcfvpvsji" path="res://assets/audio/sfx/steigen.ogg" id="12_steigen"]
+[ext_resource type="AudioStream" uid="uid://b4pfmvixqn03" path="res://assets/audio/sfx/aufstehen.wav" id="13_aufstehen"]
+[ext_resource type="AudioStream" uid="uid://cqinjrkcg1liq" path="res://assets/audio/sfx/sieg.ogg" id="14_sieg"]
+[ext_resource type="AudioStream" uid="uid://c7n38k4ccc4bp" path="res://assets/audio/sfx/klotz.wav" id="15_klotz"]
+[ext_resource type="AudioStream" uid="uid://bkc0wx2mwsu68" path="res://assets/audio/sfx/matsch.wav" id="16_matsch"]
 [ext_resource type="PackedScene" path="res://szenen/fliege_schnell.tscn" id="17_schnell"]
 [ext_resource type="PackedScene" path="res://szenen/fliege_scheu.tscn" id="18_scheu"]
 [ext_resource type="PackedScene" path="res://szenen/fliege_koeder.tscn" id="19_koeder"]
 [ext_resource type="PackedScene" path="res://szenen/fliege_teleport.tscn" id="20_teleport"]
 [ext_resource type="PackedScene" path="res://szenen/fliege_boss.tscn" id="21_boss"]
-[ext_resource type="Script" path="res://skripte/zonen.gd" id="22_zonen"]
-[ext_resource type="Script" path="res://skripte/zone.gd" id="23_zone"]
-[ext_resource type="Script" path="res://skripte/test_sprung.gd" id="24_sprung"]
-[ext_resource type="Script" path="res://skripte/start_totale.gd" id="25_totale"]
-[ext_resource type="Script" path="res://skripte/joystick.gd" id="26_joystick"]
-[ext_resource type="Script" path="res://skripte/einstellungsfliege.gd" id="27_efliege"]
-[ext_resource type="Script" path="res://skripte/einstellungen.gd" id="28_einstellungen"]
+[ext_resource type="Script" uid="uid://b5bq330c7u6gb" path="res://skripte/zonen.gd" id="22_zonen"]
+[ext_resource type="Script" uid="uid://cvklwrx1wxep" path="res://skripte/zone.gd" id="23_zone"]
+[ext_resource type="Script" uid="uid://dns7ylcko1chc" path="res://skripte/test_sprung.gd" id="24_sprung"]
+[ext_resource type="Script" uid="uid://cs2vov7l7hrrv" path="res://skripte/start_totale.gd" id="25_totale"]
+[ext_resource type="Script" uid="uid://clyv3nh78f8cr" path="res://skripte/joystick.gd" id="26_joystick"]
+[ext_resource type="Script" uid="uid://dol0cvvg2wr7r" path="res://skripte/einstellungsfliege.gd" id="27_efliege"]
+[ext_resource type="Script" uid="uid://dcgb3gb6vtmdw" path="res://skripte/einstellungen.gd" id="28_einstellungen"]
 [ext_resource type="PackedScene" path="res://szenen/regler.tscn" id="29_regler"]
-[ext_resource type="Script" path="res://skripte/musik.gd" id="30_musik"]
-[ext_resource type="AudioStream" path="res://assets/audio/musik/musik_schleife.ogg" id="31_schleife"]
-[ext_resource type="AudioStream" path="res://assets/audio/musik/musik_ende.ogg" id="32_ende"]
-[ext_resource type="Texture2D" path="res://assets/hintergrund/wiese.png" id="37_wiese"]
-[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-1-blau.png" id="p01"]
-[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-2-gelb.png" id="p02"]
-[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-3-creme.png" id="p03"]
-[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-4-weiss.png" id="p04"]
-[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-5-gruen.png" id="p05"]
-[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-6-indigo.png" id="p06"]
-[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-7-nachtblau.png" id="p07"]
-[ext_resource type="Texture2D" path="res://assets/hintergrund/riffel/riffel-8-fast-schwarz.png" id="p08"]
-[ext_resource type="Script" path="res://skripte/hintergrund.gd" id="38_hintergrund"]
-[ext_resource type="PackedScene" path="res://szenen/wolke_bewegt.tscn" id="w4"]
+[ext_resource type="Script" uid="uid://djhalp2nqr2j6" path="res://skripte/musik.gd" id="30_musik"]
+[ext_resource type="AudioStream" uid="uid://du424xq2l182p" path="res://assets/audio/musik/musik_schleife.ogg" id="31_schleife"]
+[ext_resource type="AudioStream" uid="uid://dqny740xkicao" path="res://assets/audio/musik/musik_ende.ogg" id="32_ende"]
+[ext_resource type="Texture2D" uid="uid://bpkstdm7xn4af" path="res://assets/hintergrund/wiese.png" id="37_wiese"]
+[ext_resource type="Script" uid="uid://8b4vnukwtk4a" path="res://skripte/hintergrund.gd" id="38_hintergrund"]
 [ext_resource type="PackedScene" path="res://szenen/fliege_heuschrecke.tscn" id="40_heuschrecke"]
 [ext_resource type="PackedScene" path="res://szenen/stechfliege.tscn" id="41_stechfliege"]
-[ext_resource type="Script" path="res://skripte/stecher.gd" id="42_stecher"]
-[ext_resource type="Texture2D" path="res://assets/einstellungen/wand.png" id="43_wand"]
+[ext_resource type="Script" uid="uid://bcvwcnsiwex35" path="res://skripte/stecher.gd" id="42_stecher"]
+[ext_resource type="Texture2D" uid="uid://c7tyg4e2k67uf" path="res://assets/kanone/kanone.png" id="43_kanone"]
+[ext_resource type="Texture2D" uid="uid://dbxjf3aca1gf6" path="res://assets/einstellungen/wand.png" id="43_wand"]
+[ext_resource type="Texture2D" uid="uid://b20h7pjcu3kf8" path="res://assets/kanone/kanone-hinten.png" id="44_hinten"]
 [ext_resource type="PackedScene" path="res://szenen/schild.tscn" id="44_schild"]
-[ext_resource type="Texture2D" path="res://assets/kanone/kanone.png" id="43_kanone"]
-[ext_resource type="Texture2D" path="res://assets/kanone/kanone-hinten.png" id="44_hinten"]
-[ext_resource type="Texture2D" path="res://assets/kanone/kanone-tonne.png" id="45_tonne"]
-[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-01.png" id="d1"]
-[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-02.png" id="d2"]
-[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-03.png" id="d3"]
-[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-04.png" id="d4"]
-[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-05.png" id="d5"]
-[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-06.png" id="d6"]
-[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-07.png" id="d7"]
-[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-08.png" id="d8"]
-[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-09.png" id="d9"]
-[ext_resource type="Texture2D" path="res://assets/kanone/drahtrolle-anim/drahtrolle-10.png" id="d10"]
-[ext_resource type="Texture2D" path="res://assets/kanone/feuer/feuer-1.png" id="f1"]
-[ext_resource type="Texture2D" path="res://assets/kanone/feuer/feuer-2.png" id="f2"]
-[ext_resource type="Texture2D" path="res://assets/kanone/feuer/feuer-3.png" id="f3"]
-[ext_resource type="Texture2D" path="res://assets/kanone/feuer/feuer-4.png" id="f4"]
-[ext_resource type="Texture2D" path="res://assets/kanone/feuer/feuer-5.png" id="f5"]
-[ext_resource type="Texture2D" path="res://assets/kanone/feuer/feuer-6.png" id="f6"]
+[ext_resource type="Texture2D" uid="uid://xjc3c4vfsqpk" path="res://assets/kanone/kanone-tonne.png" id="45_tonne"]
+[ext_resource type="Texture2D" uid="uid://kcreoknpmlx8" path="res://assets/kanone/drahtrolle-anim/drahtrolle-01.png" id="d1"]
+[ext_resource type="Texture2D" uid="uid://cvk6a0n448oky" path="res://assets/kanone/drahtrolle-anim/drahtrolle-02.png" id="d2"]
+[ext_resource type="Texture2D" uid="uid://c1rdl5r2aj2hl" path="res://assets/kanone/drahtrolle-anim/drahtrolle-03.png" id="d3"]
+[ext_resource type="Texture2D" uid="uid://b68gcsj0nrj2h" path="res://assets/kanone/drahtrolle-anim/drahtrolle-04.png" id="d4"]
+[ext_resource type="Texture2D" uid="uid://3pu4p41libld" path="res://assets/kanone/drahtrolle-anim/drahtrolle-05.png" id="d5"]
+[ext_resource type="Texture2D" uid="uid://1ufmowxvne56" path="res://assets/kanone/drahtrolle-anim/drahtrolle-06.png" id="d6"]
+[ext_resource type="Texture2D" uid="uid://e8rp2t5igc1n" path="res://assets/kanone/drahtrolle-anim/drahtrolle-07.png" id="d7"]
+[ext_resource type="Texture2D" uid="uid://cgcdowlwmwqe4" path="res://assets/kanone/drahtrolle-anim/drahtrolle-08.png" id="d8"]
+[ext_resource type="Texture2D" uid="uid://bt6l7ts167q2v" path="res://assets/kanone/drahtrolle-anim/drahtrolle-09.png" id="d9"]
+[ext_resource type="Texture2D" uid="uid://ba1cmdpfnt7k7" path="res://assets/kanone/drahtrolle-anim/drahtrolle-10.png" id="d10"]
+[ext_resource type="Texture2D" uid="uid://2exl3nvvmx0n" path="res://assets/kanone/feuer/feuer-1.png" id="f1"]
+[ext_resource type="Texture2D" uid="uid://dsybuuxktckty" path="res://assets/kanone/feuer/feuer-2.png" id="f2"]
+[ext_resource type="Texture2D" uid="uid://dkcv5cxg6iued" path="res://assets/kanone/feuer/feuer-3.png" id="f3"]
+[ext_resource type="Texture2D" uid="uid://dc1bsri4uj78a" path="res://assets/kanone/feuer/feuer-4.png" id="f4"]
+[ext_resource type="Texture2D" uid="uid://cjwritfcthdqf" path="res://assets/kanone/feuer/feuer-5.png" id="f5"]
+[ext_resource type="Texture2D" uid="uid://usdfafd662mr" path="res://assets/kanone/feuer/feuer-6.png" id="f6"]
+[ext_resource type="Texture2D" uid="uid://dvpbbqtn603vf" path="res://assets/hintergrund/riffel/riffel-1-blau.png" id="p01"]
+[ext_resource type="Texture2D" uid="uid://bdl0imbn3qaak" path="res://assets/hintergrund/riffel/riffel-2-gelb.png" id="p02"]
+[ext_resource type="Texture2D" uid="uid://d2xht8namsnb4" path="res://assets/hintergrund/riffel/riffel-3-creme.png" id="p03"]
+[ext_resource type="Texture2D" uid="uid://dam7i6tgs0ulc" path="res://assets/hintergrund/riffel/riffel-4-weiss.png" id="p04"]
+[ext_resource type="Texture2D" uid="uid://cbhd1l5j13l6o" path="res://assets/hintergrund/riffel/riffel-5-gruen.png" id="p05"]
+[ext_resource type="Texture2D" uid="uid://cvniqq2dlygu1" path="res://assets/hintergrund/riffel/riffel-6-indigo.png" id="p06"]
+[ext_resource type="Texture2D" uid="uid://cjotxxjwgfwxf" path="res://assets/hintergrund/riffel/riffel-7-nachtblau.png" id="p07"]
+[ext_resource type="Texture2D" uid="uid://b51qj80smql6e" path="res://assets/hintergrund/riffel/riffel-8-fast-schwarz.png" id="p08"]
+[ext_resource type="PackedScene" path="res://szenen/wolke_bewegt.tscn" id="w4"]
 
-[sub_resource type="Gradient" id="Gradient_taste"]
-colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
+[sub_resource type="SpriteFrames" id="SpriteFrames_feuer"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("f1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f6")
+}],
+"loop": 1,
+"name": &"default",
+"speed": 16.0
+}]
 
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_taste"]
-gradient = SubResource("Gradient_taste")
-width = 200
-height = 200
+[sub_resource type="SpriteFrames" id="SpriteFrames_drahtrolle"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("d1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d9")
+}, {
+"duration": 1.0,
+"texture": ExtResource("d10")
+}],
+"loop": 1,
+"name": &"default",
+"speed": 12.0
+}]
 
 [sub_resource type="Gradient" id="Gradient_liegt"]
 offsets = PackedFloat32Array(0, 0.8, 0.8, 1)
@@ -116,86 +172,30 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("GradientTexture2D_steht")
 }],
-"loop": false,
+"loop": 0,
 "name": &"aufstehen",
 "speed": 5.0
 }]
 
-[sub_resource type="SpriteFrames" id="SpriteFrames_feuer"]
-animations = [{
-"frames": [{
-"duration": 1.0,
-"texture": ExtResource("f1")
-}, {
-"duration": 1.0,
-"texture": ExtResource("f2")
-}, {
-"duration": 1.0,
-"texture": ExtResource("f3")
-}, {
-"duration": 1.0,
-"texture": ExtResource("f4")
-}, {
-"duration": 1.0,
-"texture": ExtResource("f5")
-}, {
-"duration": 1.0,
-"texture": ExtResource("f6")
-}],
-"loop": true,
-"name": &"default",
-"speed": 16.0
-}]
+[sub_resource type="Gradient" id="Gradient_taste"]
+colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
 
-[sub_resource type="SpriteFrames" id="SpriteFrames_drahtrolle"]
-animations = [{
-"frames": [{
-"duration": 1.0,
-"texture": ExtResource("d1")
-}, {
-"duration": 1.0,
-"texture": ExtResource("d2")
-}, {
-"duration": 1.0,
-"texture": ExtResource("d3")
-}, {
-"duration": 1.0,
-"texture": ExtResource("d4")
-}, {
-"duration": 1.0,
-"texture": ExtResource("d5")
-}, {
-"duration": 1.0,
-"texture": ExtResource("d6")
-}, {
-"duration": 1.0,
-"texture": ExtResource("d7")
-}, {
-"duration": 1.0,
-"texture": ExtResource("d8")
-}, {
-"duration": 1.0,
-"texture": ExtResource("d9")
-}, {
-"duration": 1.0,
-"texture": ExtResource("d10")
-}],
-"loop": true,
-"name": &"default",
-"speed": 12.0
-}]
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_taste"]
+gradient = SubResource("Gradient_taste")
+width = 200
+height = 200
 
-[node name="Spiel" type="Node2D"]
+[node name="Spiel" type="Node2D" unique_id=218368046]
 script = ExtResource("5_spiel")
 
-[node name="Hintergrund" type="CanvasLayer" parent="." node_paths=PackedStringArray("kanone")]
+[node name="Hintergrund" type="CanvasLayer" parent="." unique_id=817190884 node_paths=PackedStringArray("kanone")]
 layer = -1
 script = ExtResource("38_hintergrund")
 kanone = NodePath("../Kanone")
 bilder = Array[Texture2D]([ExtResource("p01"), ExtResource("p02"), ExtResource("p03"), ExtResource("p04"), ExtResource("p05"), ExtResource("p06"), ExtResource("p07"), ExtResource("p08")])
 flugkraft_je_bild = 12.5
 
-[node name="Pappe" type="TextureRect" parent="Hintergrund"]
+[node name="Pappe" type="TextureRect" parent="Hintergrund" unique_id=1702718226]
 offset_right = 592.0
 offset_bottom = 2352.0
 scale = Vector2(2.4324, 1.8367)
@@ -204,12 +204,12 @@ texture = ExtResource("p01")
 expand_mode = 1
 stretch_mode = 1
 
-[node name="Naechste" type="TextureRect" parent="Hintergrund"]
+[node name="Naechste" type="TextureRect" parent="Hintergrund" unique_id=1896913251]
+modulate = Color(1, 1, 1, 0)
 offset_right = 592.0
 offset_bottom = 2352.0
 scale = Vector2(2.4324, 1.8367)
 mouse_filter = 2
-modulate = Color(1, 1, 1, 0)
 texture = ExtResource("p02")
 expand_mode = 1
 stretch_mode = 1
@@ -240,65 +240,65 @@ position = Vector2(2250, 1040)
 rotation = 3.1415927
 scale = Vector2(1.7, 1.7)
 
-[node name="Boden" type="Parallax2D" parent="."]
+[node name="Boden" type="Parallax2D" parent="." unique_id=1568352170]
 scroll_offset = Vector2(0, 1212)
 repeat_size = Vector2(6694, 0)
 repeat_times = 4
 
-[node name="Wiese" type="Sprite2D" parent="Boden"]
+[node name="Wiese" type="Sprite2D" parent="Boden" unique_id=331214229]
 position = Vector2(0, -429)
 scale = Vector2(5.23, 5.23)
 texture = ExtResource("37_wiese")
 centered = false
 
-[node name="Pfosten1" type="ColorRect" parent="Boden"]
+[node name="Pfosten1" type="ColorRect" parent="Boden" unique_id=343638219]
 offset_top = -60.0
 offset_right = 12.0
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="Pfosten2" type="ColorRect" parent="Boden"]
+[node name="Pfosten2" type="ColorRect" parent="Boden" unique_id=320522811]
 offset_left = 200.0
 offset_top = -60.0
 offset_right = 212.0
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="Pfosten3" type="ColorRect" parent="Boden"]
+[node name="Pfosten3" type="ColorRect" parent="Boden" unique_id=318669736]
 offset_left = 400.0
 offset_top = -60.0
 offset_right = 412.0
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="Pfosten4" type="ColorRect" parent="Boden"]
+[node name="Pfosten4" type="ColorRect" parent="Boden" unique_id=411510733]
 offset_left = 600.0
 offset_top = -60.0
 offset_right = 612.0
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="Pfosten5" type="ColorRect" parent="Boden"]
+[node name="Pfosten5" type="ColorRect" parent="Boden" unique_id=2020389727]
 offset_left = 800.0
 offset_top = -60.0
 offset_right = 812.0
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="Pfosten6" type="ColorRect" parent="Boden"]
+[node name="Pfosten6" type="ColorRect" parent="Boden" unique_id=493593847]
 offset_left = 1000.0
 offset_top = -60.0
 offset_right = 1012.0
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="Pfosten7" type="ColorRect" parent="Boden"]
+[node name="Pfosten7" type="ColorRect" parent="Boden" unique_id=2135610564]
 offset_left = 1200.0
 offset_top = -60.0
 offset_right = 1212.0
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="Pfosten8" type="ColorRect" parent="Boden"]
+[node name="Pfosten8" type="ColorRect" parent="Boden" unique_id=574053101]
 offset_left = 1400.0
 offset_top = -60.0
 offset_right = 1412.0
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="Nummer0" type="Label" parent="Boden"]
+[node name="Nummer0" type="Label" parent="Boden" unique_id=1222695307]
 offset_left = -40.0
 offset_top = -130.0
 offset_right = 52.0
@@ -308,7 +308,7 @@ theme_override_font_sizes/font_size = 48
 text = "0"
 horizontal_alignment = 1
 
-[node name="Nummer1" type="Label" parent="Boden"]
+[node name="Nummer1" type="Label" parent="Boden" unique_id=647679257]
 offset_left = 160.0
 offset_top = -130.0
 offset_right = 252.0
@@ -318,7 +318,7 @@ theme_override_font_sizes/font_size = 48
 text = "1"
 horizontal_alignment = 1
 
-[node name="Nummer2" type="Label" parent="Boden"]
+[node name="Nummer2" type="Label" parent="Boden" unique_id=320158673]
 offset_left = 360.0
 offset_top = -130.0
 offset_right = 452.0
@@ -328,7 +328,7 @@ theme_override_font_sizes/font_size = 48
 text = "2"
 horizontal_alignment = 1
 
-[node name="Nummer3" type="Label" parent="Boden"]
+[node name="Nummer3" type="Label" parent="Boden" unique_id=706465758]
 offset_left = 560.0
 offset_top = -130.0
 offset_right = 652.0
@@ -338,7 +338,7 @@ theme_override_font_sizes/font_size = 48
 text = "3"
 horizontal_alignment = 1
 
-[node name="Nummer4" type="Label" parent="Boden"]
+[node name="Nummer4" type="Label" parent="Boden" unique_id=783873563]
 offset_left = 760.0
 offset_top = -130.0
 offset_right = 852.0
@@ -348,7 +348,7 @@ theme_override_font_sizes/font_size = 48
 text = "4"
 horizontal_alignment = 1
 
-[node name="Nummer5" type="Label" parent="Boden"]
+[node name="Nummer5" type="Label" parent="Boden" unique_id=1531772941]
 offset_left = 960.0
 offset_top = -130.0
 offset_right = 1052.0
@@ -358,7 +358,7 @@ theme_override_font_sizes/font_size = 48
 text = "5"
 horizontal_alignment = 1
 
-[node name="Nummer6" type="Label" parent="Boden"]
+[node name="Nummer6" type="Label" parent="Boden" unique_id=906271583]
 offset_left = 1160.0
 offset_top = -130.0
 offset_right = 1252.0
@@ -368,7 +368,7 @@ theme_override_font_sizes/font_size = 48
 text = "6"
 horizontal_alignment = 1
 
-[node name="Nummer7" type="Label" parent="Boden"]
+[node name="Nummer7" type="Label" parent="Boden" unique_id=880034246]
 offset_left = 1360.0
 offset_top = -130.0
 offset_right = 1452.0
@@ -378,26 +378,38 @@ theme_override_font_sizes/font_size = 48
 text = "7"
 horizontal_alignment = 1
 
-[node name="Erzeuger" type="Node2D" parent="." node_paths=PackedStringArray("kanone", "zonen")]
+[node name="Erzeuger" type="Node2D" parent="." unique_id=1628570235 node_paths=PackedStringArray("kanone", "zonen")]
 script = ExtResource("6_erzeuger")
 kanone = NodePath("../Kanone")
 zonen = NodePath("../Zonen")
 schwarm_szenen = Array[PackedScene]([ExtResource("3_fliege"), ExtResource("17_schnell"), ExtResource("18_scheu"), ExtResource("19_koeder"), ExtResource("20_teleport")])
 
-[node name="Hindernisse" type="Node2D" parent="." node_paths=PackedStringArray("kanone", "faecher")]
+[node name="Hindernisse" type="Node2D" parent="." unique_id=635002288 node_paths=PackedStringArray("kanone", "faecher")]
 script = ExtResource("8_hindernisse")
 hindernis_szene = ExtResource("9_hindernis")
 kanone = NodePath("../Kanone")
 faecher = NodePath("../Kanone/Faecher")
 
-[node name="Kanone" type="Node2D" parent="." node_paths=PackedStringArray("joystick")]
+[node name="TonKlotz" type="AudioStreamPlayer" parent="Hindernisse" unique_id=1952512181]
+stream = ExtResource("15_klotz")
+volume_db = -8.0
+max_polyphony = 3
+bus = &"Effekte"
+
+[node name="TonMatsch" type="AudioStreamPlayer" parent="Hindernisse" unique_id=721025698]
+stream = ExtResource("16_matsch")
+volume_db = -11.0
+max_polyphony = 4
+bus = &"Effekte"
+
+[node name="Kanone" type="Node2D" parent="." unique_id=71250290 node_paths=PackedStringArray("joystick")]
 script = ExtResource("1_kanone")
 nadel_szene = ExtResource("2_nadel")
 joystick = NodePath("../Bedienung/Joystick")
 
-[node name="Arm" type="Node2D" parent="Kanone"]
+[node name="Arm" type="Node2D" parent="Kanone" unique_id=1776390834]
 
-[node name="FeuerLinks" type="AnimatedSprite2D" parent="Kanone/Arm"]
+[node name="FeuerLinks" type="AnimatedSprite2D" parent="Kanone/Arm" unique_id=1793062495]
 visible = false
 position = Vector2(-124.7, -8.9)
 rotation = -1.5707964
@@ -406,7 +418,7 @@ sprite_frames = SubResource("SpriteFrames_feuer")
 autoplay = "default"
 flip_h = true
 
-[node name="FeuerRechts" type="AnimatedSprite2D" parent="Kanone/Arm"]
+[node name="FeuerRechts" type="AnimatedSprite2D" parent="Kanone/Arm" unique_id=1015791158]
 visible = false
 position = Vector2(123.8, -8.9)
 rotation = 1.5707964
@@ -414,39 +426,40 @@ scale = Vector2(0.351, 0.351)
 sprite_frames = SubResource("SpriteFrames_feuer")
 autoplay = "default"
 
-[node name="Bild" type="Sprite2D" parent="Kanone/Arm"]
+[node name="Bild" type="Sprite2D" parent="Kanone/Arm" unique_id=2064279821]
 position = Vector2(-0.5, -106.4)
 scale = Vector2(0.315, 0.315)
 texture = ExtResource("44_hinten")
 
-[node name="Drahtrolle" type="AnimatedSprite2D" parent="Kanone/Arm"]
+[node name="Drahtrolle" type="AnimatedSprite2D" parent="Kanone/Arm" unique_id=829165278]
 position = Vector2(-42.2, -57.8)
 scale = Vector2(0.315, 0.315)
 sprite_frames = SubResource("SpriteFrames_drahtrolle")
 
-[node name="Tonne" type="Sprite2D" parent="Kanone/Arm"]
+[node name="Tonne" type="Sprite2D" parent="Kanone/Arm" unique_id=1975682853]
 position = Vector2(0.2, 70.9)
 scale = Vector2(0.315, 0.315)
 texture = ExtResource("45_tonne")
 
-[node name="Muendung" type="Marker2D" parent="Kanone/Arm"]
+[node name="Muendung" type="Marker2D" parent="Kanone/Arm" unique_id=322373295]
 position = Vector2(0, -230.7)
 
-[node name="Aufstehen" type="AnimatedSprite2D" parent="Kanone"]
+[node name="Aufstehen" type="AnimatedSprite2D" parent="Kanone" unique_id=1527670631]
 visible = false
 position = Vector2(130, 717)
 scale = Vector2(3.5, 4.95)
 sprite_frames = SubResource("SpriteFrames_aufstehen")
 animation = &"aufstehen"
 
-[node name="RechteHand" type="ColorRect" parent="Kanone"]
+[node name="RechteHand" type="ColorRect" parent="Kanone" unique_id=2088670462]
 offset_left = 560.0
 offset_top = -700.0
 offset_right = 680.0
 offset_bottom = -620.0
 color = Color(0.6, 0.6, 0.6, 1)
 
-[node name="Leiste" type="ProgressBar" parent="Kanone/RechteHand"]
+[node name="Leiste" type="ProgressBar" parent="Kanone/RechteHand" unique_id=552392177]
+layout_mode = 0
 offset_left = -120.0
 offset_top = 65.0
 offset_right = -40.0
@@ -456,7 +469,7 @@ pivot_offset = Vector2(40, 435)
 fill_mode = 3
 show_percentage = false
 
-[node name="Stichstelle" type="ReferenceRect" parent="Kanone/RechteHand"]
+[node name="Stichstelle" type="ReferenceRect" parent="Kanone/RechteHand" unique_id=674756912]
 layout_mode = 0
 offset_left = -100.0
 offset_top = 150.0
@@ -466,171 +479,168 @@ mouse_filter = 2
 border_color = Color(1, 0.2, 0.2, 1)
 border_width = 3.0
 
-[node name="Griff" type="Marker2D" parent="Kanone"]
+[node name="Griff" type="Marker2D" parent="Kanone" unique_id=1784918379]
 position = Vector2(620, -700)
 
-[node name="Faecher" type="Node2D" parent="Kanone"]
+[node name="Faecher" type="Node2D" parent="Kanone" unique_id=1952737731]
 position = Vector2(0, -940)
 script = ExtResource("7_faecher")
 
-[node name="Kamera" type="Camera2D" parent="Kanone"]
+[node name="Kamera" type="Camera2D" parent="Kanone" unique_id=510549237]
 offset = Vector2(0, -447)
 zoom = Vector2(0.85, 0.85)
 
-[node name="Uebergabe" type="Node" parent="Kanone" node_paths=PackedStringArray("arm", "faecher", "griff")]
+[node name="Uebergabe" type="Node" parent="Kanone" unique_id=1847282141 node_paths=PackedStringArray("arm", "faecher", "griff")]
 script = ExtResource("4_uebergabe")
 arm = NodePath("../Arm")
 faecher = NodePath("../Faecher")
 griff = NodePath("../Griff")
 
-[node name="Bedienung" type="CanvasLayer" parent="."]
+[node name="TonArm" type="AudioStreamPlayer" parent="Kanone/Uebergabe" unique_id=290323044]
+stream = ExtResource("11_arm")
+volume_db = -18.0
+bus = &"Effekte"
 
-[node name="Joystick" type="Node2D" parent="Bedienung"]
+[node name="TonSchuss" type="AudioStreamPlayer" parent="Kanone" unique_id=1010792050]
+stream = ExtResource("10_schuss")
+volume_db = -12.0
+bus = &"Effekte"
+
+[node name="Figur" type="Node2D" parent="Kanone" unique_id=319349142 node_paths=PackedStringArray("kanone", "erzeuger", "joystick")]
+position = Vector2(130, 1212)
+script = ExtResource("25_totale")
+nadel_szene = ExtResource("2_nadel")
+kanone = NodePath("..")
+erzeuger = NodePath("../../Erzeuger")
+joystick = NodePath("../../Bedienung/Joystick")
+
+[node name="Beine" type="ColorRect" parent="Kanone/Figur" unique_id=322886175]
+offset_left = -70.0
+offset_top = -470.0
+offset_right = 70.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Rumpf" type="ColorRect" parent="Kanone/Figur" unique_id=1427410420]
+offset_left = -150.0
+offset_top = -850.0
+offset_right = 150.0
+offset_bottom = -470.0
+color = Color(0.6, 0.6, 0.6, 1)
+
+[node name="Kopf" type="ColorRect" parent="Kanone/Figur" unique_id=2049528721]
+offset_left = -66.0
+offset_top = -990.0
+offset_right = 66.0
+offset_bottom = -858.0
+color = Color(0.7, 0.7, 0.7, 1)
+
+[node name="Schulterpunkt" type="Marker2D" parent="Kanone/Figur" unique_id=472194480]
+position = Vector2(-130, -812)
+
+[node name="Schulter" type="Node2D" parent="Kanone/Figur" unique_id=542994082]
+position = Vector2(-130, -812)
+
+[node name="Armbild" type="Node2D" parent="Kanone/Figur/Schulter" unique_id=486998110]
+
+[node name="Drehpunkt" type="Marker2D" parent="Kanone/Figur/Schulter/Armbild" unique_id=2120943947]
+
+[node name="Arm" type="ColorRect" parent="Kanone/Figur/Schulter/Armbild" unique_id=756651120]
+offset_left = -30.0
+offset_top = -400.0
+offset_right = 30.0
+color = Color(0.55, 0.55, 0.55, 1)
+
+[node name="Faust" type="ColorRect" parent="Kanone/Figur/Schulter/Armbild" unique_id=1267421040]
+offset_left = -60.0
+offset_top = -435.0
+offset_right = 60.0
+offset_bottom = -395.0
+color = Color(0.6, 0.6, 0.6, 1)
+
+[node name="Bild" type="Sprite2D" parent="Kanone/Figur/Schulter/Armbild" unique_id=1591095807]
+position = Vector2(-0.3, -403.9)
+scale = Vector2(0.21, 0.21)
+texture = ExtResource("43_kanone")
+
+[node name="Spitze" type="Marker2D" parent="Kanone/Figur/Schulter/Armbild" unique_id=1917775842]
+position = Vector2(0, -540)
+
+[node name="Bedienung" type="CanvasLayer" parent="." unique_id=1432991439]
+
+[node name="Joystick" type="Node2D" parent="Bedienung" unique_id=1901375340]
 position = Vector2(170, 910)
 script = ExtResource("26_joystick")
 
-[node name="Grund" type="Sprite2D" parent="Bedienung/Joystick"]
+[node name="Grund" type="Sprite2D" parent="Bedienung/Joystick" unique_id=18113476]
 scale = Vector2(1.2, 1.2)
 texture = SubResource("GradientTexture2D_taste")
 
-[node name="Knopf" type="Sprite2D" parent="Bedienung/Joystick"]
+[node name="Knopf" type="Sprite2D" parent="Bedienung/Joystick" unique_id=485726576]
 scale = Vector2(0.5, 0.5)
 texture = SubResource("GradientTexture2D_taste")
 
-[node name="TasteSchuss" type="TouchScreenButton" parent="Bedienung"]
+[node name="TasteSchuss" type="TouchScreenButton" parent="Bedienung" unique_id=546598092]
 position = Vector2(1230, 880)
 scale = Vector2(0.85, 0.85)
 texture_normal = SubResource("GradientTexture2D_taste")
 action = "schiessen"
 visibility_mode = 1
 
-[node name="Wort" type="Label" parent="Bedienung/TasteSchuss"]
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 8
+[node name="Wort" type="Label" parent="Bedienung/TasteSchuss" unique_id=1487322037]
 offset_right = 200.0
 offset_bottom = 200.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
 theme_override_font_sizes/font_size = 48
 text = "Schuss"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Sieg" type="Label" parent="Bedienung"]
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 8
+[node name="Sieg" type="Label" parent="Bedienung" unique_id=1754753577]
 visible = false
 offset_top = 440.0
 offset_right = 1440.0
 offset_bottom = 640.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
 theme_override_font_sizes/font_size = 140
 text = "Im All!"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Absturz" type="Label" parent="Bedienung"]
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 8
+[node name="Absturz" type="Label" parent="Bedienung" unique_id=589743630]
 visible = false
 offset_top = 440.0
 offset_right = 1440.0
 offset_bottom = 640.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
 theme_override_font_sizes/font_size = 140
 text = "Abgestuerzt!"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="TonSchuss" type="AudioStreamPlayer" parent="Kanone"]
-stream = ExtResource("10_schuss")
-volume_db = -12.0
-bus = &"Effekte"
-
-[node name="TonArm" type="AudioStreamPlayer" parent="Kanone/Uebergabe"]
-stream = ExtResource("11_arm")
-volume_db = -18.0
-bus = &"Effekte"
-
-[node name="Ton" type="Node" parent="."]
-
-[node name="Steigen" type="AudioStreamPlayer" parent="Ton"]
-stream = ExtResource("12_steigen")
-volume_db = -8.0
-bus = &"Effekte"
-
-[node name="Absturz" type="AudioStreamPlayer" parent="Ton"]
-stream = ExtResource("12_steigen")
-volume_db = -8.0
-pitch_scale = 0.6
-bus = &"Effekte"
-
-[node name="Aufstehen" type="AudioStreamPlayer" parent="Ton"]
-stream = ExtResource("13_aufstehen")
-volume_db = -14.0
-bus = &"Effekte"
-
-[node name="Sieg" type="AudioStreamPlayer" parent="Ton"]
-stream = ExtResource("14_sieg")
-volume_db = -6.0
-bus = &"Effekte"
-
-[node name="TonKlotz" type="AudioStreamPlayer" parent="Hindernisse"]
-stream = ExtResource("15_klotz")
-volume_db = -8.0
-max_polyphony = 3
-bus = &"Effekte"
-
-[node name="TonMatsch" type="AudioStreamPlayer" parent="Hindernisse"]
-stream = ExtResource("16_matsch")
-volume_db = -11.0
-max_polyphony = 4
-bus = &"Effekte"
-
-[node name="Zonen" type="Node" parent="." node_paths=PackedStringArray("kanone", "anzeige")]
-script = ExtResource("22_zonen")
-kanone = NodePath("../Kanone")
-anzeige = NodePath("../Bedienung/Zone")
-
-[node name="Anfang" type="Node" parent="Zonen"]
-script = ExtResource("23_zone")
-fliegen = Array[PackedScene]([ExtResource("3_fliege"), ExtResource("17_schnell")])
-
-[node name="Scheue" type="Node" parent="Zonen"]
-script = ExtResource("23_zone")
-ab_flugkraft = 24.1
-fliegen = Array[PackedScene]([ExtResource("18_scheu"), ExtResource("40_heuschrecke")])
-
-[node name="Koeder" type="Node" parent="Zonen"]
-script = ExtResource("23_zone")
-ab_flugkraft = 49.1
-fliegen = Array[PackedScene]([ExtResource("19_koeder")])
-mindestens = 3
-
-[node name="Boss" type="Node" parent="Zonen"]
-script = ExtResource("23_zone")
-ab_flugkraft = 74.1
-fliegen = Array[PackedScene]([ExtResource("20_teleport")])
-einmalig = Array[PackedScene]([ExtResource("21_boss")])
-mindestens = 3
-
-[node name="Zone" type="Label" parent="Bedienung"]
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 8
+[node name="Zone" type="Label" parent="Bedienung" unique_id=308955573]
 offset_left = 20.0
 offset_top = 10.0
 offset_right = 700.0
 offset_bottom = 60.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
 theme_override_font_sizes/font_size = 32
 text = "Zone"
 
-[node name="TestHinweis" type="Label" parent="Bedienung"]
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 8
+[node name="TestHinweis" type="Label" parent="Bedienung" unique_id=1872498304]
 offset_left = 20.0
 offset_top = 55.0
 offset_right = 700.0
 offset_bottom = 90.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
 theme_override_font_sizes/font_size = 22
 text = "Test: Tasten 1 bis 4 springen in eine Zone, 0 oder R = Neustart"
 
-[node name="Neustart" type="Button" parent="Bedienung"]
+[node name="Neustart" type="Button" parent="Bedienung" unique_id=1743905150]
 offset_left = 1220.0
 offset_top = 10.0
 offset_right = 1420.0
@@ -639,88 +649,79 @@ focus_mode = 0
 theme_override_font_sizes/font_size = 32
 text = "Neustart"
 
-[node name="TasteNeustart" type="TouchScreenButton" parent="Bedienung/Neustart"]
+[node name="TasteNeustart" type="TouchScreenButton" parent="Bedienung/Neustart" unique_id=1160724643]
 scale = Vector2(1, 0.3)
 texture_normal = SubResource("GradientTexture2D_taste")
 action = "neustart"
 visibility_mode = 1
 
-[node name="TestSprung" type="Node" parent="." node_paths=PackedStringArray("zonen", "knopf")]
+[node name="Ton" type="Node" parent="." unique_id=1348607761]
+
+[node name="Steigen" type="AudioStreamPlayer" parent="Ton" unique_id=62759776]
+stream = ExtResource("12_steigen")
+volume_db = -8.0
+bus = &"Effekte"
+
+[node name="Absturz" type="AudioStreamPlayer" parent="Ton" unique_id=176021898]
+stream = ExtResource("12_steigen")
+volume_db = -8.0
+pitch_scale = 0.6
+bus = &"Effekte"
+
+[node name="Aufstehen" type="AudioStreamPlayer" parent="Ton" unique_id=453645559]
+stream = ExtResource("13_aufstehen")
+volume_db = -14.0
+bus = &"Effekte"
+
+[node name="Sieg" type="AudioStreamPlayer" parent="Ton" unique_id=335401091]
+stream = ExtResource("14_sieg")
+volume_db = -6.0
+bus = &"Effekte"
+
+[node name="Zonen" type="Node" parent="." unique_id=1899758533 node_paths=PackedStringArray("kanone", "anzeige")]
+script = ExtResource("22_zonen")
+kanone = NodePath("../Kanone")
+anzeige = NodePath("../Bedienung/Zone")
+
+[node name="Anfang" type="Node" parent="Zonen" unique_id=1689094012]
+script = ExtResource("23_zone")
+fliegen = Array[PackedScene]([ExtResource("3_fliege"), ExtResource("17_schnell")])
+
+[node name="Scheue" type="Node" parent="Zonen" unique_id=155389799]
+script = ExtResource("23_zone")
+ab_flugkraft = 24.1
+fliegen = Array[PackedScene]([ExtResource("18_scheu"), ExtResource("40_heuschrecke")])
+
+[node name="Koeder" type="Node" parent="Zonen" unique_id=257651934]
+script = ExtResource("23_zone")
+ab_flugkraft = 49.1
+fliegen = Array[PackedScene]([ExtResource("19_koeder")])
+mindestens = 3
+
+[node name="Boss" type="Node" parent="Zonen" unique_id=1225986517]
+script = ExtResource("23_zone")
+ab_flugkraft = 74.1
+fliegen = Array[PackedScene]([ExtResource("20_teleport")])
+einmalig = Array[PackedScene]([ExtResource("21_boss")])
+mindestens = 3
+
+[node name="TestSprung" type="Node" parent="." unique_id=1062253324 node_paths=PackedStringArray("zonen", "knopf")]
 script = ExtResource("24_sprung")
 zonen = NodePath("../Zonen")
 knopf = NodePath("../Bedienung/Neustart")
 
-[node name="Figur" type="Node2D" parent="Kanone" node_paths=PackedStringArray("kanone", "erzeuger", "joystick")]
-position = Vector2(130, 1212)
-script = ExtResource("25_totale")
-nadel_szene = ExtResource("2_nadel")
-kanone = NodePath("..")
-erzeuger = NodePath("../../Erzeuger")
-joystick = NodePath("../../Bedienung/Joystick")
-
-[node name="Beine" type="ColorRect" parent="Kanone/Figur"]
-offset_left = -70.0
-offset_top = -470.0
-offset_right = 70.0
-color = Color(0.5, 0.5, 0.5, 1)
-
-[node name="Rumpf" type="ColorRect" parent="Kanone/Figur"]
-offset_left = -150.0
-offset_top = -850.0
-offset_right = 150.0
-offset_bottom = -470.0
-color = Color(0.6, 0.6, 0.6, 1)
-
-[node name="Kopf" type="ColorRect" parent="Kanone/Figur"]
-offset_left = -66.0
-offset_top = -990.0
-offset_right = 66.0
-offset_bottom = -858.0
-color = Color(0.7, 0.7, 0.7, 1)
-
-[node name="Schulterpunkt" type="Marker2D" parent="Kanone/Figur"]
-position = Vector2(-130, -812)
-
-[node name="Schulter" type="Node2D" parent="Kanone/Figur"]
-position = Vector2(-130, -812)
-
-[node name="Armbild" type="Node2D" parent="Kanone/Figur/Schulter"]
-
-[node name="Drehpunkt" type="Marker2D" parent="Kanone/Figur/Schulter/Armbild"]
-
-[node name="Arm" type="ColorRect" parent="Kanone/Figur/Schulter/Armbild"]
-offset_left = -30.0
-offset_top = -400.0
-offset_right = 30.0
-color = Color(0.55, 0.55, 0.55, 1)
-
-[node name="Faust" type="ColorRect" parent="Kanone/Figur/Schulter/Armbild"]
-offset_left = -60.0
-offset_top = -435.0
-offset_right = 60.0
-offset_bottom = -395.0
-color = Color(0.6, 0.6, 0.6, 1)
-
-[node name="Bild" type="Sprite2D" parent="Kanone/Figur/Schulter/Armbild"]
-position = Vector2(-0.3, -403.9)
-scale = Vector2(0.21, 0.21)
-texture = ExtResource("43_kanone")
-
-[node name="Spitze" type="Marker2D" parent="Kanone/Figur/Schulter/Armbild"]
-position = Vector2(0, -540)
-
-[node name="Einstellungsfliege" type="Node2D" parent="."]
+[node name="Einstellungsfliege" type="Node2D" parent="." unique_id=1855713512]
 position = Vector2(700, 1312)
 script = ExtResource("27_efliege")
 
-[node name="Form" type="ColorRect" parent="Einstellungsfliege"]
+[node name="Form" type="ColorRect" parent="Einstellungsfliege" unique_id=1922910470]
 offset_left = -100.0
 offset_top = -100.0
 offset_right = 100.0
 offset_bottom = 100.0
 color = Color(0.15, 0.15, 0.15, 1)
 
-[node name="Wort" type="Label" parent="Einstellungsfliege"]
+[node name="Wort" type="Label" parent="Einstellungsfliege" unique_id=1314700057]
 offset_left = -100.0
 offset_top = -100.0
 offset_right = 100.0
@@ -730,13 +731,13 @@ text = "Einst."
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Einstellungen" type="CanvasLayer" parent="." node_paths=PackedStringArray("fliege", "figur")]
+[node name="Einstellungen" type="CanvasLayer" parent="." unique_id=1393655033 node_paths=PackedStringArray("fliege", "figur")]
 layer = 2
 script = ExtResource("28_einstellungen")
 fliege = NodePath("../Einstellungsfliege")
 figur = NodePath("../Kanone/Figur")
 
-[node name="Wand" type="ColorRect" parent="Einstellungen"]
+[node name="Wand" type="ColorRect" parent="Einstellungen" unique_id=1197461523]
 visible = false
 offset_top = 810.0
 offset_right = 1440.0
@@ -744,7 +745,7 @@ offset_bottom = 1890.0
 mouse_filter = 2
 color = Color(0, 0, 0, 0)
 
-[node name="Wiese" type="TextureRect" parent="Einstellungen/Wand"]
+[node name="Wiese" type="TextureRect" parent="Einstellungen/Wand" unique_id=1523534368]
 layout_mode = 0
 offset_top = -184.5
 offset_right = 640.0
@@ -754,7 +755,7 @@ mouse_filter = 2
 texture = ExtResource("43_wand")
 stretch_mode = 1
 
-[node name="Fliege" type="ColorRect" parent="Einstellungen/Wand"]
+[node name="Fliege" type="ColorRect" parent="Einstellungen/Wand" unique_id=444617737]
 layout_mode = 0
 offset_left = 978.0
 offset_right = 1064.0
@@ -762,7 +763,7 @@ offset_bottom = 86.0
 mouse_filter = 2
 color = Color(0.15, 0.15, 0.15, 1)
 
-[node name="Wort" type="Label" parent="Einstellungen/Wand/Fliege"]
+[node name="Wort" type="Label" parent="Einstellungen/Wand/Fliege" unique_id=843632052]
 layout_mode = 0
 offset_right = 86.0
 offset_bottom = 86.0
@@ -771,16 +772,7 @@ text = "Einst."
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Titel" parent="Einstellungen" instance=ExtResource("44_schild")]
-visible = false
-offset_left = 380.0
-offset_top = -150.0
-offset_right = 920.0
-offset_bottom = -10.0
-schrift = "Einstellungen"
-groesse = 60
-
-[node name="Musik" parent="Einstellungen/Wand" instance=ExtResource("29_regler")]
+[node name="Musik" parent="Einstellungen/Wand" unique_id=1358636837 instance=ExtResource("29_regler")]
 layout_mode = 0
 offset_left = 470.0
 offset_top = 205.0
@@ -789,35 +781,44 @@ offset_bottom = 385.0
 bus = "Musik"
 beschriftung = "Musik"
 
-[node name="Effekte" parent="Einstellungen/Wand" instance=ExtResource("29_regler")]
+[node name="Effekte" parent="Einstellungen/Wand" unique_id=1968843054 instance=ExtResource("29_regler")]
 layout_mode = 0
 offset_left = 470.0
 offset_top = 450.0
 offset_right = 1390.0
 offset_bottom = 630.0
 
-[node name="Dank" parent="Einstellungen/Wand" instance=ExtResource("44_schild")]
+[node name="Dank" parent="Einstellungen/Wand" unique_id=1783258443 instance=ExtResource("44_schild")]
 layout_mode = 0
 offset_left = 470.0
 offset_top = 760.0
 offset_right = 1390.0
 offset_bottom = 1075.0
 schrift = "Thanks to
-Steffen, Amke, Louisa, Loki, Mattis, Ivan, Sophie, Lysann, Mischa"
+Steffen, Amke, Louisa, Loki, Mattis, Ivan, Sophie, Lysann, Mischa, Alina"
 groesse = 51
 
-[node name="Musik" type="Node" parent="."]
+[node name="Titel" parent="Einstellungen" unique_id=1292271785 instance=ExtResource("44_schild")]
+visible = false
+offset_left = 380.0
+offset_top = -150.0
+offset_right = 920.0
+offset_bottom = -10.0
+schrift = "Einstellungen"
+groesse = 60
+
+[node name="Musik" type="Node" parent="." unique_id=1619185734]
 script = ExtResource("30_musik")
 
-[node name="Schleife" type="AudioStreamPlayer" parent="Musik"]
+[node name="Schleife" type="AudioStreamPlayer" parent="Musik" unique_id=1194137325]
 stream = ExtResource("31_schleife")
 bus = &"Musik"
 
-[node name="Ende" type="AudioStreamPlayer" parent="Musik"]
+[node name="Ende" type="AudioStreamPlayer" parent="Musik" unique_id=1083471217]
 stream = ExtResource("32_ende")
 bus = &"Musik"
 
-[node name="Stecher" type="Node" parent="." node_paths=PackedStringArray("kanone", "zonen", "zone", "stichstelle")]
+[node name="Stecher" type="Node" parent="." unique_id=1909475743 node_paths=PackedStringArray("kanone", "zonen", "zone", "stichstelle")]
 script = ExtResource("42_stecher")
 stechfliege_szene = ExtResource("41_stechfliege")
 kanone = NodePath("../Kanone")

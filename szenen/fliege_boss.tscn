@@ -1,11 +1,63 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3 uid="uid://cy8sn2iydr7sj"]
 
-[ext_resource type="Script" path="res://skripte/fliege_boss.gd" id="1_fliege"]
-[ext_resource type="AudioStream" path="res://assets/audio/sfx/summen.ogg" id="2_summen"]
-[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/bockkaefer-skizze.png" id="9_bild"]
+[ext_resource type="Script" uid="uid://crkm7rl0xw26r" path="res://skripte/fliege_boss.gd" id="1_fliege"]
+[ext_resource type="AudioStream" uid="uid://dw1q8333j2j27" path="res://assets/audio/sfx/summen.ogg" id="2_summen"]
+[ext_resource type="Texture2D" uid="uid://ojb6kf4isu8g" path="res://assets/fluegel/schlag/boss-hinten-1.png" id="f_hinten_1"]
+[ext_resource type="Texture2D" uid="uid://bt1muvjvhd2rl" path="res://assets/fluegel/schlag/boss-hinten-2.png" id="f_hinten_2"]
+[ext_resource type="Texture2D" uid="uid://donwq1tysg6w8" path="res://assets/fluegel/schlag/boss-vorn-1.png" id="f_vorn_1"]
+[ext_resource type="Texture2D" uid="uid://dx1vupr7s1j53" path="res://assets/fluegel/schlag/boss-vorn-2.png" id="f_vorn_2"]
+[ext_resource type="Texture2D" uid="uid://yk3gafejnekr" path="res://assets/fliegen/spiel/bockkaefer-skizze-schlag-1.png" id="k_1"]
+[ext_resource type="Texture2D" uid="uid://34e4rxxavhu" path="res://assets/fliegen/spiel/bockkaefer-skizze-schlag-2.png" id="k_2"]
 
-[node name="Fliege" type="Node2D" groups=["fliegen"]]
+[sub_resource type="Animation" id="Animation_flattern"]
+resource_name = "flattern"
+length = 0.034
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("FluegelVorn:texture")
+tracks/0/interp = 0
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.017),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("f_vorn_1"), ExtResource("f_vorn_2")]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("FluegelHinten:texture")
+tracks/1/interp = 0
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.017),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("f_hinten_1"), ExtResource("f_hinten_2")]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Bild:texture")
+tracks/2/interp = 0
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.017),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("k_1"), ExtResource("k_2")]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_fluegel"]
+_data = {
+&"flattern": SubResource("Animation_flattern")
+}
+
+[node name="Fliege" type="Node2D" unique_id=1002127620 groups=["fliegen"]]
 z_index = 1
+scale = Vector2(1.5550389, 1.5550389)
 script = ExtResource("1_fliege")
 tempo_langsam = 110.0
 tempo_schnell = 130.0
@@ -13,7 +65,7 @@ flugkraft = 15
 leben = 3
 flieht = false
 
-[node name="Fluegel" type="ColorRect" parent="."]
+[node name="Fluegel" type="ColorRect" parent="." unique_id=462021315]
 visible = false
 offset_left = -120.0
 offset_top = -150.0
@@ -22,7 +74,7 @@ offset_bottom = -75.0
 mouse_filter = 2
 color = Color(0.6, 0.6, 0.6, 1)
 
-[node name="Koerper" type="ColorRect" parent="."]
+[node name="Koerper" type="ColorRect" parent="." unique_id=781359436]
 visible = false
 offset_left = -150.0
 offset_top = -75.0
@@ -31,11 +83,25 @@ offset_bottom = 150.0
 mouse_filter = 2
 color = Color(0.1, 0.1, 0.1, 1)
 
-[node name="Bild" type="Sprite2D" parent="."]
+[node name="Bild" type="Sprite2D" parent="." unique_id=943922723]
 scale = Vector2(0.5667, 0.5667)
-texture = ExtResource("9_bild")
+texture = ExtResource("k_1")
 
-[node name="Art" type="Label" parent="."]
+[node name="FluegelHinten" type="Sprite2D" parent="." unique_id=668759059]
+position = Vector2(119.6, -46.8)
+scale = Vector2(0.5667, 0.5667)
+texture = ExtResource("f_hinten_1")
+
+[node name="FluegelVorn" type="Sprite2D" parent="." unique_id=1118620895]
+position = Vector2(83.6, -4.5)
+scale = Vector2(0.5667, 0.5667)
+texture = ExtResource("f_vorn_1")
+
+[node name="Flattern" type="AnimationPlayer" parent="." unique_id=664914798]
+libraries/ = SubResource("AnimationLibrary_fluegel")
+autoplay = &"flattern"
+
+[node name="Art" type="Label" parent="." unique_id=1403388221]
 visible = false
 offset_left = -150.0
 offset_top = -75.0
@@ -46,14 +112,14 @@ text = "BOSS"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Summen" type="AudioStreamPlayer2D" parent="."]
+[node name="Summen" type="AudioStreamPlayer2D" parent="." unique_id=803731454]
 stream = ExtResource("2_summen")
 volume_db = -20.0
 autoplay = true
 max_distance = 760.0
 bus = &"Effekte"
 
-[node name="Loch" type="ColorRect" parent="."]
+[node name="Loch" type="ColorRect" parent="." unique_id=299242441]
 visible = false
 offset_left = -8.0
 offset_top = -8.0

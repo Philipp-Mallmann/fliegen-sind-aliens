@@ -6747,3 +6747,110 @@ Das Bild der schnellen Fliege schaut nach links (der Kopf mit dem Auge ist links
 Angeschaut (Probe ohne Bildschirm, eine Fliege mit festem Tempo beobachtet): Drehung bleibt die ganze Zeit 0, auch in der Schleife. Gespiegelt beim Flug nach rechts, nach der Schleife (64 Bilder spaeter) nicht mehr gespiegelt und auf dem Rueckweg nach links. Schnellcheck PASS.
 
 Frage zur Selbstkontrolle: Warum steht `bild_richten()` nach `richtung = -richtung` und nicht davor?
+
+## Fluegel fuer die schnelle Fliege (27.11.2026)
+
+Wie bei der normalen Fliege: zwei Bilder aus deiner Krita-Datei, der `AnimationPlayer` `Flattern` wechselt sie (gleicher Takt wie die normale Fliege: Wechsel nach 0,017 Sekunden, also bei jedem Bild). Neu ist, dass du hier auch den Koerper bewegt hast: Er wippt zwischen den beiden Bildern um gut 8 Pixel. Darum gibt es eine dritte Spur, die das Bild des Koerpers (`Bild:texture`) mitwechselt.
+
+### Die Bilder
+
+- `assets/fluegel/schlag/schnell-vorn-1.png`, `-2.png`, `schnell-hinten-1.png`, `-2.png`: die Fluegel.
+- `assets/fliegen/spiel/fliege-skizze-schlag-1.png`, `-2.png`: der Koerper in deinen zwei Stellungen. `fliege-skizze-kraeftig.png` bleibt unveraendert liegen.
+
+### `szenen/fliege_schnell.tscn` - geaendert
+
+Neu: `FluegelHinten` (hinter dem Koerper), `FluegelVorn` (davor) und `Flattern` mit drei Spuren. `Bild` zeigt in Ruhe `fliege-skizze-schlag-1.png`. Alles hat dieselbe Groesse wie der Koerper (`scale` 0,2167), so passt es genau aufeinander wie in Krita.
+
+### `skripte/fliege_schnell.gd` - geaendert
+
+Die schnelle Fliege wird gespiegelt, wenn sie nach rechts fliegt (`bild_richten`). Die Fluegel muessen mit, sonst saessen sie danach am falschen Ende.
+
+```gdscript
+var gespiegelt: bool = false
+```
+Merkt sich, ob Bild und Fluegel gerade gespiegelt sind. In der Szene schaut die Fliege nach links, also am Anfang nicht gespiegelt.
+
+```gdscript
+	var nach_rechts: bool = richtung > 0.0
+	$Bild.flip_h = nach_rechts
+```
+Wie vorher, nur mit einem Namen fuer den Vergleich, weil er jetzt zweimal gebraucht wird.
+
+```gdscript
+	if nach_rechts != gespiegelt:
+		gespiegelt = nach_rechts
+		for fluegel in [$FluegelVorn, $FluegelHinten]:
+			fluegel.flip_h = nach_rechts
+			fluegel.position.x = -fluegel.position.x
+```
+Nur wenn sich die Richtung wirklich geaendert hat: Jeder Fluegel wird gespiegelt (`flip_h`) und auf die andere Seite der Fliegenmitte gesetzt (aus x 9 wird x -9). Ohne die Abfrage wuerde ein zweiter Aufruf mit derselben Richtung den Fluegel wieder zuruecksetzen. `[$FluegelVorn, $FluegelHinten]` ist eine Liste mit den beiden Knoten, die Schleife macht fuer beide dasselbe.
+
+### So wurde es angeschaut
+
+- Schnellcheck PASS fuer `fliege_schnell.gd`, Verify PASS.
+- Probe: die schnelle Fliege nach links und nach rechts, je beide Schlagbilder. Die Fluegel sitzen in beiden Richtungen auf dem Ruecken.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum wird `position.x` umgedreht und nicht nur `flip_h` gesetzt?
+2. Was ginge schief, wenn die Abfrage `nach_rechts != gespiegelt` fehlte und `bild_richten` zweimal hintereinander mit derselben Richtung liefe?
+3. Warum braucht die schnelle Fliege eine dritte Spur, die normale nicht?
+
+### Nachtrag: zweite Runde normale und schnelle Fliege, neu die scheue Fliege (27.11.2026)
+
+Kein neuer Code. Du hast die normale und die schnelle Fliege in Krita noch einmal ueberarbeitet und die scheue Fliege neu gemacht. Alle drei sind gleich gebaut wie oben beschrieben: zwei Bilder je Fluegel, bei der schnellen und der scheuen auch zwei Koerperbilder, und `Flattern` wechselt sie alle 0,017 Sekunden.
+
+- `szenen/fliege_normal.tscn`, `fliege_schnell.tscn`: neue Bilder, neue Positionen der Fluegel (sie liegen jetzt dort, wo du sie in Krita hingesetzt hast).
+- `szenen/fliege_scheu.tscn`: neu `FluegelHinten`, `FluegelVorn`, `Flattern` mit drei Spuren; `Bild` zeigt `fliege-ohne-fluegel-schlag-1.png`. Die Fluegel sind tuerkis (Zone Scheue).
+- Neue Bilder: `assets/fluegel/schlag/scheu-*.png`, `assets/fliegen/spiel/fliege-ohne-fluegel-schlag-1.png` und `-2.png`. Dein Original `fliege-ohne-fluegel.png` bleibt unveraendert.
+
+### Nachtrag: Heuschrecke wieder im Original, dritte Runde normale und schnelle Fliege (27.11.2026)
+
+Kein Code.
+
+- `szenen/fliege_heuschrecke.tscn` zeigt wieder `heuschrecke-skizze.png`, dein Original. Die verstaerkte Fassung `heuschrecke-skizze-kraeftig.png` ist geloescht: Beim Verstaerken waren die duennen Linien (Fuehler, Beine) verloren gegangen, man hat die Heuschrecke kaum noch erkannt.
+- `fliege_normal.tscn`, `fliege_schnell.tscn`, `fliege_scheu.tscn`: neue Fluegelbilder und Positionen aus deiner letzten Krita-Runde.
+
+## Fluegel fuer die Heuschrecke (27.11.2026)
+
+Wie bei den anderen: zwei Bilder fuer jeden Fluegel und fuer den Koerper aus deiner Krita-Datei, `Flattern` wechselt sie alle 0,017 Sekunden. Die Fluegel sind tuerkis (Zone Scheue).
+
+In Krita war die Heuschrecke gespiegelt, damit sie wie die anderen Fliegen nach links schaut und die Fluegel gleich herum liegen. Beim Einbau wurden alle Bilder wieder zurueckgespiegelt, denn im Spiel schaut die Heuschrecke im Grundzustand nach rechts (so ist dein Original). Neue Bilder: `assets/fluegel/schlag/heuschrecke-*.png`, `assets/fliegen/spiel/heuschrecke-skizze-schlag-1.png` und `-2.png`.
+
+### `skripte/fliege_heuschrecke.gd` - geaendert
+
+In `sprung_beginnen` wurde bisher nur das Bild gespiegelt (`$Bild.flip_h`). Jetzt spiegeln die Fluegel mit, genau wie bei der schnellen Fliege:
+
+```gdscript
+var gespiegelt: bool = false
+```
+Merkt sich, ob gerade gespiegelt ist. Im Grundzustand schaut die Heuschrecke nach rechts, also nicht gespiegelt.
+
+```gdscript
+	var nach_links: bool = richtung < 0.0
+	$Bild.flip_h = nach_links
+	if nach_links != gespiegelt:
+		gespiegelt = nach_links
+		for fluegel in [$FluegelVorn, $FluegelHinten]:
+			fluegel.flip_h = nach_links
+			fluegel.position.x = -fluegel.position.x
+```
+Springt sie nach links, wird gespiegelt. Die Fluegel wechseln nur dann die Seite, wenn sich die Richtung wirklich geaendert hat; jeder Sprung ruft `sprung_beginnen` auf, auch der zweite in dieselbe Richtung.
+
+Angeschaut: Schnellcheck PASS, Verify PASS, Probebild mit vier Heuschrecken (nach rechts und nach links, je beide Schlagbilder): Fluegel sitzen jedes Mal auf dem Ruecken.
+
+Frage: Warum ist hier `richtung < 0.0` der gespiegelte Fall, bei der schnellen Fliege aber `richtung > 0.0`?
+
+### Nachtrag: Fluegel fuer die Koeder-Fliege (27.11.2026)
+
+Kein Code, nur `szenen/fliege_koeder.tscn`: violette Fluegel (Zone Koeder) und wippender Koerper aus deiner Krita-Datei, gebaut wie bei der scheuen Fliege. Neue Bilder: `assets/fluegel/schlag/koeder-*.png`, `assets/fliegen/spiel/fliege-fuehler-gruen-schlag-1.png` und `-2.png`; dein Original bleibt.
+
+### Nachtrag: Fluegel fuer die Teleport-Fliege (27.11.2026)
+
+Kein Code, nur `szenen/fliege_teleport.tscn`: orange Fluegel (Zone Boss) und wippender Koerper aus deiner Krita-Datei. Du hast den Koerper in Krita etwa 1,5-mal so gross gemacht; die neuen Koerperbilder sind darum groesser, und weil `fliege.gd` die Trefferflaeche aus der Bildgroesse rechnet, ist auch die Trefferflaeche groesser. Das Flackern beim Teleport betrifft die ganze Fliege (`modulate` am obersten Knoten), die Fluegel flackern also mit. Neue Bilder: `assets/fluegel/schlag/teleport-*.png`, `assets/fliegen/spiel/fliege-1-schlag-1.png` und `-2.png`; dein Original bleibt.
+
+### Nachtrag: Fluegel fuer den Bockkaefer (27.11.2026)
+
+Kein Code, nur `szenen/fliege_boss.tscn`: orange Fluegel (Zone Boss) und Koerper aus deiner Krita-Datei. Du hast in Krita den hinteren Fluegel ueber den Koerper gelegt. Darum steht `FluegelHinten` hier in der Liste **nach** `Bild` (vor `FluegelVorn`): Was weiter unten in der Liste steht, wird spaeter und damit weiter vorn gemalt, also liegen beide Fluegel vor dem Koerper. Neue Bilder: `assets/fluegel/schlag/boss-*.png`, `assets/fliegen/spiel/bockkaefer-skizze-schlag-1.png` und `-2.png`; dein Original bleibt.
+
+Damit haben alle sieben Fliegen der Zonen Fluegel, die schlagen.

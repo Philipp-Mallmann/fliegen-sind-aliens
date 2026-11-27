@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bpu1ch8ypk13f"
-path="res://.godot/imported/heuschrecke-skizze-kraeftig.png-9fc7d2e5fac430a889bb9399c0576206.ctex"
+uid="uid://coyr2go35bb1p"
+path="res://.godot/imported/scheu-vorn-1.png-0b5a035140c13ce41f86685965797449.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/fliegen/spiel/heuschrecke-skizze-kraeftig.png"
-dest_files=["res://.godot/imported/heuschrecke-skizze-kraeftig.png-9fc7d2e5fac430a889bb9399c0576206.ctex"]
+source_file="res://assets/fluegel/schlag/scheu-vorn-1.png"
+dest_files=["res://.godot/imported/scheu-vorn-1.png-0b5a035140c13ce41f86685965797449.ctex"]
 
 [params]
 

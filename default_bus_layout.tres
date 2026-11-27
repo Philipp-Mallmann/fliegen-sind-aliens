@@ -1,4 +1,4 @@
-[gd_resource type="AudioBusLayout" load_steps=2 format=3]
+[gd_resource type="AudioBusLayout" format=3 uid="uid://cxw0d3hb577nc"]
 
 [sub_resource type="AudioEffectLowPassFilter" id="Daempfer"]
 cutoff_hz = 600.0

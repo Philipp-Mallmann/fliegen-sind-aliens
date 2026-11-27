@@ -24,6 +24,8 @@ var sprung_nummer: int = 0
 var uhr: float = 0.0
 # Wo der laufende Sprung angefangen hat, auf der x-Achse.
 var start_x: float = 0.0
+# true heisst: Bild und Fluegel sind gerade gespiegelt (sie springt nach links). In der Szene schaut sie nach rechts.
+var gespiegelt: bool = false
 
 
 func fliegen(delta: float) -> void:
@@ -52,4 +54,11 @@ func sprung_beginnen() -> void:
 	sprung_nummer += 1
 	uhr = 0.0
 	start_x = position.x
-	$Bild.flip_h = richtung < 0.0
+	var nach_links: bool = richtung < 0.0
+	$Bild.flip_h = nach_links
+	# Die Fluegel werden mitgespiegelt, aber nur wenn sich die Richtung wirklich aendert (wie bei der schnellen Fliege).
+	if nach_links != gespiegelt:
+		gespiegelt = nach_links
+		for fluegel in [$FluegelVorn, $FluegelHinten]:
+			fluegel.flip_h = nach_links
+			fluegel.position.x = -fluegel.position.x

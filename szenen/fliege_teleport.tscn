@@ -1,8 +1,14 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://skripte/fliege_teleport.gd" id="1_fliege"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/summen.ogg" id="2_summen"]
 [ext_resource type="Texture2D" path="res://assets/fliegen/spiel/fliege-1.png" id="9_bild"]
+[ext_resource type="Texture2D" path="res://assets/fluegel/schlag/teleport-vorn-1.png" id="f_vorn_1"]
+[ext_resource type="Texture2D" path="res://assets/fluegel/schlag/teleport-vorn-2.png" id="f_vorn_2"]
+[ext_resource type="Texture2D" path="res://assets/fluegel/schlag/teleport-hinten-1.png" id="f_hinten_1"]
+[ext_resource type="Texture2D" path="res://assets/fluegel/schlag/teleport-hinten-2.png" id="f_hinten_2"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/fliege-1-schlag-1.png" id="k_1"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/fliege-1-schlag-2.png" id="k_2"]
 
 [sub_resource type="Gradient" id="Gradient_schimmer"]
 colors = PackedColorArray(0.4, 0.9, 1, 0.8, 0.4, 0.9, 1, 0)
@@ -14,6 +20,52 @@ height = 240
 fill = 1
 fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(0.5, 0)
+
+[sub_resource type="Animation" id="Animation_flattern"]
+resource_name = "flattern"
+length = 0.034
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("FluegelVorn:texture")
+tracks/0/interp = 0
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.017),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("f_vorn_1"), ExtResource("f_vorn_2")]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("FluegelHinten:texture")
+tracks/1/interp = 0
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.017),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("f_hinten_1"), ExtResource("f_hinten_2")]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Bild:texture")
+tracks/2/interp = 0
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.017),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("k_1"), ExtResource("k_2")]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_fluegel"]
+_data = {
+&"flattern": SubResource("Animation_flattern")
+}
 
 [node name="Fliege" type="Node2D" groups=["fliegen"]]
 z_index = 1
@@ -43,9 +95,25 @@ offset_bottom = 50.0
 mouse_filter = 2
 color = Color(0.25, 0.25, 0.25, 1)
 
+[node name="FluegelHinten" type="Sprite2D" parent="."]
+position = Vector2(-25.9, -66.6)
+scale = Vector2(0.2333, 0.2333)
+texture = ExtResource("f_hinten_1")
+
 [node name="Bild" type="Sprite2D" parent="."]
 scale = Vector2(0.2333, 0.2333)
-texture = ExtResource("9_bild")
+texture = ExtResource("k_1")
+
+[node name="FluegelVorn" type="Sprite2D" parent="."]
+position = Vector2(3.8, -71.2)
+scale = Vector2(0.2333, 0.2333)
+texture = ExtResource("f_vorn_1")
+
+[node name="Flattern" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_fluegel")
+}
+autoplay = &"flattern"
 
 [node name="Art" type="Label" parent="."]
 visible = false

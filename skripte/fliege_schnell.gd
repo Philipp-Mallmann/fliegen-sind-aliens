@@ -22,6 +22,8 @@ var winkel: float = 0.0
 var wendet: bool = false
 # Wie viel von der Schleife sie schon gelenkt hat, im Bogenmass.
 var gelenkt: float = 0.0
+# true heisst: Bild und Fluegel sind gerade gespiegelt (sie fliegt nach rechts). In der Szene schaut sie nach links.
+var gespiegelt: bool = false
 
 
 func losfliegen() -> void:
@@ -59,4 +61,12 @@ func fliegen(delta: float) -> void:
 # Das Bild schaut nach links (der Kopf ist links). Fliegt sie nach rechts, wird es gespiegelt.
 # In der Schleife dreht es sich nicht mit, es wird erst umgedreht, wenn sie wirklich in die andere Richtung fliegt.
 func bild_richten() -> void:
-	$Bild.flip_h = richtung > 0.0
+	var nach_rechts: bool = richtung > 0.0
+	$Bild.flip_h = nach_rechts
+	# Die Fluegel werden mitgespiegelt: Bild umdrehen und auf die andere Seite der Mitte setzen.
+	# Nur wenn sich die Richtung wirklich aendert, sonst wuerden sie bei jedem Aufruf hin und her springen.
+	if nach_rechts != gespiegelt:
+		gespiegelt = nach_rechts
+		for fluegel in [$FluegelVorn, $FluegelHinten]:
+			fluegel.flip_h = nach_rechts
+			fluegel.position.x = -fluegel.position.x
