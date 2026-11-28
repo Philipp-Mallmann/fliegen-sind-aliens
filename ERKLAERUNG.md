@@ -8213,3 +8213,56 @@ Weil die Kamera an der Kanone haengt, steht die Kanone immer in der Bildmitte. "
 **So wurde es angeschaut.** Schnellcheck PASS fuer `kanone.gd`, Verify PASS. Probe im Fenster, je 1,5 Sekunden: Zeiger rechts: 453 Pixel nach rechts, volles Tempo 360. Zeiger links: 453 nach links. Zeiger knapp ueber der Totzone: 79 Pixel, Tempo 54. Taste rechts bei Zeiger links: 453 nach rechts, die Taste gewinnt. Taste los, Maus nicht bewegt: 0 Pixel. Ohne Mausbewegung am Anfang: 0. Gemessen in der Totale (Zoom 0,43), nicht im herangezoomten Spiel. Wie es sich anfuehlt und ob 40 und 300 passen, entscheidest du am Spiel.
 
 **Fragen.** 1. Wozu braucht es `maus_lenkt`, wenn man doch einfach immer den Zeiger nehmen koennte? 2. Was passiert ohne Totzone? 3. Warum wird durch `maus_voll` geteilt?
+
+### Nachtrag: Seil-Variante 2, Kanone vor dem Arm, Kanone beim Absturz weg (28.11.2026)
+
+**Seil (`skripte/uebergabe.gd`).** Du hast Variante 2 gewaehlt: Das Seil bleibt am Anfang gerade und macht die Kurve zur Hand erst im letzten Stueck.
+
+```gdscript
+@export var gegen_schwung: float = 0.0
+```
+Vorher 0.25. Mit 0 ergibt `-gegen_schwung * sin(...)` immer 0, das Seil biegt sich am Anfang also gar nicht mehr weg. Der Regler bleibt, falls du doch etwas Zurueckbleiben willst.
+
+**Kanone vor dem Arm (`szenen/spiel.tscn`).** Zwei Dinge entscheiden, was vorn liegt: `z_index` (groessere Zahl liegt vorn) und bei gleicher Zahl die Reihenfolge in der Liste (was weiter unten steht, liegt vorn). Aermel und Oberkoerper des haengenden Forschers haben `z_index = 1`. Darum:
+
+- Der Knoten `Kanone/Arm` (die Kanone des Spiels) steht in der Liste jetzt **unter** `Haenger` statt darueber.
+- Er hat `z_index = 1` bekommen, dieselbe Zahl wie der Aermel. Bei gleicher Zahl gewinnt die Reihenfolge, also die Kanone.
+
+Nicht 2, weil die Steine `z_index = 2` haben und weiter vor der Kanone liegen sollen. In der Totale aendert sich nichts: Dort sieht man diesen Knoten nicht, sondern den Kanonenarm der Figur (`Figur/Schulter`), und der liegt beim Haengen weiter hinter dem Koerper.
+
+**Absturz, der nicht bis zum Boden geht (`skripte/spiel.gd`).**
+
+```gdscript
+@export var koerper_start: float = 0.0
+@export var koerper_einflug: float = 430.0
+```
+`koerper_start`: wo der fallende Forscher wartet, gemessen von der Kanone nach unten. Bei 0 liegt seine Oberkante knapp unter dem unteren Bildrand. Vorher startete er am Boden-Platz, 1170 Pixel tiefer, und musste erst 1200 Pixel fahren, bevor man etwas sah. `koerper_einflug`: wie weit er von dort ins Bild kommt (vorher 1600 vom Boden-Platz aus, er landet an derselben Stelle wie vorher).
+
+```gdscript
+	koerper.position.y = koerper_start
+	...
+	$Kanone/Haenger.visible = false
+	$Kanone/Arm.visible = false
+```
+Der Forscher wird an den Startplatz gesetzt. Hand und Kanone werden im selben Moment unsichtbar.
+
+```gdscript
+	koerperfahrt.tween_property(koerper, "position:y", koerper_start - koerper_einflug, dauer * koerper_anteil)
+	koerperfahrt.tween_interval(dauer * (1.0 - 2.0 * koerper_anteil))
+	koerperfahrt.tween_property(koerper, "position:y", koerper_start, dauer * koerper_anteil)
+	koerperfahrt.tween_callback(zwischenfall_ende)
+```
+Hinein, warten, wieder hinaus bis zum Startplatz, dann `zwischenfall_ende`.
+
+```gdscript
+func zwischenfall_ende() -> void:
+	$Kanone/Aufstehen.visible = false
+	$Kanone/Aufstehen.position.y = koerper_unten
+	$Kanone/Haenger.visible = true
+	$Kanone/Arm.visible = kanone_da
+```
+Der fallende Forscher verschwindet und steht wieder am Boden-Platz bereit (dort braucht ihn der Aufprall). Die Hand ist wieder da. Die Kanone nur, wenn es sie schon gibt (`kanone_da`).
+
+**So wurde es angeschaut.** Schnellcheck PASS (`spiel.gd`, `uebergabe.gd`), Verify PASS. Probe mit vier Bildern: Kanone in Wurfstellung unter der Hand liegt vor dem Aermel. 0,08 Sekunden nach Beginn eines Absturzes (6 Fliegen verloren) sind Kanone und Hand weg und der Forscher ist schon mit Rumpf und Beinen im Bild (vorher zu diesem Zeitpunkt noch nichts). Nach dem Absturz sind Kanone und Hand wieder da. Nicht angeschaut: wie es in Bewegung wirkt, und ein Absturz, waehrend die Kanone gerade ein Seil zur Hand faehrt (das Seil haengt dann kurz an der unsichtbaren Kanone). Die Flugkraft-Leiste bleibt beim Absturz stehen.
+
+**Fragen.** 1. Warum reicht `z_index = 1`, obwohl der Aermel dieselbe Zahl hat? 2. Warum `kanone_da` und nicht einfach `true`? 3. Was passiert mit `gegen_schwung = 0` in `schwung_setzen`?

@@ -23,7 +23,7 @@ signal gefangen(flugkraft: int)
 @export var wurf_winkel: float = 28.0
 # Wie das Seil auf die Fahrt der Kanone antwortet. Am Anfang bleibt es zurueck und biegt sich von der Hand weg:
 # gegen_schwung sagt, wie stark (0 heisst gar nicht). Erst ab diesem Anteil der Hinfahrt (schwung_ab) schwingt es zur Hand hinueber.
-@export var gegen_schwung: float = 0.25
+@export var gegen_schwung: float = 0.0
 @export var schwung_ab: float = 0.6
 
 # true heisst: Gerade laeuft eine Uebergabe. Die Kanone faehrt und schiesst dann nicht.

@@ -22,8 +22,11 @@ extends Node2D
 # Die Kamera in der Luft: normale Groesse, die Kanone sitzt am unteren Bildrand (540 - 20 Pixel Rand).
 @export var zoom_luft: float = 1.0
 @export var versatz_luft: float = -520.0
-# Bei einem Absturz, der nicht bis zum Boden geht: So weit kommt der fallende Forscher von unten ins Bild, in Pixeln.
-@export var koerper_einflug: float = 1600.0
+# Bei einem Absturz, der nicht bis zum Boden geht: Hier wartet der fallende Forscher, gemessen von der Kanone nach unten.
+# Bei 0 liegt er knapp unter dem unteren Bildrand, man sieht ihn also sofort, wenn er losfaehrt.
+@export var koerper_start: float = 0.0
+# So weit kommt er von dort ins Bild, in Pixeln.
+@export var koerper_einflug: float = 430.0
 # Welcher Anteil des Absturzes fuer das Hereinkommen gebraucht wird. Genauso lang dauert am Ende das Hinausgehen.
 @export var koerper_anteil: float = 0.3
 # Wie gross der haengende Forscher im Flug ist. In der Totale ist er 0.935 gross. Im Flug ist auf seinen Arm herangezoomt:
@@ -196,20 +199,30 @@ func fliege_verlieren(weg: int) -> void:
 
 
 # Ein Absturz, der nicht bis zum Boden geht: Der fallende Forscher kommt von unten ins Bild
-# und verschwindet kurz vor dem Ende des Absturzes wieder nach unten. Die Kanone bleibt zu sehen.
+# und verschwindet kurz vor dem Ende des Absturzes wieder nach unten. Solange sieht man weder die Kanone noch die Hand.
 func zwischenfall(dauer: float) -> void:
 	var koerper: AnimatedSprite2D = $Kanone/Aufstehen
 	koerper_zuruecksetzen()
+	koerper.position.y = koerper_start
 	koerper.visible = true
 	koerper.play("fallen")
 	# Waehrenddessen haengt niemand an der Hand, sonst saehe man den Forscher zweimal.
 	$Kanone/Haenger.visible = false
+	$Kanone/Arm.visible = false
 	koerperfahrt = create_tween()
-	koerperfahrt.tween_property(koerper, "position:y", koerper_unten - koerper_einflug, dauer * koerper_anteil)
+	koerperfahrt.tween_property(koerper, "position:y", koerper_start - koerper_einflug, dauer * koerper_anteil)
 	koerperfahrt.tween_interval(dauer * (1.0 - 2.0 * koerper_anteil))
-	koerperfahrt.tween_property(koerper, "position:y", koerper_unten, dauer * koerper_anteil)
-	koerperfahrt.tween_callback(koerper.hide)
-	koerperfahrt.tween_callback($Kanone/Haenger.show)
+	koerperfahrt.tween_property(koerper, "position:y", koerper_start, dauer * koerper_anteil)
+	koerperfahrt.tween_callback(zwischenfall_ende)
+
+
+# Der fallende Forscher ist wieder unten aus dem Bild: Er verschwindet und steht wieder am Boden bereit, Hand und Kanone sind wieder da.
+# Die Kanone gibt es erst, wenn sie nach dem ersten Fang von unten gekommen ist (kanone_da).
+func zwischenfall_ende() -> void:
+	$Kanone/Aufstehen.visible = false
+	$Kanone/Aufstehen.position.y = koerper_unten
+	$Kanone/Haenger.visible = true
+	$Kanone/Arm.visible = kanone_da
 
 
 # Haelt eine laufende Fahrt des Forschers an und stellt ihn wieder unten hin.

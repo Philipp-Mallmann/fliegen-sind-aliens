@@ -476,43 +476,6 @@ script = ExtResource("1_kanone")
 nadel_szene = ExtResource("2_nadel")
 joystick = NodePath("../Bedienung/Joystick")
 
-[node name="Arm" type="Node2D" parent="Kanone" unique_id=1776390834]
-
-[node name="FeuerLinks" type="AnimatedSprite2D" parent="Kanone/Arm" unique_id=1793062495]
-visible = false
-position = Vector2(-124.7, -8.9)
-rotation = -1.5707964
-scale = Vector2(0.351, 0.351)
-sprite_frames = SubResource("SpriteFrames_feuer")
-autoplay = "default"
-flip_h = true
-
-[node name="FeuerRechts" type="AnimatedSprite2D" parent="Kanone/Arm" unique_id=1015791158]
-visible = false
-position = Vector2(123.8, -8.9)
-rotation = 1.5707964
-scale = Vector2(0.351, 0.351)
-sprite_frames = SubResource("SpriteFrames_feuer")
-autoplay = "default"
-
-[node name="Bild" type="Sprite2D" parent="Kanone/Arm" unique_id=2064279821]
-position = Vector2(-0.5, -106.4)
-scale = Vector2(0.315, 0.315)
-texture = ExtResource("44_hinten")
-
-[node name="Drahtrolle" type="AnimatedSprite2D" parent="Kanone/Arm" unique_id=829165278]
-position = Vector2(-42.2, -57.8)
-scale = Vector2(0.315, 0.315)
-sprite_frames = SubResource("SpriteFrames_drahtrolle")
-
-[node name="Tonne" type="Sprite2D" parent="Kanone/Arm" unique_id=1975682853]
-position = Vector2(0.2, 70.9)
-scale = Vector2(0.315, 0.315)
-texture = ExtResource("45_tonne")
-
-[node name="Muendung" type="Marker2D" parent="Kanone/Arm" unique_id=322373295]
-position = Vector2(0, -230.7)
-
 [node name="Aufstehen" type="AnimatedSprite2D" parent="Kanone" unique_id=1527670631]
 position = Vector2(18.999992, 1170)
 scale = Vector2(0.8322026, 0.840139)
@@ -553,6 +516,44 @@ z_index = 1
 position = Vector2(-219, -23)
 texture = ExtResource("hg_oberkoerper")
 centered = false
+
+[node name="Arm" type="Node2D" parent="Kanone" unique_id=1776390834]
+z_index = 1
+
+[node name="FeuerLinks" type="AnimatedSprite2D" parent="Kanone/Arm" unique_id=1793062495]
+visible = false
+position = Vector2(-124.7, -8.9)
+rotation = -1.5707964
+scale = Vector2(0.351, 0.351)
+sprite_frames = SubResource("SpriteFrames_feuer")
+autoplay = "default"
+flip_h = true
+
+[node name="FeuerRechts" type="AnimatedSprite2D" parent="Kanone/Arm" unique_id=1015791158]
+visible = false
+position = Vector2(123.8, -8.9)
+rotation = 1.5707964
+scale = Vector2(0.351, 0.351)
+sprite_frames = SubResource("SpriteFrames_feuer")
+autoplay = "default"
+
+[node name="Bild" type="Sprite2D" parent="Kanone/Arm" unique_id=2064279821]
+position = Vector2(-0.5, -106.4)
+scale = Vector2(0.315, 0.315)
+texture = ExtResource("44_hinten")
+
+[node name="Drahtrolle" type="AnimatedSprite2D" parent="Kanone/Arm" unique_id=829165278]
+position = Vector2(-42.2, -57.8)
+scale = Vector2(0.315, 0.315)
+sprite_frames = SubResource("SpriteFrames_drahtrolle")
+
+[node name="Tonne" type="Sprite2D" parent="Kanone/Arm" unique_id=1975682853]
+position = Vector2(0.2, 70.9)
+scale = Vector2(0.315, 0.315)
+texture = ExtResource("45_tonne")
+
+[node name="Muendung" type="Marker2D" parent="Kanone/Arm" unique_id=322373295]
+position = Vector2(0, -230.7)
 
 [node name="RechteHand" type="ColorRect" parent="Kanone" unique_id=2088670462]
 z_index = 2
