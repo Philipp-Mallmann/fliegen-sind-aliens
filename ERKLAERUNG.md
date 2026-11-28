@@ -7915,3 +7915,11 @@ Wird gerufen, wenn der Draht fest sitzt. Das Ende ist so lang wie der Weg von de
 **So wurde es angeschaut.** Schnellcheck PASS fuer `nadel.gd`, `start_totale.gd`, `uebergabe.gd`, Verify PASS. Probe wie zuvor: Abheben hoechstens 0,00 Pixel Luecke in 3507 Bildern, Fang im Flug 2,25 Pixel (Nachruecken im Faecher, unveraendert). In der Grossaufnahme geht der Draht an der Oberkante des obersten Fingers hinein, das Ende haengt dahinter herunter und ist in den Luecken zwischen den Fingern zu sehen. Nicht angeschaut: wie das Baumeln in Bewegung wirkt.
 
 **Fragen.** 1. Warum haengt das Ende nach einer Weile still? 2. Woher kommt die Laenge des Endes? 3. Warum liegt es hinter der Hand?
+
+### Nachtrag: Der Knick im Draht ist unter dem Finger versteckt (28.11.2026)
+
+Dein Hinweis: Man sah den Knick, an dem der Draht in der Hand nach unten abbiegt. Er soll knapp unter der Kante des obersten Fingers liegen.
+
+Nur zwei Zahlen in `szenen/spiel.tscn`: Der Griff liegt in deinem Bild jetzt bei (776, 693) statt (770, 684), also 9 Pixel tiefer und 6 weiter rechts, im Finger statt auf seiner Kante. Die fuenf Bilder in `Haenger/Inhalt` stehen dafuer bei (-219, -23), `Haenger` bei (142.6, 33.7). Der Finger liegt vor dem Draht (`z_index = 1`), darum verdeckt er den Knick.
+
+So wurde es angeschaut: Verify PASS. Grossaufnahme der Hand waehrend und nach einem Fang: Der Draht verschwindet unter der Kante des obersten Fingers, den Knick sieht man nicht mehr. Das Ende kommt zwischen den Fingern wieder hervor. Luecken wie zuvor (0,00 und 2,25 Pixel).

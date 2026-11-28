@@ -521,36 +521,36 @@ animation = &"aufstehen"
 frame_progress = 0.94876117
 
 [node name="Haenger" type="Node2D" parent="Kanone"]
-position = Vector2(137, 25.3)
+position = Vector2(142.6, 33.7)
 script = ExtResource("haengen_skript")
 
 [node name="Inhalt" type="Node2D" parent="Kanone/Haenger"]
 scale = Vector2(0.935, 0.935)
 
 [node name="Kopf" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
-position = Vector2(-213, -14)
+position = Vector2(-219, -23)
 texture = ExtResource("hg_kopf")
 centered = false
 
 [node name="Hose" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
-position = Vector2(-213, -14)
+position = Vector2(-219, -23)
 texture = ExtResource("hg_hose")
 centered = false
 
 [node name="Daumen" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
-position = Vector2(-213, -14)
+position = Vector2(-219, -23)
 texture = ExtResource("hg_daumen")
 centered = false
 
 [node name="ArmLinks" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
 z_index = 1
-position = Vector2(-213, -14)
+position = Vector2(-219, -23)
 texture = ExtResource("hg_arm-links")
 centered = false
 
 [node name="Oberkoerper" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
 z_index = 1
-position = Vector2(-213, -14)
+position = Vector2(-219, -23)
 texture = ExtResource("hg_oberkoerper")
 centered = false
 
