@@ -30,11 +30,16 @@ signal getroffen(nadel: Node2D)
 @export var steck_tiefe: float = -0.15
 # Wie weit das kurze Drahtstueck vor der Fliege ueber ihren Rand hinausreicht, in Pixeln. Verhindert eine Luecke am Rand.
 @export var rand_zugabe: float = 6.0
-# Das Drahtende, das unter der Hand baumelt: wie stark es zur Mitte zurueckgezogen wird (groesser heisst: schwingt schneller),
-# wie schnell das Schwingen abklingt, und wie lang es hoechstens ist, in Pixeln.
-@export var rest_schwere: float = 40.0
-@export var rest_reibung: float = 1.5
-@export var rest_hoechstens: float = 600.0
+# Das Seilende, das unter der Hand haengt, nachdem es sich vom Lauf geloest hat. Es faellt wie ein Seil aus kurzen Gliedern.
+# Wie stark die Schwerkraft daran zieht (Pixel pro Sekunde im Quadrat), wie viel Schwung es von Bild zu Bild behaelt
+# (1 heisst: alles, kleiner heisst: es beruhigt sich schneller) und aus wie vielen Gliedern es besteht.
+@export var rest_schwerkraft: float = 2600.0
+@export var rest_daempfung: float = 0.985
+@export var rest_glieder: int = 10
+# In so kleinen Zeitschritten wird das Seilende gerechnet, in Sekunden. Immer gleich, egal wie schnell das Spiel gerade laeuft.
+@export var rest_takt: float = 0.0166
+# Wie schnell der Draht nach dem Loslassen aus seinem Bogen in den normalen Durchhang zurueckfindet. Groesser heisst schneller.
+@export var bogen_tempo: float = 8.0
 
 # Wie viele Pixel die Nadel schon geflogen ist.
 var geflogen: float = 0.0
@@ -48,14 +53,22 @@ var halbe_groessen: Array[Vector2] = []
 var vorn_stuecke: Array[Line2D] = []
 # Der Punkt, an dem der Faden der Nadel festhaengt: erst die Muendung der Kanone, im Faecher die rechte Hand.
 var anker: Node2D = null
-# Der Punkt, ueber den der Draht laeuft, bevor er zum Anker weitergeht: die Hand, solange der Draht noch an der Kanone haengt.
-# null heisst: Der Draht geht gerade zum Anker.
-var ueber: Node2D = null
-# Das Drahtende, das unter der Hand baumelt, nachdem es sich vom Lauf geloest hat: seine Laenge in Pixeln (0 heisst: keins),
-# sein Winkel (0 heisst: haengt gerade nach unten) und wie schnell sich der Winkel gerade aendert.
-var rest_laenge: float = 0.0
-var rest_winkel: float = 0.0
-var rest_tempo: float = 0.0
+# Die Hand, zu der der Schwung der Kanone den Draht hinueberdrueckt, und wie weit er schon dort ist:
+# 0 heisst: Der Draht haengt normal durch. 1 heisst: Er laeuft in einem Bogen genau durch die Hand. null heisst: kein Schwung.
+var schwung_punkt: Node2D = null
+var schwung: float = 0.0
+# Ein zusaetzlicher Bogen im Draht, der von selbst wieder verschwindet (nach dem Loslassen, siehe rest_abwerfen).
+var bogen_extra: Vector2 = Vector2.ZERO
+# Das Seilende unter der Hand: die Punkte seiner Glieder, gemessen von der Hand aus, dieselben Punkte im Bild davor
+# (aus dem Unterschied ergibt sich der Schwung), und wie lang jedes Glied ist. Leer heisst: Es gibt kein Seilende.
+var rest_punkte: PackedVector2Array = []
+var rest_vorher: PackedVector2Array = []
+var rest_laengen: PackedFloat32Array = []
+# true heisst: Das Seilende haengt still und wird nicht mehr gerechnet.
+var rest_ruht: bool = true
+# Wie viel Zeit noch nicht gerechnet ist, und wie lange sich das Seil schon kaum bewegt, beides in Sekunden.
+var rest_uhr: float = 0.0
+var rest_stille: float = 0.0
 # Die Kanone, die die Nadel geschossen hat. Solange die Nadel fliegt, bleibt sie genau ueber ihr. Setzt kanone.gd.
 # null heisst: Die Nadel kommt aus der Totale (start_totale.gd) und fliegt frei in ihre Richtung.
 var kanone: Node2D = null
@@ -67,10 +80,10 @@ var haengt: bool = false
 
 func _process(delta: float) -> void:
 	if steckt:
-		# Das baumelnde Drahtende schwingt wie ein Pendel aus: Es zieht zur Mitte zurueck und wird dabei langsamer.
-		if rest_laenge > 0.0:
-			rest_tempo += (-rest_schwere * sin(rest_winkel) - rest_reibung * rest_tempo) * delta
-			rest_winkel += rest_tempo * delta
+		# Der zusaetzliche Bogen wird in jedem Bild ein Stueck kleiner, bis er weg ist.
+		bogen_extra = bogen_extra.lerp(Vector2.ZERO, minf(bogen_tempo * delta, 1.0))
+		if not rest_ruht:
+			rest_fallen(delta)
 		faden_spannen()
 		return
 	if kanone != null:
@@ -186,24 +199,108 @@ func stecken_in(grosse: Node2D) -> void:
 # Der Faden geht ab: Er haengt nirgends mehr fest und wird nicht mehr gezeichnet.
 func faden_loesen() -> void:
 	anker = null
-	ueber = null
-	rest_laenge = 0.0
+	schwung_punkt = null
+	rest_punkte.clear()
+	rest_ruht = true
 	$Faden.clear_points()
 	$Rest.clear_points()
 	for stueck in vorn_stuecke:
 		stueck.clear_points()
 
 
-# Der Draht sitzt fest in der Hand: Das Stueck von der Hand bis zum Lauf loest sich von der Kanone und baumelt ab jetzt
-# unter der Hand. Es behaelt seine Laenge und schwingt aus der Richtung los, in der die Kanone war.
+# Der Bogen des Drahts in diesem Bild: der normale Durchhang, dazu der zusaetzliche Bogen.
+# Drueckt der Schwung der Kanone den Draht zur Hand, wandert der Bogen dorthin: Bei schwung 1 ist er genau so gross,
+# dass die Mitte des Drahts in der Hand liegt (Hand minus Mitte der geraden Linie).
+func bogen_jetzt(oben: Vector2, unten: Vector2) -> Vector2:
+	var bogen: Vector2 = durchbiegung(oben, unten) + bogen_extra
+	if schwung_punkt != null:
+		bogen = bogen.lerp(schwung_punkt.global_position - (oben + unten) / 2.0, schwung)
+	return bogen
+
+
+# Der Draht sitzt fest in der Hand und loest sich vom Lauf. Bis jetzt lief er in einem Bogen von der Fliege durch die Hand
+# zur Kanone. Die obere Haelfte bleibt der Draht zur Fliege, die untere Haelfte wird zum Seilende, das unter der Hand faellt.
 func rest_abwerfen(hand: Node2D) -> void:
-	var von: Vector2 = hand.global_position
-	var bis: Vector2 = anker.global_position
-	rest_laenge = minf(von.distance_to(bis), rest_hoechstens)
-	rest_winkel = (bis - von).angle() - PI / 2.0
-	rest_tempo = 0.0
-	ueber = null
+	var oben: Vector2 = $Oese.global_position
+	var unten: Vector2 = anker.global_position
+	var bogen: Vector2 = bogen_jetzt(oben, unten)
+	var mitte: Vector2 = faden_punkt(oben, unten, bogen, 0.5)
+	# Die untere Haelfte des Drahts wird zum Seilende. Zuerst wird sie fein abgetastet (40 kurze Stuecke) und ihre Laenge gemessen.
+	var fein: PackedVector2Array = []
+	var laenge: float = 0.0
+	for nummer in 41:
+		fein.append(faden_punkt(oben, unten, bogen, 0.5 + 0.5 * nummer / 40.0) - mitte)
+		if nummer > 0:
+			laenge += fein[nummer].distance_to(fein[nummer - 1])
+	# Dann werden die Glieder darauf verteilt, alle gleich lang: Immer wenn ein Glied voll ist, kommt der naechste Punkt.
+	var glied: float = laenge / rest_glieder
+	rest_punkte.clear()
+	rest_vorher.clear()
+	rest_laengen.clear()
+	rest_punkte.append(Vector2.ZERO)
+	rest_laengen.append(0.0)
+	var gelaufen: float = 0.0
+	for nummer in range(1, 41):
+		gelaufen += fein[nummer].distance_to(fein[nummer - 1])
+		if gelaufen >= glied * rest_punkte.size() or nummer == 40:
+			rest_punkte.append(fein[nummer])
+			rest_laengen.append(glied)
+	# Eine eigene Kopie: Sonst waeren beide Listen dieselbe, und das Seil haette keinen Schwung.
+	rest_vorher = rest_punkte.duplicate()
+	rest_ruht = false
+	rest_uhr = 0.0
+	rest_stille = 0.0
+	# Der Draht zur Fliege endet jetzt in der Hand. Damit er nicht springt, bekommt er den Bogen mit, den seine Haelfte gerade hatte
+	# (ihr mittlerer Punkt minus die Mitte der neuen geraden Linie). bogen_extra ist der Teil davon, der wieder verschwindet.
+	var viertel: Vector2 = faden_punkt(oben, unten, bogen, 0.25)
 	anker = hand
+	schwung_punkt = null
+	schwung = 0.0
+	bogen_extra = viertel - (oben + mitte) / 2.0 - durchbiegung(oben, mitte)
+	# Gleich neu spannen, damit Draht und Seilende schon in diesem Bild an der Hand sitzen.
+	faden_spannen()
+
+
+# Laesst das Seilende weiter fallen. Gerechnet wird in gleich grossen Zeitschritten (rest_takt): Dauert ein Bild laenger,
+# gibt es mehrere Schritte, dauert es kuerzer, manchmal keinen. So faellt das Seil auf jedem Geraet gleich.
+func rest_fallen(delta: float) -> void:
+	rest_uhr += minf(delta, 0.1)
+	while rest_uhr >= rest_takt:
+		rest_uhr -= rest_takt
+		rest_schritt()
+
+
+# Ein Zeitschritt des Seilendes. Jedes Glied bewegt sich so weiter wie im Schritt davor (Schwung) und wird von der
+# Schwerkraft nach unten gezogen. Danach werden die Glieder wieder auf ihre Laenge gebracht, das oberste haengt an der Hand.
+func rest_schritt() -> void:
+	var punkte: PackedVector2Array = rest_punkte
+	var vorher: PackedVector2Array = rest_vorher
+	var schnellstes: float = 0.0
+	for nummer in range(1, punkte.size()):
+		var schritt: Vector2 = (punkte[nummer] - vorher[nummer]) * rest_daempfung
+		vorher[nummer] = punkte[nummer]
+		punkte[nummer] = punkte[nummer] + schritt + Vector2.DOWN * rest_schwerkraft * rest_takt * rest_takt
+		schnellstes = maxf(schnellstes, schritt.length())
+	# Achtmal nacheinander, damit sich die Korrekturen durch das ganze Seil fortsetzen und es sich nicht dehnt.
+	for runde in 8:
+		for nummer in range(1, punkte.size()):
+			var stueck: Vector2 = punkte[nummer] - punkte[nummer - 1]
+			var zu_viel: Vector2 = stueck.normalized() * (stueck.length() - rest_laengen[nummer])
+			if nummer == 1:
+				# Das oberste Glied haengt an der Hand, nur sein unteres Ende gibt nach.
+				punkte[nummer] = punkte[nummer] - zu_viel
+			else:
+				punkte[nummer - 1] = punkte[nummer - 1] + zu_viel / 2.0
+				punkte[nummer] = punkte[nummer] - zu_viel / 2.0
+	rest_punkte = punkte
+	rest_vorher = vorher
+	# Bewegt sich eine halbe Sekunde lang fast nichts mehr, haengt das Seil still und wird nicht weiter gerechnet.
+	if schnellstes < 0.05:
+		rest_stille += rest_takt
+	else:
+		rest_stille = 0.0
+	if rest_stille > 0.5:
+		rest_ruht = true
 
 
 func stecken_bleiben() -> void:
@@ -234,17 +331,13 @@ func faden_spannen() -> void:
 		return
 	var oben: Vector2 = $Oese.global_position
 	var unten: Vector2 = anker.global_position
-	# Laeuft der Draht ueber die Hand, endet das Hauptstueck dort. Der Rest geht von der Hand weiter zum Anker (zur Kanone).
-	if ueber != null:
-		unten = ueber.global_position
-		$Rest.points = PackedVector2Array([$Rest.to_local(unten), $Rest.to_local(anker.global_position)])
-	elif rest_laenge > 0.0:
-		# Das geloeste Ende haengt unter der Hand: von der Hand aus in Richtung seines Winkels, so lang wie es war.
-		var ende: Vector2 = unten + Vector2.DOWN.rotated(rest_winkel) * rest_laenge
-		$Rest.points = PackedVector2Array([$Rest.to_local(unten), $Rest.to_local(ende)])
-	elif $Rest.points.size() > 0:
-		$Rest.clear_points()
-	var bogen: Vector2 = durchbiegung(oben, unten)
+	# Das Seilende haengt an der Hand (dem Anker): Jedes Glied steht an seinem Platz von der Hand aus.
+	if rest_punkte.size() > 0:
+		var glieder: PackedVector2Array = []
+		for versatz in rest_punkte:
+			glieder.append($Rest.to_local(unten + versatz))
+		$Rest.points = glieder
+	var bogen: Vector2 = bogen_jetzt(oben, unten)
 	var punkte: PackedVector2Array = []
 	for nummer in draht_stuecke + 1:
 		punkte.append($Faden.to_local(faden_punkt(oben, unten, bogen, float(nummer) / draht_stuecke)))

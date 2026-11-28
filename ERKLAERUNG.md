@@ -7923,3 +7923,82 @@ Dein Hinweis: Man sah den Knick, an dem der Draht in der Hand nach unten abbiegt
 Nur zwei Zahlen in `szenen/spiel.tscn`: Der Griff liegt in deinem Bild jetzt bei (776, 693) statt (770, 684), also 9 Pixel tiefer und 6 weiter rechts, im Finger statt auf seiner Kante. Die fuenf Bilder in `Haenger/Inhalt` stehen dafuer bei (-219, -23), `Haenger` bei (142.6, 33.7). Der Finger liegt vor dem Draht (`z_index = 1`), darum verdeckt er den Knick.
 
 So wurde es angeschaut: Verify PASS. Grossaufnahme der Hand waehrend und nach einem Fang: Der Draht verschwindet unter der Kante des obersten Fingers, den Knick sieht man nicht mehr. Das Ende kommt zwischen den Fingern wieder hervor. Luecken wie zuvor (0,00 und 2,25 Pixel).
+
+### Nachtrag: Der Schwung der Kanone drueckt das Seil in die Hand, das Ende faellt als Seil (28.11.2026)
+
+Deine Punkte: Die Kanone soll weiter hinueberfahren, und ihr Schwung soll das Seil in einem Bogen hochdruecken, bis es in der Hand landet, solange es noch an der Kanone haengt. Und das geloeste Ende soll nicht steif und gerade fallen, sondern biegsam wie ein Seil, mit Schwerkraft.
+
+Damit ist der Umweg ueber den `ueber`-Punkt, den Knoten `Fadenpunkt` und das starre Pendel wieder weg. Was in den zwei Nachtraegen davor dazu steht, gilt nicht mehr.
+
+**Der Bogen (`skripte/nadel.gd`).**
+
+```gdscript
+var schwung_punkt: Node2D = null
+var schwung: float = 0.0
+var bogen_extra: Vector2 = Vector2.ZERO
+```
+`schwung_punkt` ist die Hand, `schwung` sagt, wie weit der Draht schon dort ist (0 bis 1). `bogen_extra` ist ein Bogen, der von selbst verschwindet.
+
+```gdscript
+func bogen_jetzt(oben: Vector2, unten: Vector2) -> Vector2:
+	var bogen: Vector2 = durchbiegung(oben, unten) + bogen_extra
+	if schwung_punkt != null:
+		bogen = bogen.lerp(schwung_punkt.global_position - (oben + unten) / 2.0, schwung)
+	return bogen
+```
+Der Draht war schon immer eine Kurve: die gerade Linie plus ein Bogen, der in der Mitte am groessten ist (`faden_punkt`). Bisher war der Bogen nur der Durchhang. Jetzt wandert er mit `schwung` zu dem Wert "Hand minus Mitte der geraden Linie". Mit diesem Bogen liegt die Mitte der Kurve genau in der Hand. Bei `schwung` 1 laeuft der Draht also von der Fliege im Bogen durch die Hand und weiter zur Kanone. `faden_spannen` benutzt `bogen_jetzt` statt `durchbiegung`.
+
+**Das Seilende (`skripte/nadel.gd`).**
+
+```gdscript
+@export var rest_schwerkraft: float = 2600.0
+@export var rest_daempfung: float = 0.985
+@export var rest_glieder: int = 10
+@export var rest_takt: float = 0.0166
+@export var bogen_tempo: float = 8.0
+```
+Die Schwerkraft, wie viel Schwung das Seil je Schritt behaelt, die Zahl der Glieder, die Laenge eines Rechenschritts (etwa eine Sechzigstelsekunde) und wie schnell der Draht nach dem Loslassen in den normalen Durchhang zurueckfindet.
+
+```gdscript
+var rest_punkte: PackedVector2Array = []
+var rest_vorher: PackedVector2Array = []
+var rest_laengen: PackedFloat32Array = []
+var rest_ruht: bool = true
+var rest_uhr: float = 0.0
+var rest_stille: float = 0.0
+```
+Die Punkte der Glieder (gemessen von der Hand aus), dieselben Punkte einen Schritt davor, die Laenge jedes Glieds, ob das Seil still haengt, die noch nicht gerechnete Zeit und wie lange es sich schon kaum bewegt.
+
+`rest_abwerfen(hand)`: Im Moment des Loslassens laeuft der Draht als eine Kurve von der Fliege durch die Hand zur Kanone. Die untere Haelfte wird zum Seilende: Sie wird in 40 kurzen Stuecken abgetastet (`fein`), ihre Laenge wird gemessen, und darauf werden 10 gleich lange Glieder verteilt. Das Seil beginnt also genau dort, wo der Draht eben noch war. `rest_vorher = rest_punkte.duplicate()` macht eine echte Kopie: Ohne `duplicate()` waeren beide Listen dieselbe Liste, und das Seil haette keinen Schwung (das war ein Fehler in meiner ersten Fassung). Die obere Haelfte bleibt der Draht zur Fliege. Damit er nicht springt, bekommt er als `bogen_extra` den Bogen mit, den seine Haelfte gerade hatte. Am Ende `faden_spannen()`, damit alles schon in diesem Bild stimmt.
+
+```gdscript
+func rest_fallen(delta: float) -> void:
+	rest_uhr += minf(delta, 0.1)
+	while rest_uhr >= rest_takt:
+		rest_uhr -= rest_takt
+		rest_schritt()
+```
+Das Seil wird in gleich grossen Zeitschritten gerechnet. Dauert ein Bild laenger, gibt es mehrere Schritte, dauert es kuerzer, manchmal keinen. So faellt es auf jedem Geraet gleich schnell. (Meine erste Fassung rechnete einmal je Bild und fiel je nach Bildrate anders.)
+
+`rest_schritt()`:
+```gdscript
+		var schritt: Vector2 = (punkte[nummer] - vorher[nummer]) * rest_daempfung
+		vorher[nummer] = punkte[nummer]
+		punkte[nummer] = punkte[nummer] + schritt + Vector2.DOWN * rest_schwerkraft * rest_takt * rest_takt
+```
+Jedes Glied geht so weiter, wie es im Schritt davor gegangen ist (das ist sein Schwung, etwas gebremst), und die Schwerkraft zieht es nach unten.
+```gdscript
+			var stueck: Vector2 = punkte[nummer] - punkte[nummer - 1]
+			var zu_viel: Vector2 = stueck.normalized() * (stueck.length() - rest_laengen[nummer])
+```
+Danach wird jedes Glied wieder auf seine Laenge gebracht: Ist es zu lang, ruecken seine zwei Enden je die Haelfte zusammen. Beim obersten Glied bewegt sich nur das untere Ende, das obere haengt an der Hand. Das laeuft achtmal hintereinander, damit sich das Seil nicht dehnt. Bewegt sich eine halbe Sekunde lang fast nichts mehr (`rest_stille`), wird das Seil nicht mehr gerechnet (`rest_ruht`).
+
+In `_process` wird `bogen_extra` in jedem Bild kleiner (`lerp` zu null) und das Seil faellt weiter, solange es nicht ruht.
+
+**Abheben (`skripte/start_totale.gd`).** `am_lauf` ersetzt `hakt_ein` und `halt`, `gleit_dauer` ist weg. In `anhaengen()` bekommt die Nadel `schwung_punkt = hand`, und im Ablauf laeuft `schwung` von 0 auf 1, waehrend der Arm zur Hand schwenkt (die letzten 70 Prozent des Schwenks). Der Pendel-Drehpunkt wandert mit: `spitze.lerp(hand, erste_nadel.schwung)`. `loslassen()` ruft `rest_abwerfen`.
+
+**Jeder Fang (`skripte/uebergabe.gd`).** `ziel_x = 540` statt 480: Die Kanone faehrt bis unter die Hand und ein Stueck weiter. Auf der Hinfahrt laeuft `nadel.schwung` von 0 auf 1: Der Draht schwingt im Bogen hinueber. Auf der Rueckfahrt haengt er noch 40 Prozent der Zeit am Lauf (`halte_anteil`), dann `vom_lauf_loesen`. Der `fadenpunkt` ist weg, auch als Knoten in der Szene.
+
+**So wurde es angeschaut.** Schnellcheck PASS fuer `nadel.gd`, `start_totale.gd`, `uebergabe.gd`, Verify PASS. Probe mit festen 60 Bildern pro Sekunde. Luecken am Drahtende, am Bogen in der Hand und am Seilende: Abheben 0,00 Pixel, Fang im Flug 0,25 Pixel. Die Spitze des Seilendes haengt nach dem Loslassen etwa 470 Pixel unter der Hand und pendelt zwischen etwa 80 Pixel links und rechts aus. Zwei Fehler habe ich dabei gefunden und behoben: Erst fiel das Seil gar nicht (die zwei Listen waren dieselbe), und beim Abheben sass das Drahtende ein Bild lang noch an der Kanone (174 Pixel). Nicht angeschaut: wie Bogen und Seil in Bewegung wirken.
+
+**Fragen.** 1. Warum laeuft der Draht bei `schwung` 1 genau durch die Hand? 2. Wozu braucht das Seil die Punkte vom Schritt davor? 3. Warum wird das Seil in festen Zeitschritten gerechnet?

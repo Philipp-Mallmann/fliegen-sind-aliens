@@ -7,18 +7,16 @@ signal gefangen(flugkraft: int)
 @export var dauer: float = 0.48
 # Wie lange die Fliege wartet, bevor sie losfaehrt, in Sekunden. Sie kommt trotzdem gleichzeitig mit dem Arm an.
 @export var verzoegerung: float = 0.1
-# Wie weit der Arm von der Mitte nach rechts faehrt, in Pixeln. Dort sitzt die rechte Hand.
-@export var ziel_x: float = 480.0
+# Wie weit der Arm von der Mitte nach rechts faehrt, in Pixeln: bis unter die Hand und ein Stueck weiter.
+@export var ziel_x: float = 540.0
 # Der Arm: linke Hand, Kanone und Muendung. Nur er faehrt zur Seite, die Kamera und der Faecher nicht.
 @export var arm: Node2D
 # Der Faecher am oberen Bildrand, in dem die gefangenen Fliegen haengen.
 @export var faecher: Node2D
 # Der Punkt an der rechten Hand, an dem die Faeden der Fliegen im Faecher festhaengen.
 @export var griff: Node2D
-# Ein Punkt, der das Drahtende von der Muendung zur Hand traegt. Muss ein Kind der Kanone sein, wie der Griff.
-@export var fadenpunkt: Node2D
-# Welcher Anteil der Rueckfahrt fuer das Einhaken in die Hand gebraucht wird. Danach loest sich der Draht vom Lauf.
-@export var einhak_anteil: float = 0.4
+# Wie lange der Draht auf der Rueckfahrt noch am Lauf haengt, als Anteil der Rueckfahrt. Danach loest er sich.
+@export var halte_anteil: float = 0.4
 
 # true heisst: Gerade laeuft eine Uebergabe. Die Kanone faehrt und schiesst dann nicht.
 var laeuft: bool = false
@@ -94,28 +92,25 @@ func uebergeben() -> void:
 		hin.parallel().tween_property(nadel, "position:y", ziel.y, fahrzeit / 2.0).set_delay(verzoegerung)
 		hin.parallel().tween_property(nadel, "position:x", ziel.x, fahrzeit / 2.0).set_delay(verzoegerung + fahrzeit / 2.0)
 		hin.parallel().tween_property(nadel, "scale", Vector2.ONE * faecher.groesse(), fahrzeit).set_delay(verzoegerung)
+		# Der Schwung der Kanone drueckt den Draht in einem Bogen hoch und hinueber: Wenn sie ankommt, liegt er in der Hand.
+		nadel.schwung_punkt = griff
+		hin.parallel().tween_property(nadel, "schwung", 1.0, dauer)
 		await hin.finished
 		# Ein Hindernis kann die Nadel in der Zwischenzeit abgeschossen haben, dann gibt es sie nicht mehr.
 		if not is_instance_valid(nadel):
 			continue
 		nadel.haengt = true
-		# Die Kanone ist bei der Hand. Der Draht haengt weiter am Lauf (Anker bleibt die Muendung).
-		# Zuerst hakt er in die Hand ein: Der Punkt, ueber den er laeuft, wandert von der Muendung zum Griff.
-		fadenpunkt.global_position = nadel.anker.global_position
-		nadel.ueber = fadenpunkt
+		# Die Kanone faehrt zurueck. Der Draht laeuft durch die Hand und haengt noch am Lauf, bis er fest sitzt.
 		var zurueck: Tween = fahrt_anlegen()
 		zurueck.tween_property(arm, "position", Vector2.ZERO, dauer)
 		var draht: Tween = fahrt_anlegen()
-		draht.tween_property(fadenpunkt, "position", griff.position, dauer * einhak_anteil)
+		draht.tween_interval(dauer * halte_anteil)
 		draht.tween_callback(vom_lauf_loesen.bind(nadel))
 		await zurueck.finished
-		if is_instance_valid(nadel):
-			nadel.ueber = null
-			nadel.anker = griff
 	laeuft = false
 
 
-# Der Draht sitzt fest in der Hand: Das Stueck bis zum Lauf loest sich und baumelt unter der Hand (nadel.gd, rest_abwerfen).
+# Der Draht sitzt fest in der Hand: Er loest sich vom Lauf, und sein Ende faellt als Seil unter die Hand (nadel.gd, rest_abwerfen).
 func vom_lauf_loesen(nadel: Node2D) -> void:
 	if is_instance_valid(nadel):
 		nadel.rest_abwerfen(griff)
