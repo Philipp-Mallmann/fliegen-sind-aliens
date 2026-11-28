@@ -521,36 +521,36 @@ animation = &"aufstehen"
 frame_progress = 0.94876117
 
 [node name="Haenger" type="Node2D" parent="Kanone"]
-position = Vector2(135.1, 51.5)
+position = Vector2(137, 25.3)
 script = ExtResource("haengen_skript")
 
 [node name="Inhalt" type="Node2D" parent="Kanone/Haenger"]
 scale = Vector2(0.935, 0.935)
 
 [node name="Kopf" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
-position = Vector2(-211, -42)
+position = Vector2(-213, -14)
 texture = ExtResource("hg_kopf")
 centered = false
 
 [node name="Hose" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
-position = Vector2(-211, -42)
+position = Vector2(-213, -14)
 texture = ExtResource("hg_hose")
 centered = false
 
 [node name="Daumen" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
-position = Vector2(-211, -42)
+position = Vector2(-213, -14)
 texture = ExtResource("hg_daumen")
 centered = false
 
 [node name="ArmLinks" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
 z_index = 1
-position = Vector2(-211, -42)
+position = Vector2(-213, -14)
 texture = ExtResource("hg_arm-links")
 centered = false
 
 [node name="Oberkoerper" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
 z_index = 1
-position = Vector2(-211, -42)
+position = Vector2(-213, -14)
 texture = ExtResource("hg_oberkoerper")
 centered = false
 
@@ -576,9 +576,9 @@ show_percentage = false
 [node name="Stichstelle" type="ReferenceRect" parent="Kanone/RechteHand" unique_id=674756912]
 layout_mode = 0
 offset_left = 140.0
-offset_top = 170.0
+offset_top = 240.0
 offset_right = 200.0
-offset_bottom = 370.0
+offset_bottom = 440.0
 mouse_filter = 2
 border_color = Color(1, 0.2, 0.2, 1)
 border_width = 3.0

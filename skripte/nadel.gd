@@ -30,6 +30,11 @@ signal getroffen(nadel: Node2D)
 @export var steck_tiefe: float = -0.15
 # Wie weit das kurze Drahtstueck vor der Fliege ueber ihren Rand hinausreicht, in Pixeln. Verhindert eine Luecke am Rand.
 @export var rand_zugabe: float = 6.0
+# Das Drahtende, das unter der Hand baumelt: wie stark es zur Mitte zurueckgezogen wird (groesser heisst: schwingt schneller),
+# wie schnell das Schwingen abklingt, und wie lang es hoechstens ist, in Pixeln.
+@export var rest_schwere: float = 40.0
+@export var rest_reibung: float = 1.5
+@export var rest_hoechstens: float = 600.0
 
 # Wie viele Pixel die Nadel schon geflogen ist.
 var geflogen: float = 0.0
@@ -46,6 +51,11 @@ var anker: Node2D = null
 # Der Punkt, ueber den der Draht laeuft, bevor er zum Anker weitergeht: die Hand, solange der Draht noch an der Kanone haengt.
 # null heisst: Der Draht geht gerade zum Anker.
 var ueber: Node2D = null
+# Das Drahtende, das unter der Hand baumelt, nachdem es sich vom Lauf geloest hat: seine Laenge in Pixeln (0 heisst: keins),
+# sein Winkel (0 heisst: haengt gerade nach unten) und wie schnell sich der Winkel gerade aendert.
+var rest_laenge: float = 0.0
+var rest_winkel: float = 0.0
+var rest_tempo: float = 0.0
 # Die Kanone, die die Nadel geschossen hat. Solange die Nadel fliegt, bleibt sie genau ueber ihr. Setzt kanone.gd.
 # null heisst: Die Nadel kommt aus der Totale (start_totale.gd) und fliegt frei in ihre Richtung.
 var kanone: Node2D = null
@@ -57,6 +67,10 @@ var haengt: bool = false
 
 func _process(delta: float) -> void:
 	if steckt:
+		# Das baumelnde Drahtende schwingt wie ein Pendel aus: Es zieht zur Mitte zurueck und wird dabei langsamer.
+		if rest_laenge > 0.0:
+			rest_tempo += (-rest_schwere * sin(rest_winkel) - rest_reibung * rest_tempo) * delta
+			rest_winkel += rest_tempo * delta
 		faden_spannen()
 		return
 	if kanone != null:
@@ -173,10 +187,23 @@ func stecken_in(grosse: Node2D) -> void:
 func faden_loesen() -> void:
 	anker = null
 	ueber = null
+	rest_laenge = 0.0
 	$Faden.clear_points()
 	$Rest.clear_points()
 	for stueck in vorn_stuecke:
 		stueck.clear_points()
+
+
+# Der Draht sitzt fest in der Hand: Das Stueck von der Hand bis zum Lauf loest sich von der Kanone und baumelt ab jetzt
+# unter der Hand. Es behaelt seine Laenge und schwingt aus der Richtung los, in der die Kanone war.
+func rest_abwerfen(hand: Node2D) -> void:
+	var von: Vector2 = hand.global_position
+	var bis: Vector2 = anker.global_position
+	rest_laenge = minf(von.distance_to(bis), rest_hoechstens)
+	rest_winkel = (bis - von).angle() - PI / 2.0
+	rest_tempo = 0.0
+	ueber = null
+	anker = hand
 
 
 func stecken_bleiben() -> void:
@@ -211,6 +238,10 @@ func faden_spannen() -> void:
 	if ueber != null:
 		unten = ueber.global_position
 		$Rest.points = PackedVector2Array([$Rest.to_local(unten), $Rest.to_local(anker.global_position)])
+	elif rest_laenge > 0.0:
+		# Das geloeste Ende haengt unter der Hand: von der Hand aus in Richtung seines Winkels, so lang wie es war.
+		var ende: Vector2 = unten + Vector2.DOWN.rotated(rest_winkel) * rest_laenge
+		$Rest.points = PackedVector2Array([$Rest.to_local(unten), $Rest.to_local(ende)])
 	elif $Rest.points.size() > 0:
 		$Rest.clear_points()
 	var bogen: Vector2 = durchbiegung(oben, unten)

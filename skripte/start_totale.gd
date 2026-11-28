@@ -58,10 +58,6 @@ var start_lage: Transform2D = Transform2D.IDENTITY
 var hakt_ein: bool = false
 # Wo der Draht gehalten wird: 0 heisst an der Kanonenspitze, 1 heisst in der Hand, dazwischen unterwegs.
 var halt: float = 0.0
-# true heisst: Der Draht sitzt fest in der Hand, und sein Rest loest sich gerade von der Kanonenspitze.
-var laesst_los: bool = false
-# Wo das Ende des Rests ist: 0 heisst noch an der Kanonenspitze, 1 heisst in der Hand angekommen.
-var los: float = 0.0
 # Der Ablauf nach dem ersten Treffer. null heisst: Es gab noch keinen.
 var ablauf: Tween = null
 
@@ -95,11 +91,6 @@ func _process(delta: float) -> void:
 		var ort: Vector2 = spitze.lerp(hand, halt)
 		kanone.get_node("Fadenpunkt").global_position = ort
 		haenger.drehpunkt_setzen(ort)
-	# Loslassen: Das Ende des Drahts wandert von der Kanonenspitze in die Hand.
-	if laesst_los:
-		var von: Vector2 = $Schulter/Armbild/Bild/Spitze.global_position
-		var bis: Vector2 = haenger.get_node("Inhalt").global_position
-		kanone.get_node("Fadenpunkt").global_position = von.lerp(bis, los)
 	if not aktiv or wand_offen:
 		return
 	kippen(delta)
@@ -179,8 +170,6 @@ func anhaengen() -> void:
 	ablauf.tween_callback(in_der_hand)
 	ablauf.tween_property($Schulter, "rotation", ziel_winkel - deg_to_rad(rueck_winkel), halte_dauer)
 	ablauf.tween_callback(loslassen)
-	ablauf.tween_property(self, "los", 1.0, gleit_dauer)
-	ablauf.tween_callback(frei)
 
 
 # Die Kanonenspitze ist bei der Hand: Ab jetzt laeuft der Draht ueber den Haltepunkt und von dort weiter zum Lauf.
@@ -195,18 +184,10 @@ func in_der_hand() -> void:
 	erste_nadel.ueber = haenger
 
 
-# Der Draht sitzt fest: Sein Rest loest sich vom Lauf und rutscht in die Hand.
+# Der Draht sitzt fest: Sein Rest loest sich vom Lauf und baumelt ab jetzt unter der Hand (nadel.gd, rest_abwerfen).
+# Der Draht endet in der Hand, die Fliege kann nicht mehr entkommen.
 func loslassen() -> void:
-	los = 0.0
-	laesst_los = true
-	erste_nadel.anker = kanone.get_node("Fadenpunkt")
-
-
-# Der Rest ist in der Hand angekommen: Der Draht endet jetzt in der Hand, die Fliege kann nicht mehr entkommen.
-func frei() -> void:
-	laesst_los = false
-	erste_nadel.ueber = null
-	erste_nadel.anker = haenger
+	erste_nadel.rest_abwerfen(haenger)
 	sequenz_fertig()
 
 
@@ -233,6 +214,5 @@ func ausschalten() -> void:
 	aktiv = false
 	folgt = false
 	hakt_ein = false
-	laesst_los = false
 	transform = start_lage
 	$Schulter.visible = false

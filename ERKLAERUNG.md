@@ -7857,3 +7857,61 @@ Die Pruefung `is_instance_valid(nadel)` steht jetzt direkt nach der Hinfahrt: Ha
 **So wurde es angeschaut.** Schnellcheck PASS fuer `nadel.gd`, `start_totale.gd`, `uebergabe.gd`, Verify PASS. Probe Abheben: Der Draht geht durch die Hand bis zur Kanonenspitze, waehrend der Arm zurueckgeht. Gemessen nach jedem Bild an allen Enden (Hauptstueck an der Hand, Rest an der Hand, Rest am Lauf): hoechstens 0,00 Pixel Luecke in 3535 Bildern. Probe zweiter Fang im Flug: Der Draht laeuft von der Fliege durch die Hand hinunter zur Muendung, loest sich dann und rutscht in die Hand. Hoechstens 2,25 Pixel in 768 Bildern, und zwar am Griff, wenn die Nadeln im Faecher nachruecken (das Nachruecken stellt `faecher.gd` noch auf die alte Art weiter). Nicht angeschaut: das Gefuehl beim Spielen.
 
 **Fragen.** 1. Was zeichnet die Linie `Rest`, und wann ist sie leer? 2. Warum bleibt beim Einhaken der Anker die Muendung? 3. Was bewirkt `process_priority = -1`?
+
+### Nachtrag: Griffpunkt hoeher, das geloeste Drahtende baumelt (28.11.2026)
+
+Deine Punkte: Der Draht soll hoeher in die Hand gehen, an der oberen Kante des obersten Fingers, zwischen Daumen und Fingern. Und das Stueck, das bis zur Kanone gereicht hat, soll nicht verschwinden, sondern unter der Hand haengen und baumeln, hinter dem Arm. Bei jedem Fang.
+
+**Griffpunkt (`szenen/spiel.tscn`).** Der Griff lag in deinem Bild bei (768, 712), jetzt bei (770, 684): 28 Pixel hoeher, an der Oberkante des obersten Fingers. Die fuenf Bilder in `Haenger/Inhalt` stehen darum bei (-213, -14) statt (-211, -42), und `Haenger` bei (137, 25.3). Der Koerper bleibt dabei, wo er war, nur der Punkt, an dem der Draht haelt und um den er pendelt, ist gewandert. Die `Stichstelle` ist 70 Pixel tiefer, damit sie wieder auf dem Unterarm liegt.
+
+**`skripte/nadel.gd`.**
+
+```gdscript
+@export var rest_schwere: float = 40.0
+@export var rest_reibung: float = 1.5
+@export var rest_hoechstens: float = 600.0
+```
+Wie stark das baumelnde Ende zur Mitte zurueckgezogen wird, wie schnell es ausschwingt, und wie lang es hoechstens ist.
+
+```gdscript
+var rest_laenge: float = 0.0
+var rest_winkel: float = 0.0
+var rest_tempo: float = 0.0
+```
+Die Laenge des Endes (0 heisst: keins), sein Winkel (0 heisst: gerade nach unten) und wie schnell sich der Winkel aendert.
+
+```gdscript
+		if rest_laenge > 0.0:
+			rest_tempo += (-rest_schwere * sin(rest_winkel) - rest_reibung * rest_tempo) * delta
+			rest_winkel += rest_tempo * delta
+```
+Neu in `_process`, nur wenn die Nadel steckt. Wieder ein Pendel: `sin(rest_winkel)` zieht zur Mitte, die Reibung bremst. Nach ein paar Schwingungen haengt das Ende still. Das sind zwei kleine Rechnungen je Nadel und Bild, fuer den Browser ohne Bedeutung.
+
+```gdscript
+	elif rest_laenge > 0.0:
+		var ende: Vector2 = unten + Vector2.DOWN.rotated(rest_winkel) * rest_laenge
+		$Rest.points = PackedVector2Array([$Rest.to_local(unten), $Rest.to_local(ende)])
+```
+Neu in `faden_spannen`. `unten` ist die Hand. Von dort geht die Linie `Rest` in Richtung des Winkels, so lang wie das Ende ist. `Vector2.DOWN.rotated(...)` ist ein Pfeil nach unten, um den Winkel gedreht.
+
+```gdscript
+func rest_abwerfen(hand: Node2D) -> void:
+	var von: Vector2 = hand.global_position
+	var bis: Vector2 = anker.global_position
+	rest_laenge = minf(von.distance_to(bis), rest_hoechstens)
+	rest_winkel = (bis - von).angle() - PI / 2.0
+	rest_tempo = 0.0
+	ueber = null
+	anker = hand
+```
+Wird gerufen, wenn der Draht fest sitzt. Das Ende ist so lang wie der Weg von der Hand zum Lauf in diesem Moment und startet in der Richtung, in der die Kanone war. `angle()` misst ab der Richtung nach rechts, minus ein Viertelkreis (`PI / 2`) ergibt den Winkel ab "gerade nach unten". Danach endet der Draht in der Hand.
+
+**`skripte/start_totale.gd`.** Die Phase `laesst_los` mit `los` ist weg, ebenso `frei()`. `loslassen()` ruft nur noch `erste_nadel.rest_abwerfen(haenger)` und dann `sequenz_fertig()`.
+
+**`skripte/uebergabe.gd`.** `vom_lauf_loesen(nadel)` ruft `nadel.rest_abwerfen(griff)`. Der zweite Teil der Drahtfahrt ist weg.
+
+**Hinter dem Arm.** Die Linie `Rest` gehoert zur Nadel im Faecher. Hand und Kittel haben `z_index = 1`, der Draht 0, also liegt das Ende dahinter. Zwischen den Fingern sieht man es durch.
+
+**So wurde es angeschaut.** Schnellcheck PASS fuer `nadel.gd`, `start_totale.gd`, `uebergabe.gd`, Verify PASS. Probe wie zuvor: Abheben hoechstens 0,00 Pixel Luecke in 3507 Bildern, Fang im Flug 2,25 Pixel (Nachruecken im Faecher, unveraendert). In der Grossaufnahme geht der Draht an der Oberkante des obersten Fingers hinein, das Ende haengt dahinter herunter und ist in den Luecken zwischen den Fingern zu sehen. Nicht angeschaut: wie das Baumeln in Bewegung wirkt.
+
+**Fragen.** 1. Warum haengt das Ende nach einer Weile still? 2. Woher kommt die Laenge des Endes? 3. Warum liegt es hinter der Hand?
