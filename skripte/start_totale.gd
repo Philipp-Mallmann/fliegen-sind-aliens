@@ -145,6 +145,7 @@ func anhaengen() -> void:
 	$Koerper.visible = false
 	$Gesicht.visible = false
 	haenger.visible = true
+	arm_nach_hinten()
 	var hand: Node2D = haenger.get_node("Inhalt")
 	relativ = hand.global_transform.affine_inverse() * global_transform
 	folgt = true
@@ -180,6 +181,14 @@ func loslassen() -> void:
 	sequenz_fertig()
 
 
+# Solange der Forscher haengt, liegt der Arm mit der Kanone hinter seinem Kopf und Koerper.
+# Godot zeichnet Geschwister in der Reihenfolge der Liste: Was weiter oben steht, liegt hinten. Darum rueckt die Figur
+# in der Liste vor den haengenden Forscher, und der Arm verliert seinen Vorrang (z_index 0 statt 2).
+func arm_nach_hinten() -> void:
+	kanone.move_child(self, haenger.get_index())
+	$Schulter.z_index = 0
+
+
 func sequenz_fertig() -> void:
 	spielstart.emit(erste_nadel)
 
@@ -193,6 +202,7 @@ func wegschwenken(dauer: float) -> void:
 	if not folgt:
 		relativ = haenger.get_node("Inhalt").global_transform.affine_inverse() * global_transform
 		folgt = true
+		arm_nach_hinten()
 	var schwenk: Tween = create_tween()
 	schwenk.tween_property($Schulter, "rotation", $Schulter.rotation - deg_to_rad(wegschwenk_winkel), dauer)
 

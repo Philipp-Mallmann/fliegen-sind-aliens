@@ -8045,3 +8045,46 @@ In `faden_spannen`. `halt` ist die Stelle, an der das Seil gehalten wird: bei `s
 **So wurde es angeschaut.** Schnellcheck PASS fuer `nadel.gd` und `uebergabe.gd`, Verify PASS. Probe mit 60 Bildern pro Sekunde: Das Seil geht gerade von der Fliege zur Kanone, wird beim Ankommen in die Hand gelegt und haengt als Schlaufe nach unten zur Kanone. Luecken hoechstens 0,00 Pixel (Abheben) und 0,25 (Fang). Die Spitze des geloesten Endes startet 127 Pixel neben der Hand und haengt nach einer Sekunde gerade darunter, sie schwingt nur noch 11 Pixel ueber die Mitte hinaus (vorher 80 und mehrere Sekunden lang). Nicht angeschaut: wie es in Bewegung wirkt.
 
 **Fragen.** 1. Warum haengt ein senkrechtes Seilstueck nicht durch? 2. Was aendert `rest_daempfung` 0,95 gegenueber 0,985? 3. Warum loest sich das Seil jetzt frueher vom Lauf?
+
+### Nachtrag: Bogen zurueck, die Kanone wirft, der Kanonenarm liegt beim Haengen hinten (28.11.2026)
+
+Deine Punkte: (1) Im Haenge-Bild soll der drehbare Arm mit der Kanone hinter Kopf und Koerper liegen, nur dort. (2) Das Seil soll wieder so schwingen wie in der Fassung mit dem Bogen, aber die Kanone soll in ihrer Bewegung selbst den Schwung machen, der dazu passt.
+
+**Das Seil (`skripte/nadel.gd`).** Die Fassung aus dem vorigen Nachtrag ("Weniger Schwung, die Rundung haengt unten") ist zurueckgenommen: `rest_bogen` und `durchhang_rest` sind wieder weg. Es gilt wieder der Nachtrag davor ("Der Schwung der Kanone drueckt das Seil in die Hand"): `bogen_jetzt`, `bogen_extra`, `bogen_tempo`, das Seil laeuft bei `schwung` 1 als eine Kurve durch die Hand. Einzige Aenderung: `rest_daempfung = 0.97` statt 0,985, das geloeste Ende haengt nach etwa anderthalb Sekunden still.
+
+**Der Wurf der Kanone (`skripte/uebergabe.gd`).**
+
+```gdscript
+@export var wurf_hoehe: float = 110.0
+@export var wurf_winkel: float = 28.0
+```
+Wie weit die Kanone am Ende der Hinfahrt anhebt und wie weit sie zur Hand kippt.
+
+```gdscript
+		hin.tween_property(arm, "position:x", ziel_x, dauer)
+		hin.parallel().tween_property(arm, "position:y", -wurf_hoehe, dauer / 2.0).set_delay(dauer / 2.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		hin.parallel().tween_property(arm, "rotation", deg_to_rad(wurf_winkel), dauer / 2.0).set_delay(dauer / 2.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+```
+Die Fahrt zur Seite ist wie vorher, nur noch fuer `position:x`. Neu: In der zweiten Haelfte (`set_delay(dauer / 2.0)`) hebt die Kanone 110 Pixel an (minus ist nach oben) und kippt 28 Grad zur Hand. `TRANS_QUAD` mit `EASE_IN` heisst: erst langsam, dann immer schneller, wie ein Wurf.
+
+```gdscript
+		hin.parallel().tween_property(nadel, "schwung", 1.0, dauer).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+```
+Der Bogen des Seils waechst mit derselben Kurve wie der Wurf: Das Seil schwingt hinueber, weil die Kanone wirft.
+
+Auf der Rueckfahrt geht `position` zurueck auf null (also auch die Hoehe) und `rotation` zurueck auf 0. `halte_anteil` ist wieder 0,4. Wird die Nadel waehrend der Hinfahrt abgeschossen, stellt das Skript Hoehe und Kippen sofort zurueck.
+
+**Kanonenarm hinter dem Koerper (`skripte/start_totale.gd`, `skripte/haengen.gd`).**
+
+```gdscript
+func arm_nach_hinten() -> void:
+	kanone.move_child(self, haenger.get_index())
+	$Schulter.z_index = 0
+```
+Godot zeichnet Geschwister in der Reihenfolge der Liste: Was weiter oben steht, liegt hinten. `move_child` rueckt die Figur in der Liste an die Stelle des haengenden Forschers, der rutscht eins weiter. So wird der Arm zuerst gezeichnet und liegt hinter Kopf und Koerper. `z_index = 0` nimmt ihm den Vorrang, den er im Stehen hat (dort bleibt er vorn). Gerufen in `anhaengen()` und, fuer den Testsprung, in `wegschwenken()`.
+
+In `haengen.gd` steht in `_ready` neu `process_priority = -1`: Der haengende Forscher ist in jedem Bild vor der Figur dran, obwohl er jetzt in der Liste hinter ihr steht. Die Figur richtet sich nach ihm, also muss er zuerst gerechnet sein.
+
+**So wurde es angeschaut.** Schnellcheck PASS fuer `nadel.gd`, `uebergabe.gd`, `haengen.gd`, `start_totale.gd`, Verify PASS. Probe mit 60 Bildern pro Sekunde: Beim Haengen laeuft der Aermel des Kanonenarms hinter dem Kopf vorbei. Beim Fang im Flug hebt und kippt die Kanone zur Hand, das Seil schwingt im Bogen hinein. Luecken 0,00 und 0,25 Pixel. Das geloeste Ende startet 143 Pixel neben der Hand und haengt nach 1,5 Sekunden still. Aufgefallen: Die geworfene Kanone steht dabei zum Teil hinter dem Aermel. Nicht angeschaut: wie der Wurf in Bewegung wirkt.
+
+**Fragen.** 1. Was bewirkt `EASE_IN` beim Wurf? 2. Warum liegt der Arm nach `move_child` hinter dem Koerper? 3. Wozu braucht `haengen.gd` jetzt `process_priority = -1`?

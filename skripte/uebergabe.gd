@@ -16,7 +16,11 @@ signal gefangen(flugkraft: int)
 # Der Punkt an der rechten Hand, an dem die Faeden der Fliegen im Faecher festhaengen.
 @export var griff: Node2D
 # Wie lange der Draht auf der Rueckfahrt noch am Lauf haengt, als Anteil der Rueckfahrt. Danach loest er sich.
-@export var halte_anteil: float = 0.25
+@export var halte_anteil: float = 0.4
+# Der Wurf: Am Ende der Hinfahrt hebt die Kanone so viele Pixel an und kippt um so viele Grad zur Hand hin.
+# Mit diesem Schwung wirft sie das Seil in die Hand.
+@export var wurf_hoehe: float = 110.0
+@export var wurf_winkel: float = 28.0
 
 # true heisst: Gerade laeuft eine Uebergabe. Die Kanone faehrt und schiesst dann nicht.
 var laeuft: bool = false
@@ -87,22 +91,29 @@ func uebergeben() -> void:
 		$TonArm.play()
 		var fahrzeit: float = dauer - verzoegerung
 		var hin: Tween = fahrt_anlegen()
-		hin.tween_property(arm, "position", Vector2(ziel_x, 0.0), dauer)
+		hin.tween_property(arm, "position:x", ziel_x, dauer)
+		# Der Wurf: In der zweiten Haelfte der Hinfahrt hebt die Kanone an und kippt zur Hand. Erst langsam, dann schnell (EASE_IN).
+		hin.parallel().tween_property(arm, "position:y", -wurf_hoehe, dauer / 2.0).set_delay(dauer / 2.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		hin.parallel().tween_property(arm, "rotation", deg_to_rad(wurf_winkel), dauer / 2.0).set_delay(dauer / 2.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		var ziel: Vector2 = faecher.platz(nadel)
 		hin.parallel().tween_property(nadel, "position:y", ziel.y, fahrzeit / 2.0).set_delay(verzoegerung)
 		hin.parallel().tween_property(nadel, "position:x", ziel.x, fahrzeit / 2.0).set_delay(verzoegerung + fahrzeit / 2.0)
 		hin.parallel().tween_property(nadel, "scale", Vector2.ONE * faecher.groesse(), fahrzeit).set_delay(verzoegerung)
-		# In der zweiten Haelfte der Hinfahrt nimmt die Kanone das Seil mit hoch zur Hand: Wenn sie ankommt, liegt es darin.
+		# Der Schwung dieses Wurfs drueckt das Seil in einem Bogen hoch und hinueber: Wenn die Kanone ankommt, liegt es in der Hand.
+		# Es schwingt genauso an wie der Wurf selbst (EASE_IN).
 		nadel.schwung_punkt = griff
-		hin.parallel().tween_property(nadel, "schwung", 1.0, dauer / 2.0).set_delay(dauer / 2.0)
+		hin.parallel().tween_property(nadel, "schwung", 1.0, dauer).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		await hin.finished
 		# Ein Hindernis kann die Nadel in der Zwischenzeit abgeschossen haben, dann gibt es sie nicht mehr.
 		if not is_instance_valid(nadel):
+			arm.position.y = 0.0
+			arm.rotation = 0.0
 			continue
 		nadel.haengt = true
-		# Die Kanone faehrt zurueck. Der Draht laeuft durch die Hand und haengt noch am Lauf, bis er fest sitzt.
+		# Die Kanone faehrt zurueck, senkt sich wieder und richtet sich auf. Das Seil laeuft durch die Hand und haengt noch am Lauf.
 		var zurueck: Tween = fahrt_anlegen()
 		zurueck.tween_property(arm, "position", Vector2.ZERO, dauer)
+		zurueck.parallel().tween_property(arm, "rotation", 0.0, dauer)
 		var draht: Tween = fahrt_anlegen()
 		draht.tween_interval(dauer * halte_anteil)
 		draht.tween_callback(vom_lauf_loesen.bind(nadel))

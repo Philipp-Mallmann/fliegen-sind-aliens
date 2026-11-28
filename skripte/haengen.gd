@@ -25,6 +25,8 @@ var pendelt: bool = false
 
 func _ready() -> void:
 	letzter_ort = global_position
+	# In jedem Bild frueher dran als die Figur (kleinere Zahl heisst frueher): Die Figur richtet sich nach diesem Knoten.
+	process_priority = -1
 
 
 func _process(delta: float) -> void:
