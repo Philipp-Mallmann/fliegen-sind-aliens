@@ -6,12 +6,13 @@ extends Node2D
 @export var steine: Array[Texture2D] = []
 # Wie schnell der Gegenstand faellt, in Pixeln pro Sekunde. Stuerzt die Kanone gerade ab, kommt ihr Tempo dazu (siehe fallen):
 # Sonst wuerde der Faecher den Stein von oben einholen.
-@export var falltempo: float = 1500.0
+@export var falltempo: float = 750.0
 # Wie lange ein Blinken der Warnung dauert, am Anfang und am Ende, in Sekunden. Kleiner heisst schneller.
 @export var blinken_anfang: float = 1.0
 @export var blinken_ende: float = 0.1
-# Wie weit ueber der Kanone der obere Bildrand liegt, in Pixeln. In der Luft 1060, am Boden etwas mehr (herausgezoomt).
-@export var bildrand: float = 1060.0
+# So weit ragen Stein und Spalte ueber den Bildrand hinaus, in Pixeln: der Stein nach oben, die Spalte nach oben und unten.
+# Wackelt das Bild oder steigt die Kamera schnell, sieht man so nie das Ende der Spalte oder den wartenden Stein.
+@export var ueberstand: float = 150.0
 # Wie gross das Warnschild am Anfang und am Ende der Warnung ist. 1 ist die Groesse aus der Szene.
 @export var groesse_anfang: float = 0.25
 @export var groesse_ende: float = 1.5
@@ -43,7 +44,7 @@ extends Node2D
 ]
 @export var spalte_farben: Array[Color] = [
 	Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5),
-	Color(0, 0, 0, 0.5), Color(0.92, 0.73, 0.17, 0.2), Color(0.92, 0.73, 0.17, 0.2), Color(0.92, 0.73, 0.17, 0.2),
+	Color(0, 0, 0, 0.5), Color(1.0, 0.96, 0.8, 0.25), Color(1.0, 0.96, 0.8, 0.25), Color(1.0, 0.96, 0.8, 0.25),
 ]
 
 # Die Kanone. Die Warnung bleibt ueber ihr am oberen Bildrand. Setzt der Hindernis-Erzeuger.
@@ -68,9 +69,14 @@ func _ready() -> void:
 	$Klotz.texture = steine.pick_random()
 	breite = $Klotz.texture.get_width()
 	hoehe = $Klotz.texture.get_height()
-	$Klotz.position.y = -hoehe / 2.0
+	$Klotz.position.y = -hoehe / 2.0 - ueberstand
 	$Spalte.offset_left = -breite / 2.0
 	$Spalte.offset_right = breite / 2.0
+	$Spalte.offset_top = -ueberstand
+	$Spalte.offset_bottom = 1080.0 + ueberstand
+	# Kurz bevor das Bild gemalt wird, setzt sich die Warnung an den oberen Bildrand (an_den_rand).
+	# Erst dann sind Kanone und Kamera fuer dieses Bild fertig bewegt (auch das Steigen, ein Tween, kommt erst nach _process).
+	RenderingServer.frame_pre_draw.connect(an_den_rand)
 
 
 func _process(delta: float) -> void:
@@ -82,7 +88,7 @@ func _process(delta: float) -> void:
 
 func warnen(delta: float) -> void:
 	gewarnt += delta
-	position.y = kanone.position.y - bildrand
+	an_den_rand()
 	kanone_vorher = kanone.position.y
 	var rest: float = warnzeit - gewarnt
 	var anteil: float = clampf(1.0 - rest / volle_warnzeit, 0.0, 1.0)
@@ -122,6 +128,13 @@ func fallen(delta: float) -> void:
 		queue_free()
 
 
+# Solange gewarnt wird, steht das Hindernis genau am oberen Bildrand, so wie die Kamera ihn gerade zeigt.
+func an_den_rand() -> void:
+	if gewarnt < warnzeit:
+		var kamera: Camera2D = get_viewport().get_camera_2d()
+		position.y = kamera.get_screen_center_position().y - 540.0 / kamera.zoom.y
+
+
 # Wo der untere Bildrand gerade in der Welt liegt: die Bildmitte der Kamera plus die halbe Bildhoehe.
 # Ist die Kamera herausgezoomt (zoom kleiner als 1), zeigt das Bild mehr, darum wird durch den Zoom geteilt.
 func bildrand_unten() -> float:
@@ -139,7 +152,7 @@ func in_spalte(fliege: Node2D) -> bool:
 func im_klotz(fliege: Node2D) -> bool:
 	var groesse: float = fliege.halbe_groesse * fliege.global_scale.x
 	var seitlich: float = absf(fliege.global_position.x - global_position.x)
-	var senkrecht: float = absf(fliege.global_position.y - (global_position.y - hoehe / 2.0))
+	var senkrecht: float = absf(fliege.global_position.y - $Klotz.global_position.y)
 	return seitlich <= breite / 2.0 + groesse and senkrecht <= hoehe / 2.0 + groesse
 
 

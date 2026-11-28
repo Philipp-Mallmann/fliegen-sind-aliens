@@ -8352,3 +8352,16 @@ Der Draht besteht aus drei Teilen: dem Faden, dem Seilende (`Rest`) und den kurz
 **So wurde es angeschaut.** Schnellcheck PASS (`spiel.gd`, `nadel.gd`), Verify PASS. Probe: Nadel an der Kanone, Uebergabe gestartet, 0,15 Sekunden spaeter Absturz um 3. Waehrend der Hinfahrt: Kanone, Leiste und Faden sichtbar. 0,05 Sekunden nach Absturzbeginn: alle drei unsichtbar, der Faden haengt noch an der Muendung. 1,5 Sekunden spaeter: alle wieder sichtbar, der Faden haengt jetzt am Griff der Hand. Nicht angeschaut: wie es in Bewegung wirkt.
 
 **Fragen.** 1. Warum blendet `kanone_zeigen(false)` nicht einfach alle Draehte aus? 2. Wozu ist `draht_sichtbar` da, wenn `$Faden.visible` es doch schon zeigt? 3. Was passiert, wenn man vor dem ersten Fang abstuerzt?
+
+### Nachtrag: Steine langsamer, heller Schatten, Warnung klebt am Bildrand (28.11.2026)
+
+`skripte/hindernis.gd`:
+
+- `falltempo` 750 statt 1500: halb so schnell.
+- `spalte_farben`: ab Indigo (Pappe 6 bis 8) Cremeweiss mit 25 Prozent (`Color(1.0, 0.96, 0.8, 0.25)`) statt Schild-Gelb mit 20 Prozent.
+- **Warnung am Bildrand.** Beim Fang steigt die Kanone schnell (ein Tween), und dabei sah man das untere Ende des Schattens und manchmal den wartenden Stein. Zwei Gruende: Tweens laufen erst *nach* allen `_process`. Das Hindernis hat sich also am Stand der Kanone vom letzten Bild ausgerichtet und hing ein Stueck hinterher. Und wenn das Bild wackelt, verrutscht der Bildrand. Zwei Aenderungen:
+  1. `RenderingServer.frame_pre_draw.connect(an_den_rand)` in `_ready`. Dieses Signal kommt kurz bevor das Bild gemalt wird, wenn alles fuer dieses Bild fertig bewegt ist. `an_den_rand()` setzt das Hindernis an den oberen Bildrand, so wie die Kamera ihn gerade zeigt: `kamera.get_screen_center_position().y - 540.0 / kamera.zoom.y` (Bildmitte minus halbe Bildhoehe; herausgezoomt zeigt das Bild mehr, darum geteilt durch den Zoom). Das ersetzt `bildrand` (1060 ueber der Kanone), der jetzt weg ist.
+  2. Neu `ueberstand` (150 Pixel): Der Stein wartet 150 Pixel ueber dem Bildrand (`$Klotz.position.y = -hoehe / 2.0 - ueberstand`), und die Spalte ragt oben und unten 150 Pixel ueber das Bild hinaus (`offset_top`, `offset_bottom`). Darum faellt der Stein 150 Pixel weiter, bei 750 Pixeln pro Sekunde 0,2 Sekunden laenger.
+- `im_klotz` misst jetzt an der Mitte des Steinbilds (`$Klotz.global_position.y`), weil der Stein nicht mehr direkt am Hindernispunkt sitzt.
+
+Angeschaut: Schnellcheck PASS, Verify PASS. Probe: Warnung neben der Kanone, dann Fang mit 15 Flugkraft (schnellstes Steigen) und gleichzeitig 24 Pixel Wackeln, Bilder waehrend des Steigens: Der Schatten reicht in jedem Bild von oben bis unten, der Stein ist nicht zu sehen.
