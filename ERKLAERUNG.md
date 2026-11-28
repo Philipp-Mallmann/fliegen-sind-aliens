@@ -7463,3 +7463,26 @@ func leuchten_zeigen(ladung: float) -> void:
 `ladung` kommt aus `ladung_jetzt()`: 1 bei drei Spruengen, 2/3 bei zwei, 1/3 bei einem. Mal 3 ergibt das 3, 2 oder 1. Ring 0 (innen) ist sichtbar, sobald `ringe` mindestens 1 ist; Ring 2 (aussen) erst bei 3. So verschwindet bei jedem Sprung der aeusserste. Waehrend der Erholung waechst `ladung` gleitend von 0 bis 1: Zuerst blendet der innere Ring ein, dann der mittlere, dann der aeussere. Die Farben stehen im Inspector in `leucht_farben`.
 
 Angeschaut: Schnellcheck PASS fuer `hindernis.gd`, `fliege_teleport.gd`, `spiel.gd`, Verify PASS. Probe: Ringe bei 3, 2, 1 Spruengen und bei halber Erholung (innen voll, Mitte halb, aussen aus), Umriss sitzt; ein Stein auf eine freie Fliege: Fliege weg, Fleck da. Nicht angeschaut: ein Absturz mit fallendem Stein im echten Spiel.
+
+### Nachtrag: Flattern langsamer, Teleport-Glitch, duennere Ringe in Fliegenfarben, Forscher faellt mit (28.11.2026)
+
+**Flattern** (alle acht Fliegenszenen, Animation `flattern`): Die Animation ist jetzt 0,06 Sekunden lang statt 0,034, das zweite Fluegelbild kommt bei 0,03 statt 0,017. Jedes Bild bleibt also etwa zwei Bilder lang stehen (bei 60 Bildern pro Sekunde). Bei allen Fliegen gleich.
+
+**Glitch** (`shader/glitch.gdshader`, neu): Ein Shader ist ein kleines Programm, das die Grafikkarte fuer jeden Bildpunkt einer Grafik ausfuehrt. Dieser macht dasselbe wie dein Logo am Ende der Reels: Er schneidet das Bild in waagerechte Streifen, schiebt jeden Streifen ein Stueck zur Seite und laesst einzelne Streifen ganz weg.
+
+```glsl
+float zeile = floor(UV.y * streifen);
+float verschiebung = (wuerfeln(zeile + zufall) * 2.0 - 1.0) * versatz * staerke;
+vec2 stelle = UV + vec2(verschiebung, 0.0);
+```
+`UV` ist die Stelle im Bild, von 0 (links/oben) bis 1 (rechts/unten). `floor(UV.y * 14)` sagt, in welchem der 14 Streifen der Punkt liegt. `wuerfeln` macht aus der Streifennummer eine Zufallszahl zwischen 0 und 1; mal 2 minus 1 ergibt -1 bis +1, mal `versatz` (15 Prozent der Bildbreite) und mal `staerke`. Gelesen wird die Farbe dann von der verschobenen Stelle, so rutscht der ganze Streifen. Ist `wuerfeln(...)` kleiner als `staerke`, wird der Punkt durchsichtig: Bei staerke 0,5 faellt etwa jeder zweite Streifen weg. `zufall` wechselt jedes Bild, darum flimmert es. `knoten_farbe` merkt sich im `vertex`-Teil das `modulate` des Knotens, damit die Ringe ihre Farbe behalten.
+
+`szenen/fliege_teleport.tscn`: Der Shader steckt als `ShaderMaterial` an der Fliege selbst (`resource_local_to_scene`, damit jede Teleport-Fliege ihren eigenen hat und nicht alle zugleich glitchen). Koerper, Fluegel, `Leuchten` und die drei Ringe haben `use_parent_material = true`: Sie benutzen das Material ihres Elternknotens.
+
+`skripte/fliege_teleport.gd`: Das Blinken (`flacker_takt`, `flacker_blass`) ist weg. Statt dessen `glitchen(staerke)`, das dem Shader die Staerke und eine neue Zufallszahl gibt. Waehrend `flacker_zeit` (0,2 s) vor dem Sprung waechst die Staerke von 0 auf 1 (`1.0 - flackert_noch / flacker_zeit`), sie glitcht weg. Nach dem Sprung taucht sie in `auftauch_zeit` (0,15 s) wieder auf, die Staerke faellt von 1 auf 0 (`taucht_noch / auftauch_zeit`). `skripte/nadel.gd`: Wird sie beim Auftauchen getroffen, setzt `aufspiessen` den Glitch auf 0 (`if getroffene.has_method("glitchen")`: nur die Teleport-Fliege hat diese Funktion).
+
+**Ringe**: duenner (4 statt 7 Pixel je Ring, neu gerechnet), und die Farben in `leucht_farben` sind aus ihrem Bild gemessen: Gruen vom Koerper (0.44, 0.69, 0.27), Blau von den Beinen (0.44, 0.5, 0.78), Violett vom Hinterleib (0.48, 0.28, 0.6).
+
+**Forscher faellt mit** (`skripte/spiel.gd`): Bei einem Absturz, der nicht bis zum Boden geht, ruft `fliege_verlieren` jetzt `zwischenfall(dauer)`. Der Knoten `Aufstehen` (der fallende Forscher) wird sichtbar, spielt `fallen` und faehrt mit einem Tween um `koerper_einflug` (1600 Pixel) nach oben, also von unten ins Bild. Das dauert `koerper_anteil` (30 Prozent) des Absturzes; dann `tween_interval` (Warten), und in den letzten 30 Prozent faehrt er zurueck nach unten und wird versteckt (`koerper.hide`). `koerper_unten` merkt sich in `_ready`, wo er normal steht. `koerper_zuruecksetzen` haelt eine laufende Fahrt an und stellt ihn zurueck; das passiert vor jeder neuen Fahrt, beim Absturz bis zum Boden (`fallen`) und wenn waehrenddessen gefangen wird (`aufstehen_abbrechen`).
+
+Angeschaut: Schnellcheck PASS fuer `spiel.gd`, `fliege_teleport.gd`, `nadel.gd`, Verify PASS. Probe: Teleport-Fliege unter der Kanone, 24 Bilder hintereinander: Streifen verrutschen, fallen weg, Fliege taucht woanders auf. Probe Absturz von 8 auf 4: Forscher kommt unten ins Bild, ist am Ende wieder weg und versteckt. Nicht angeschaut: das Flattern im laufenden Spiel.

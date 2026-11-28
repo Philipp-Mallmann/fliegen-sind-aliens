@@ -138,6 +138,9 @@ func aufspiessen(getroffene: Node2D) -> void:
 	getroffene.position = Vector2.ZERO
 	getroffene.rotation = 0.0
 	getroffene.modulate.a = 1.0
+	# Die Teleport-Fliege kann gerade noch halb im Glitch stecken (beim Auftauchen). Gefangen ist sie wieder ganz da.
+	if getroffene.has_method("glitchen"):
+		getroffene.glitchen(0.0)
 	for alte in getroffene.steckende:
 		alte.faden_loesen()
 	# Blut an der Einstichstelle: ein Kind der Fliege, also ueber ihr, aber unter dem Nagel. In ihrer Zonenfarbe.

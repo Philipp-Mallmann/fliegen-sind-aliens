@@ -22,6 +22,10 @@ extends Node2D
 # Die Kamera in der Luft: normale Groesse, die Kanone sitzt am unteren Bildrand (540 - 20 Pixel Rand).
 @export var zoom_luft: float = 1.0
 @export var versatz_luft: float = -520.0
+# Bei einem Absturz, der nicht bis zum Boden geht: So weit kommt der fallende Forscher von unten ins Bild, in Pixeln.
+@export var koerper_einflug: float = 1600.0
+# Welcher Anteil des Absturzes fuer das Hereinkommen gebraucht wird. Genauso lang dauert am Ende das Hinausgehen.
+@export var koerper_anteil: float = 0.3
 
 # Die Flugkraft aller Fliegen, die oben im Faecher haengen.
 var flugkraft: int = 0
@@ -35,6 +39,10 @@ var wackel_staerke: float = 0.0
 var wackel_zeit: float = 0.0
 # Wie weit die Einstellungsfliege am Anfang rechts von der Kanone steht, in Pixeln. Wird in _ready gemessen.
 var fliege_abstand: float = 0.0
+# Wo der Forscher (Knoten Aufstehen) unten unter der Kanone steht. Wird in _ready gemerkt, dorthin kehrt er zurueck.
+var koerper_unten: float = 0.0
+# Die Fahrt des fallenden Forschers ins Bild und wieder hinaus. null heisst: Es gab noch keine.
+var koerperfahrt: Tween = null
 
 
 func _ready() -> void:
@@ -49,6 +57,7 @@ func _ready() -> void:
 	$Kanone/RechteHand.visible = false
 	# Im Editor ist der Forscher sichtbar, damit man ihn hinziehen kann. Im Spiel erst beim Absturz.
 	$Kanone/Aufstehen.visible = false
+	koerper_unten = $Kanone/Aufstehen.position.y
 	$Kanone.set_process(false)
 	$Hindernisse.set_process(false)
 	fliege_abstand = $Einstellungsfliege.position.x - $Kanone.position.x
@@ -139,10 +148,33 @@ func fliege_verlieren(weg: int) -> void:
 		$Musik.leise()
 	else:
 		steigen.tween_callback(entsperren)
+		zwischenfall(strecke / falltempo)
+
+
+# Ein Absturz, der nicht bis zum Boden geht: Der fallende Forscher kommt von unten ins Bild
+# und verschwindet kurz vor dem Ende des Absturzes wieder nach unten. Die Kanone bleibt zu sehen.
+func zwischenfall(dauer: float) -> void:
+	var koerper: AnimatedSprite2D = $Kanone/Aufstehen
+	koerper_zuruecksetzen()
+	koerper.visible = true
+	koerper.play("fallen")
+	koerperfahrt = create_tween()
+	koerperfahrt.tween_property(koerper, "position:y", koerper_unten - koerper_einflug, dauer * koerper_anteil)
+	koerperfahrt.tween_interval(dauer * (1.0 - 2.0 * koerper_anteil))
+	koerperfahrt.tween_property(koerper, "position:y", koerper_unten, dauer * koerper_anteil)
+	koerperfahrt.tween_callback(koerper.hide)
+
+
+# Haelt eine laufende Fahrt des Forschers an und stellt ihn wieder unten hin.
+func koerper_zuruecksetzen() -> void:
+	if koerperfahrt != null:
+		koerperfahrt.kill()
+	$Kanone/Aufstehen.position.y = koerper_unten
 
 
 # Der Absturz bis auf den Boden: Statt Kanone und Figur faellt der Forscher, bis er aufschlaegt.
 func fallen() -> void:
+	koerper_zuruecksetzen()
 	$Kanone/Arm.visible = false
 	$Kanone/Figur.visible = false
 	$Kanone/Aufstehen.visible = true
@@ -160,6 +192,7 @@ func aufstehen() -> void:
 
 
 func aufstehen_abbrechen() -> void:
+	koerper_zuruecksetzen()
 	$Kanone/Aufstehen.stop()
 	$Kanone/Aufstehen.visible = false
 	$Kanone/Figur.visible = true
