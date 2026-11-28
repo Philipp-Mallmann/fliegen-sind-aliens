@@ -7579,3 +7579,26 @@ Schnellcheck PASS fuer `warten.gd`, Verify PASS. Probe ohne Eingabe: nach 1 Seku
 1. Warum startet `warten` nicht in jedem Bild neu, obwohl `_process` in jedem Bild laeuft?
 2. Was macht `frame_changed.connect(schulter_setzen)`?
 3. Warum fragt das Skript `get_parent().aktiv` ab?
+
+### Nachtrag: Warnstreifen-Umriss bei Gefahr, Umrisse je Fluegelbild, Ringe schwaecher (28.11.2026)
+
+**Umrisse je Fluegelbild.** Vorher war der Ring der Teleport-Fliege aus *beiden* Fluegelbildern zusammen gerechnet, darum stand er beim anderen Bild ins Leere. Jetzt gibt es fuer jedes der zwei Bilder der Animation `flattern` eigene Umrissbilder (`assets/fliegen/spiel/umriss/`). Die Animation wechselt sie mit: In jeder Fliegenszene ist eine neue Spur `Gefahr:texture`, bei der Teleport-Fliege dazu `Leuchten/Ring1:texture` bis `Ring3`. Bild 1 bei 0 Sekunden, Bild 2 bei 0,03, genau wie die Fluegel. Gerechnet sind die Bilder ausserhalb des Spielordners mit einem Python-Programm: Es liest aus der Szene, wo Koerper und Fluegel sitzen und wie gross sie sind, legt sie fuer jedes Bild uebereinander und weitet die Umrissflaeche.
+
+**Warnstreifen-Umriss.** Jede Fliege hat einen neuen Knoten `Gefahr` (Sprite2D, unsichtbar), ganz hinten. Sein Bild ist ein weisser, schraeg gestrichelter Streifen 3 bis 8 Pixel um die Fliege herum; die Farbe kommt ueber `modulate`.
+
+`skripte/hindernis.gd`, in `warnen`:
+```gdscript
+	for fliege in get_tree().get_nodes_in_group("fliegen"):
+		if in_spalte(fliege):
+			fliege.gefahr_noch = 0.1
+			fliege.gefahr_farbe = gefahr_farben[hintergrund.nummer]
+```
+`in_spalte` ist wie `im_klotz`, nur ohne die Hoehe: seitlich in der Spalte und unter dem Stein. `gefahr_farben` hat eine Farbe je Pappe: das Gelb des Schilds, und ab Indigo, wo der Schatten selbst gelb ist, Schwarz.
+
+`skripte/fliege.gd`: `gefahr_zeigen(delta)` steht in `_process` *vor* `if gefangen: return`, denn auch die gefangenen Fliegen im Faecher sind in Gefahr, gerade die. `gefahr_noch` zaehlt herunter; solange der Stein warnt, setzt er es jedes Bild wieder auf 0,1. Hoert die Warnung auf (der Stein faellt) oder fliegt die Fliege aus der Spalte, ist es nach 0,1 Sekunden vorbei. Sichtbar ist der Umriss, wenn `gefahr_noch > 0.0` und die Blink-Uhr in der ersten Haelfte von `gefahr_takt` (0,3 s) ist.
+
+`skripte/fliege_schnell.gd` und `fliege_heuschrecke.gd`: `$Gefahr.flip_h` wird mitgespiegelt. Das Umrissbild ist um die Mitte der Fliege herum gerechnet, darum reicht Spiegeln, verschieben muss man es nicht.
+
+**Ringe schwaecher.** `skripte/fliege_teleport.gd`: neu `leucht_deckkraft` (0,55); die Deckkraft jedes Rings wird damit malgenommen.
+
+Angeschaut: Schnellcheck PASS (`fliege.gd`, `fliege_schnell.gd`, `fliege_heuschrecke.gd`, `fliege_teleport.gd`, `hindernis.gd`), Verify PASS. Probe: alle sieben Fliegen mit Umriss in beiden Fluegelbildern, gelb auf hell, schwarz auf dunkel; der Umriss folgt jeweils dem Bild. Nicht angeschaut: das Blinken unter einem echten Stein im Spiel.

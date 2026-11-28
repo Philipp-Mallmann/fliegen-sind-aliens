@@ -56,6 +56,7 @@ func sprung_beginnen() -> void:
 	start_x = position.x
 	var nach_links: bool = richtung < 0.0
 	$Bild.flip_h = nach_links
+	$Gefahr.flip_h = nach_links
 	# Die Fluegel werden mitgespiegelt, aber nur wenn sich die Richtung wirklich aendert (wie bei der schnellen Fliege).
 	if nach_links != gespiegelt:
 		gespiegelt = nach_links

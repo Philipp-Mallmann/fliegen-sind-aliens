@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dkv8j0es7fn7w"
-path="res://.godot/imported/teleport-leuchten-3.png-b7d6d570e0cc0919535f2a739f47e309.ctex"
+uid="uid://dtlfingitunuu"
+path="res://.godot/imported/gefahr-scheu-1.png-c852edc79780e0f79600f9073a5f35c7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/fliegen/spiel/teleport-leuchten-3.png"
-dest_files=["res://.godot/imported/teleport-leuchten-3.png-b7d6d570e0cc0919535f2a739f47e309.ctex"]
+source_file="res://assets/fliegen/spiel/umriss/gefahr-scheu-1.png"
+dest_files=["res://.godot/imported/gefahr-scheu-1.png-c852edc79780e0f79600f9073a5f35c7.ctex"]
 
 [params]
 

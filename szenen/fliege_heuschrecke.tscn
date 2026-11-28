@@ -8,6 +8,8 @@
 [ext_resource type="Texture2D" uid="uid://cp64xx3igxdn" path="res://assets/fluegel/schlag/heuschrecke-vorn-2.png" id="f_vorn_2"]
 [ext_resource type="Texture2D" uid="uid://288ggxwlqc7v" path="res://assets/fliegen/spiel/heuschrecke-skizze-schlag-1.png" id="k_1"]
 [ext_resource type="Texture2D" uid="uid://ddpwmw7i84wg4" path="res://assets/fliegen/spiel/heuschrecke-skizze-schlag-2.png" id="k_2"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/gefahr-heuschrecke-1.png" id="g_1"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/gefahr-heuschrecke-2.png" id="g_2"]
 
 [sub_resource type="Animation" id="Animation_flattern"]
 resource_name = "flattern"
@@ -49,6 +51,18 @@ tracks/2/keys = {
 "update": 1,
 "values": [ExtResource("k_1"), ExtResource("k_2")]
 }
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Gefahr:texture")
+tracks/3/interp = 0
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.03),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("g_1"), ExtResource("g_2")]
+}
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_fluegel"]
 _data = {
@@ -81,6 +95,12 @@ offset_right = 50.0
 offset_bottom = 50.0
 mouse_filter = 2
 color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="Gefahr" type="Sprite2D" parent="."]
+visible = false
+position = Vector2(0, -52.5)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("g_1")
 
 [node name="FluegelHinten" type="Sprite2D" parent="." unique_id=63026358]
 position = Vector2(10.9, -66.3)

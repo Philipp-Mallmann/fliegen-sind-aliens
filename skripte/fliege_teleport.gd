@@ -28,6 +28,9 @@ extends "res://skripte/fliege.gd"
 # Blau von den Beinen, Violett vom Hinterleib.
 @export var leucht_farben: Array[Color] = [Color(0.44, 0.69, 0.27), Color(0.44, 0.5, 0.78), Color(0.48, 0.28, 0.6)]
 
+# Wie kraeftig die Ringe hoechstens sind. 1 heisst voll, 0.5 halb durchsichtig.
+@export var leucht_deckkraft: float = 0.55
+
 # Wie viele Spruenge sie noch hat. 0 heisst: Sie erholt sich gerade.
 var uebrig: int = 0
 # Wie viele Sekunden die Erholung noch dauert.
@@ -102,7 +105,7 @@ func leuchten_zeigen(ladung: float) -> void:
 	for nummer in 3:
 		var ring: Sprite2D = $Leuchten.get_child(nummer)
 		ring.modulate = leucht_farben[nummer]
-		ring.modulate.a = clampf(ringe - nummer, 0.0, 1.0)
+		ring.modulate.a = clampf(ringe - nummer, 0.0, 1.0) * leucht_deckkraft
 
 
 # Stellt den Glitch ein: 0 heisst ganz normal, 1 heisst voll verrutscht und fast weg.

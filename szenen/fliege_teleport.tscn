@@ -9,10 +9,15 @@
 [ext_resource type="Texture2D" path="res://assets/fluegel/schlag/teleport-hinten-2.png" id="f_hinten_2"]
 [ext_resource type="Texture2D" path="res://assets/fliegen/spiel/fliege-1-schlag-1.png" id="k_1"]
 [ext_resource type="Texture2D" path="res://assets/fliegen/spiel/fliege-1-schlag-2.png" id="k_2"]
-[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/teleport-leuchten-1.png" id="l_1"]
-[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/teleport-leuchten-2.png" id="l_2"]
-[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/teleport-leuchten-3.png" id="l_3"]
 [ext_resource type="Shader" path="res://shader/glitch.gdshader" id="s_glitch"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/gefahr-teleport-1.png" id="g_1"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/gefahr-teleport-2.png" id="g_2"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/teleport-ring-1-1.png" id="r1_1"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/teleport-ring-2-1.png" id="r2_1"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/teleport-ring-3-1.png" id="r3_1"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/teleport-ring-1-2.png" id="r1_2"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/teleport-ring-2-2.png" id="r2_2"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/teleport-ring-3-2.png" id="r3_2"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_glitch"]
 resource_local_to_scene = true
@@ -58,6 +63,54 @@ tracks/2/keys = {
 "update": 1,
 "values": [ExtResource("k_1"), ExtResource("k_2")]
 }
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Gefahr:texture")
+tracks/3/interp = 0
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.03),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("g_1"), ExtResource("g_2")]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Leuchten/Ring1:texture")
+tracks/4/interp = 0
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 0.03),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("r1_1"), ExtResource("r1_2")]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Leuchten/Ring2:texture")
+tracks/5/interp = 0
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 0.03),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("r2_1"), ExtResource("r2_2")]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Leuchten/Ring3:texture")
+tracks/6/interp = 0
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0, 0.03),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("r3_1"), ExtResource("r3_2")]
+}
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_fluegel"]
 _data = {
@@ -75,20 +128,20 @@ flugkraft = 6
 
 [node name="Leuchten" type="Node2D" parent="."]
 use_parent_material = true
-position = Vector2(0, -20)
+position = Vector2(0, -34.0)
 scale = Vector2(0.5, 0.5)
 
 [node name="Ring1" type="Sprite2D" parent="Leuchten"]
 use_parent_material = true
-texture = ExtResource("l_1")
+texture = ExtResource("r1_1")
 
 [node name="Ring2" type="Sprite2D" parent="Leuchten"]
 use_parent_material = true
-texture = ExtResource("l_2")
+texture = ExtResource("r2_1")
 
 [node name="Ring3" type="Sprite2D" parent="Leuchten"]
 use_parent_material = true
-texture = ExtResource("l_3")
+texture = ExtResource("r3_1")
 
 [node name="Fluegel" type="ColorRect" parent="."]
 visible = false
@@ -107,6 +160,13 @@ offset_right = 50.0
 offset_bottom = 50.0
 mouse_filter = 2
 color = Color(0.25, 0.25, 0.25, 1)
+
+[node name="Gefahr" type="Sprite2D" parent="."]
+use_parent_material = true
+visible = false
+position = Vector2(0, -34.0)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("g_1")
 
 [node name="FluegelHinten" type="Sprite2D" parent="."]
 use_parent_material = true

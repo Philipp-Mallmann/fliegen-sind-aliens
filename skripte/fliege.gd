@@ -17,6 +17,8 @@ extends Node2D
 # Wie tief und wie hoch das Summen hoechstens klingt. 1 ist die Tonhoehe der Datei. Jede Fliege wuerfelt ihre eigene.
 @export var tonhoehe_tief: float = 0.8
 @export var tonhoehe_hoch: float = 1.4
+# Wie schnell der Warnstreifen-Umriss blinkt: so lange dauert einmal an und aus, in Sekunden.
+@export var gefahr_takt: float = 0.3
 
 # Das Tempo dieser einen Fliege. Wird beim Start ausgewuerfelt.
 var tempo: float = 0.0
@@ -42,6 +44,13 @@ var zeit: float = 0.0
 var steckende: Array[Node2D] = []
 # Die halbe Groesse der Trefferflaeche, in Pixeln. Wird beim Start aus der Groesse des Bilds berechnet.
 var halbe_groesse: float = 50.0
+# Wie lange die Fliege noch in Gefahr ist, in Sekunden. Ein Stein, der ueber ihr warnt, setzt das in jedem Bild neu
+# (hindernis.gd). Hoert er auf, laeuft es ab, und der Umriss geht aus.
+var gefahr_noch: float = 0.0
+# In welcher Farbe der Umriss blinkt. Setzt der Stein: Gelb, auf den Pappen mit gelbem Schatten Schwarz.
+var gefahr_farbe: Color = Color.WHITE
+# Die Uhr fuer das Blinken.
+var gefahr_uhr: float = 0.0
 
 
 func _ready() -> void:
@@ -58,6 +67,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	# Auch eine gefangene Fliege im Faecher kann in Gefahr sein, darum steht das vor dem return.
+	gefahr_zeigen(delta)
 	if gefangen:
 		return
 	zeit += delta
@@ -80,3 +91,12 @@ func fliegen(_delta: float) -> void:
 # Wird aufgerufen, wenn eine Nadel die Fliege trifft, sie aber noch nicht gefangen ist. Hier leer, der Boss ueberschreibt sie.
 func angeschossen() -> void:
 	pass
+
+
+# Der Warnstreifen-Umriss (Knoten Gefahr): blinkt, solange ein Stein ueber der Fliege warnt.
+func gefahr_zeigen(delta: float) -> void:
+	gefahr_noch -= delta
+	gefahr_uhr += delta
+	var an: bool = gefahr_noch > 0.0 and fmod(gefahr_uhr, gefahr_takt) < gefahr_takt / 2.0
+	$Gefahr.visible = an
+	$Gefahr.modulate = gefahr_farbe

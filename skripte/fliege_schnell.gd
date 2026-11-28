@@ -63,6 +63,7 @@ func fliegen(delta: float) -> void:
 func bild_richten() -> void:
 	var nach_rechts: bool = richtung > 0.0
 	$Bild.flip_h = nach_rechts
+	$Gefahr.flip_h = nach_rechts
 	# Die Fluegel werden mitgespiegelt: Bild umdrehen und auf die andere Seite der Mitte setzen.
 	# Nur wenn sich die Richtung wirklich aendert, sonst wuerden sie bei jedem Aufruf hin und her springen.
 	if nach_rechts != gespiegelt:

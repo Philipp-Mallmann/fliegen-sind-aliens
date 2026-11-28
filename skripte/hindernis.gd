@@ -27,6 +27,12 @@ extends Node2D
 # Die Farbe der Spalte auf jeder Pappe, von unten (blau) nach oben (fast schwarz). Die vierte Zahl ist die Deckkraft.
 # Auf den hellen Pappen ein Schatten (Schwarz, 50 Prozent), ab Indigo das Gelb des Warnschilds (20 Prozent),
 # weil man dort einen Schatten nicht saehe.
+# Die Farbe des blinkenden Umrisses an den Fliegen unter dem Stein, je Pappe: Gelb wie das Schild,
+# wo der Schatten gelb ist aber Schwarz, damit er sich abhebt.
+@export var gefahr_farben: Array[Color] = [
+	Color(0.92, 0.73, 0.17), Color(0.92, 0.73, 0.17), Color(0.92, 0.73, 0.17), Color(0.92, 0.73, 0.17),
+	Color(0.92, 0.73, 0.17), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0),
+]
 @export var spalte_farben: Array[Color] = [
 	Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5),
 	Color(0, 0, 0, 0.5), Color(0.92, 0.73, 0.17, 0.2), Color(0.92, 0.73, 0.17, 0.2), Color(0.92, 0.73, 0.17, 0.2),
@@ -81,6 +87,12 @@ func warnen(delta: float) -> void:
 		$TonWarnung.volume_db = lerpf(ton_leise, ton_laut, anteil)
 		$TonWarnung.play()
 	$Warnung.visible = an
+	# Jede Fliege in der Spalte bekommt den blinkenden Umriss (fliege.gd, gefahr_zeigen). 0,1 Sekunden reichen:
+	# Der Wert wird ja in jedem Bild neu gesetzt, solange gewarnt wird.
+	for fliege in get_tree().get_nodes_in_group("fliegen"):
+		if in_spalte(fliege):
+			fliege.gefahr_noch = 0.1
+			fliege.gefahr_farbe = gefahr_farben[hintergrund.nummer]
 	if gewarnt >= warnzeit:
 		get_parent().get_node("TonKlotz").play()
 
@@ -97,6 +109,13 @@ func fallen(delta: float) -> void:
 			zermatschen(fliege)
 	if position.y > kanone.position.y + weg_unter:
 		queue_free()
+
+
+# true heisst: Die Fliege ist in der Spalte unter dem Stein, der Stein trifft sie, wenn sie dort bleibt.
+func in_spalte(fliege: Node2D) -> bool:
+	var groesse: float = fliege.halbe_groesse * fliege.global_scale.x
+	var seitlich: float = absf(fliege.global_position.x - global_position.x)
+	return seitlich <= breite / 2.0 + groesse and fliege.global_position.y > global_position.y
 
 
 func im_klotz(fliege: Node2D) -> bool:
