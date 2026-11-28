@@ -33,6 +33,12 @@ extends Node2D
 	Color(0.92, 0.73, 0.17), Color(0.92, 0.73, 0.17), Color(0.92, 0.73, 0.17), Color(0.92, 0.73, 0.17),
 	Color(0.92, 0.73, 0.17), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0),
 ]
+# Ein duenner Rand um die Striche, je Pappe. Durchsichtig (vierte Zahl 0) heisst: kein Rand.
+# Auf den dunklen Pappen Orange, sonst saehe man die schwarzen Striche kaum.
+@export var gefahr_rand_farben: Array[Color] = [
+	Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0),
+	Color(0, 0, 0, 0), Color(1.0, 0.55, 0.1), Color(1.0, 0.55, 0.1), Color(1.0, 0.55, 0.1),
+]
 @export var spalte_farben: Array[Color] = [
 	Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5),
 	Color(0, 0, 0, 0.5), Color(0.92, 0.73, 0.17, 0.2), Color(0.92, 0.73, 0.17, 0.2), Color(0.92, 0.73, 0.17, 0.2),
@@ -93,6 +99,7 @@ func warnen(delta: float) -> void:
 		if in_spalte(fliege):
 			fliege.gefahr_noch = 0.1
 			fliege.gefahr_farbe = gefahr_farben[hintergrund.nummer]
+			fliege.gefahr_rand_farbe = gefahr_rand_farben[hintergrund.nummer]
 	if gewarnt >= warnzeit:
 		get_parent().get_node("TonKlotz").play()
 

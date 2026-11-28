@@ -10,6 +10,8 @@
 [ext_resource type="Texture2D" uid="uid://cbhc1m23cftt3" path="res://assets/fliegen/spiel/fliege-ohne-fluegel-schlag-2.png" id="k_2"]
 [ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/gefahr-scheu-1.png" id="g_1"]
 [ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/gefahr-scheu-2.png" id="g_2"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/gefahr-rand-scheu-1.png" id="gr_1"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/gefahr-rand-scheu-2.png" id="gr_2"]
 
 [sub_resource type="Animation" id="Animation_flattern"]
 resource_name = "flattern"
@@ -63,6 +65,18 @@ tracks/3/keys = {
 "update": 1,
 "values": [ExtResource("g_1"), ExtResource("g_2")]
 }
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Gefahr/Rand:texture")
+tracks/4/interp = 0
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 0.03),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("gr_1"), ExtResource("gr_2")]
+}
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_fluegel"]
 _data = {
@@ -101,6 +115,9 @@ visible = false
 position = Vector2(0, -38.0)
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("g_1")
+
+[node name="Rand" type="Sprite2D" parent="Gefahr"]
+texture = ExtResource("gr_1")
 
 [node name="FluegelHinten" type="Sprite2D" parent="." unique_id=1299999591]
 position = Vector2(-17, -82.7)

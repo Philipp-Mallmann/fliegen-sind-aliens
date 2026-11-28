@@ -49,6 +49,8 @@ var halbe_groesse: float = 50.0
 var gefahr_noch: float = 0.0
 # In welcher Farbe der Umriss blinkt. Setzt der Stein: Gelb, auf den Pappen mit gelbem Schatten Schwarz.
 var gefahr_farbe: Color = Color.WHITE
+# Die Farbe des duennen Rands um die Striche. Durchsichtig heisst: kein Rand. Setzt der Stein (auf den dunklen Pappen Orange).
+var gefahr_rand_farbe: Color = Color(0, 0, 0, 0)
 # Die Uhr fuer das Blinken.
 var gefahr_uhr: float = 0.0
 
@@ -99,4 +101,6 @@ func gefahr_zeigen(delta: float) -> void:
 	gefahr_uhr += delta
 	var an: bool = gefahr_noch > 0.0 and fmod(gefahr_uhr, gefahr_takt) < gefahr_takt / 2.0
 	$Gefahr.visible = an
-	$Gefahr.modulate = gefahr_farbe
+	# self_modulate faerbt nur den Knoten selbst, nicht sein Kind Rand. modulate wuerde den Rand mitfaerben (Schwarz mal Orange = Schwarz).
+	$Gefahr.self_modulate = gefahr_farbe
+	$Gefahr/Rand.self_modulate = gefahr_rand_farbe

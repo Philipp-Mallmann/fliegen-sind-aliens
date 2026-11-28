@@ -7602,3 +7602,13 @@ Schnellcheck PASS fuer `warten.gd`, Verify PASS. Probe ohne Eingabe: nach 1 Seku
 **Ringe schwaecher.** `skripte/fliege_teleport.gd`: neu `leucht_deckkraft` (0,55); die Deckkraft jedes Rings wird damit malgenommen.
 
 Angeschaut: Schnellcheck PASS (`fliege.gd`, `fliege_schnell.gd`, `fliege_heuschrecke.gd`, `fliege_teleport.gd`, `hindernis.gd`), Verify PASS. Probe: alle sieben Fliegen mit Umriss in beiden Fluegelbildern, gelb auf hell, schwarz auf dunkel; der Umriss folgt jeweils dem Bild. Nicht angeschaut: das Blinken unter einem echten Stein im Spiel.
+
+### Nachtrag: Orange Rand um die schwarzen Warnstriche (28.11.2026)
+
+Auf den dunklen Pappen sind die schwarzen Striche jetzt duenn orange umrandet. Jeder `Gefahr`-Knoten hat ein Kind `Rand` (Sprite2D) mit einem eigenen Bild (`umriss/gefahr-rand-<art>-1.png` und `-2.png`, je Fluegelbild, mit eigener Spur `Gefahr/Rand:texture` in `flattern`). Das Bild ist ein 2 Pixel breiter Saum aussen um jeden Strich, gerechnet aus dem Strichbild (geweitet minus Original).
+
+`skripte/fliege.gd`: `$Gefahr.self_modulate` statt `modulate`. Der Unterschied: `modulate` faerbt den Knoten *und alle Kinder*, `self_modulate` nur den Knoten selbst. Mit `modulate` waere der Rand Schwarz mal Orange, also Schwarz. Neu `gefahr_rand_farbe`, die der Rand als `self_modulate` bekommt.
+
+`skripte/hindernis.gd`: neu `gefahr_rand_farben`, eine Farbe je Pappe. Durchsichtig (`Color(0, 0, 0, 0)`) heisst kein Rand; ab Indigo Orange (1.0, 0.55, 0.1). `fliege_schnell.gd` und `fliege_heuschrecke.gd` spiegeln `Gefahr/Rand` mit.
+
+Angeschaut: Schnellcheck PASS (`fliege.gd`, `hindernis.gd`, `fliege_schnell.gd`, `fliege_heuschrecke.gd`), Verify PASS. Probe auf dunklem Grund, beide Fluegelbilder: Der Rand sitzt um jeden schwarzen Strich, auch bei den gespiegelten Fliegen (beim ersten Versuch hing er bei der schnellen Fliege seitenverkehrt, weil er nicht mitgespiegelt wurde).

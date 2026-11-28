@@ -12,6 +12,8 @@
 [ext_resource type="Shader" path="res://shader/glitch.gdshader" id="s_glitch"]
 [ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/gefahr-teleport-1.png" id="g_1"]
 [ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/gefahr-teleport-2.png" id="g_2"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/gefahr-rand-teleport-1.png" id="gr_1"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/gefahr-rand-teleport-2.png" id="gr_2"]
 [ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/teleport-ring-1-1.png" id="r1_1"]
 [ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/teleport-ring-2-1.png" id="r2_1"]
 [ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/teleport-ring-3-1.png" id="r3_1"]
@@ -111,6 +113,18 @@ tracks/6/keys = {
 "update": 1,
 "values": [ExtResource("r3_1"), ExtResource("r3_2")]
 }
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("Gefahr/Rand:texture")
+tracks/7/interp = 0
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0, 0.03),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("gr_1"), ExtResource("gr_2")]
+}
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_fluegel"]
 _data = {
@@ -167,6 +181,10 @@ visible = false
 position = Vector2(0, -34.0)
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("g_1")
+
+[node name="Rand" type="Sprite2D" parent="Gefahr"]
+use_parent_material = true
+texture = ExtResource("gr_1")
 
 [node name="FluegelHinten" type="Sprite2D" parent="."]
 use_parent_material = true
