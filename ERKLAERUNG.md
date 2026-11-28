@@ -7486,3 +7486,96 @@ vec2 stelle = UV + vec2(verschiebung, 0.0);
 **Forscher faellt mit** (`skripte/spiel.gd`): Bei einem Absturz, der nicht bis zum Boden geht, ruft `fliege_verlieren` jetzt `zwischenfall(dauer)`. Der Knoten `Aufstehen` (der fallende Forscher) wird sichtbar, spielt `fallen` und faehrt mit einem Tween um `koerper_einflug` (1600 Pixel) nach oben, also von unten ins Bild. Das dauert `koerper_anteil` (30 Prozent) des Absturzes; dann `tween_interval` (Warten), und in den letzten 30 Prozent faehrt er zurueck nach unten und wird versteckt (`koerper.hide`). `koerper_unten` merkt sich in `_ready`, wo er normal steht. `koerper_zuruecksetzen` haelt eine laufende Fahrt an und stellt ihn zurueck; das passiert vor jeder neuen Fahrt, beim Absturz bis zum Boden (`fallen`) und wenn waehrenddessen gefangen wird (`aufstehen_abbrechen`).
 
 Angeschaut: Schnellcheck PASS fuer `spiel.gd`, `fliege_teleport.gd`, `nadel.gd`, Verify PASS. Probe: Teleport-Fliege unter der Kanone, 24 Bilder hintereinander: Streifen verrutschen, fallen weg, Fliege taucht woanders auf. Probe Absturz von 8 auf 4: Forscher kommt unten ins Bild, ist am Ende wieder weg und versteckt. Nicht angeschaut: das Flattern im laufenden Spiel.
+
+## Warten: Nach 3 Sekunden ohne Eingabe geht der Forscher in die Knie (`skripte/warten.gd`, `szenen/spiel.tscn`, 28.11.2026)
+
+Dein Wunsch: Fuers normale Stehen die Koepfe aus deinen Bildern 0 und 1, fuers Warten die aus Bild 10 und 11 (mit den Koerpern 3 und 4). Nach etwa 3 Sekunden ohne Eingabe kommt das Warten, bei einer Mausbewegung sofort wieder das Stehen.
+
+### Die Bilder (`assets/forscher/stehen/`)
+
+Acht Bilder, alle mit demselben Ausschnitt (665 x 1527): `stehen-koerper-1/2`, `stehen-kopf-1/2`, `warten-koerper-1/2`, `warten-kopf-1/2`. Die Koepfe sind genau so, wie du sie in Krita gelegt und vergroessert hast. Die Steh-Bilder von vorher (mit `kopf-01`) sind ersetzt.
+
+### `SpriteFrames_koerper` und `SpriteFrames_kopf` - geaendert
+
+Je zwei Animationen: `stehen` und neu `warten`. Beide mit deinem Takt aus dem Godot-Editor: erstes Bild `"duration": 2.0`, zweites `1.0`, `"speed": 3.0`. Ein Durchlauf dauert also (2 + 1) / 3 = 1 Sekunde. Den Takt hattest du nur beim Koerper eingestellt, der Kopf lief noch mit 6 Bildern pro Sekunde. Jetzt hat der Kopf denselben Takt, sonst liefen Kopf und Koerper auseinander. Dass `warten` denselben Takt hat, ist meine Annahme.
+
+### `skripte/warten.gd` - neu, am neuen Knoten `Kanone/Figur/Warten`
+
+```gdscript
+@export var koerper: AnimatedSprite2D
+@export var gesicht: AnimatedSprite2D
+@export var schulter: Node2D
+```
+Die drei Teile, die das Skript steuert. In der Szene zeigen sie auf `../Koerper`, `../Gesicht` und `../Schulter`.
+
+```gdscript
+@export var wartezeit: float = 3.0
+@export var knie_tiefe: float = 231.9
+```
+Nach 3 Sekunden ohne Eingabe beginnt das Warten. 231,9 ist, wie weit die Schulter in den Knien tiefer liegt: Der Hals rutscht im Foto 248 Pixel nach unten, mal 0,935.
+
+```gdscript
+var ruhig: float = 0.0
+var schulter_y: float = 0.0
+```
+`ruhig` zaehlt die Sekunden ohne Eingabe. `schulter_y` merkt sich, wo die Schulter beim Stehen ist.
+
+```gdscript
+func _ready() -> void:
+	schulter_y = schulter.position.y
+	koerper.frame_changed.connect(schulter_setzen)
+```
+Am Anfang wird die Steh-Hoehe der Schulter gemerkt. `frame_changed` ist ein Signal des Koerpers: Es kommt bei jedem Bildwechsel, und dann wird `schulter_setzen` gerufen.
+
+```gdscript
+func _process(delta: float) -> void:
+	if not get_parent().aktiv:
+		if koerper.animation != "stehen":
+			zeigen("stehen")
+		return
+	ruhig += delta
+	if ruhig >= wartezeit and koerper.animation != "warten":
+		zeigen("warten")
+```
+`get_parent()` ist die `Figur`, `aktiv` steht in `start_totale.gd` und wird nach dem ersten Fang `false`. Danach haengt die Figur unter der Kanone, dort soll sie nicht in die Knie gehen. Sonst waechst `ruhig` in jedem Bild um die vergangene Zeit, und ab 3 Sekunden kommt `warten`. Die Bedingung `!= "warten"` sorgt dafuer, dass die Animation nicht in jedem Bild neu startet.
+
+```gdscript
+func _input(_ereignis: InputEvent) -> void:
+	ruhig = 0.0
+	if koerper.animation != "stehen":
+		zeigen("stehen")
+```
+Godot ruft `_input` bei jeder Eingabe: Maus bewegt oder geklickt, Taste, Finger auf dem Bildschirm. Dann faengt das Zaehlen von vorn an, und wartet der Forscher gerade, steht er sofort wieder.
+
+```gdscript
+func zeigen(animation: String) -> void:
+	koerper.play(animation)
+	gesicht.play(animation)
+	schulter_setzen()
+```
+Koerper und Kopf starten dieselbe Animation im selben Moment, darum zeigen sie immer dasselbe Bild.
+
+```gdscript
+func schulter_setzen() -> void:
+	if koerper.animation == "warten" and koerper.frame == 0:
+		schulter.position.y = schulter_y + knie_tiefe
+	else:
+		schulter.position.y = schulter_y
+```
+Im ersten Warte-Bild (in den Knien) geht die Schulter mit dem Arm und der Kanone um `knie_tiefe` nach unten, sonst steht sie auf der Steh-Hoehe. Ohne das hingen Arm und Kanone in den Knien oben in der Luft.
+
+### Sonst geaendert in `szenen/spiel.tscn`
+
+- `Gesicht` und `Koerper` bei (-287.5, -1094.2): neu gerechnet fuer den neuen Ausschnitt.
+- `Schulterpunkt` und `Schulter` bei y -526.6. Du hast das Aufstehen neu gesetzt (bei (19, 1170), Groesse 0,83 / 0,84), dadurch liegen die Schuhe des Knienden jetzt 1532,5 unter der Kanone. Der Stehende steht wieder auf derselben Hoehe.
+- Deine Aenderungen aus dem Editor sind mit drin: Aufstehen neu gesetzt, das erste Aufstehbild 3 statt 2 lang, `ForscherArm` und die Kanone (`Bild`) im Arm verschoben.
+
+### So wurde es angeschaut
+
+Schnellcheck PASS fuer `warten.gd`, Verify PASS. Probe ohne Eingabe: nach 1 Sekunde `stehen`, nach 3,5 Sekunden `warten` (Koerper und Kopf im selben Bild), in den Knien sitzen Arm und Kanone an der Schulter. Dann eine Mausbewegung ins Spiel geschickt: sofort wieder `stehen`. Nicht angeschaut: ob das Warten am Handy ohne Maus zu frueh kommt.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum startet `warten` nicht in jedem Bild neu, obwohl `_process` in jedem Bild laeuft?
+2. Was macht `frame_changed.connect(schulter_setzen)`?
+3. Warum fragt das Skript `get_parent().aktiv` ab?

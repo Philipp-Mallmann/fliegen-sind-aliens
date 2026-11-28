@@ -44,6 +44,7 @@
 [ext_resource type="Texture2D" uid="uid://xjc3c4vfsqpk" path="res://assets/kanone/kanone-tonne.png" id="45_tonne"]
 [ext_resource type="Texture2D" uid="uid://dynmlffdcvspd" path="res://assets/forscher/aufstehen/aufprall.png" id="a1"]
 [ext_resource type="Texture2D" uid="uid://bbujjob3730uw" path="res://assets/forscher/aufstehen/kniend.png" id="a2"]
+[ext_resource type="PackedScene" path="res://szenen/forscher_arm.tscn" id="arm_foto"]
 [ext_resource type="Texture2D" uid="uid://kcreoknpmlx8" path="res://assets/kanone/drahtrolle-anim/drahtrolle-01.png" id="d1"]
 [ext_resource type="Texture2D" uid="uid://cvk6a0n448oky" path="res://assets/kanone/drahtrolle-anim/drahtrolle-02.png" id="d2"]
 [ext_resource type="Texture2D" uid="uid://c1rdl5r2aj2hl" path="res://assets/kanone/drahtrolle-anim/drahtrolle-03.png" id="d3"]
@@ -74,14 +75,18 @@
 [ext_resource type="Texture2D" uid="uid://cvniqq2dlygu1" path="res://assets/hintergrund/riffel/riffel-6-indigo.png" id="p06"]
 [ext_resource type="Texture2D" uid="uid://cjotxxjwgfwxf" path="res://assets/hintergrund/riffel/riffel-7-nachtblau.png" id="p07"]
 [ext_resource type="Texture2D" uid="uid://b51qj80smql6e" path="res://assets/hintergrund/riffel/riffel-8-fast-schwarz.png" id="p08"]
+[ext_resource type="Script" uid="uid://daqucobhg7atx" path="res://skripte/punktanzeige.gd" id="punkt_skript"]
+[ext_resource type="Texture2D" uid="uid://vich0dp2gwq1" path="res://assets/forscher/stehen/stehen-koerper-1.png" id="st_koerper1"]
+[ext_resource type="Texture2D" uid="uid://b5gee2pb4unov" path="res://assets/forscher/stehen/stehen-koerper-2.png" id="st_koerper2"]
+[ext_resource type="Texture2D" uid="uid://q60aw86xs1u" path="res://assets/forscher/stehen/stehen-kopf-1.png" id="st_kopf1"]
+[ext_resource type="Texture2D" uid="uid://b30ytlpue5ym6" path="res://assets/forscher/stehen/stehen-kopf-2.png" id="st_kopf2"]
 [ext_resource type="PackedScene" path="res://szenen/wolke_bewegt.tscn" id="w4"]
-[ext_resource type="PackedScene" path="res://szenen/forscher_arm.tscn" id="arm_foto"]
-[ext_resource type="Texture2D" path="res://assets/forscher/stehen/stehen-koerper-1.png" id="st_koerper1"]
-[ext_resource type="Texture2D" path="res://assets/forscher/stehen/stehen-koerper-2.png" id="st_koerper2"]
-[ext_resource type="Texture2D" path="res://assets/forscher/stehen/stehen-kopf-1.png" id="st_kopf1"]
-[ext_resource type="Texture2D" path="res://assets/forscher/stehen/stehen-kopf-2.png" id="st_kopf2"]
-[ext_resource type="Script" path="res://skripte/punktanzeige.gd" id="punkt_skript"]
 [ext_resource type="PackedScene" path="res://szenen/zahl.tscn" id="zahl_szene"]
+[ext_resource type="Texture2D" path="res://assets/forscher/stehen/warten-koerper-1.png" id="wa_koerper1"]
+[ext_resource type="Texture2D" path="res://assets/forscher/stehen/warten-koerper-2.png" id="wa_koerper2"]
+[ext_resource type="Texture2D" path="res://assets/forscher/stehen/warten-kopf-1.png" id="wa_kopf1"]
+[ext_resource type="Texture2D" path="res://assets/forscher/stehen/warten-kopf-2.png" id="wa_kopf2"]
+[ext_resource type="Script" path="res://skripte/warten.gd" id="warten_skript"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_feuer"]
 animations = [{
@@ -150,13 +155,13 @@ animations = [{
 [sub_resource type="SpriteFrames" id="SpriteFrames_aufstehen"]
 animations = [{
 "frames": [{
-"duration": 2.0,
+"duration": 3.0,
 "texture": ExtResource("a1")
 }, {
 "duration": 1.0,
 "texture": ExtResource("a2")
 }],
-"loop": 0,
+"loop": 1,
 "name": &"aufstehen",
 "speed": 6.0
 }, {
@@ -184,32 +189,10 @@ animations = [{
 "speed": 12.0
 }]
 
-[sub_resource type="Gradient" id="Gradient_taste"]
-colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_taste"]
-gradient = SubResource("Gradient_taste")
-width = 200
-height = 200
-
-[sub_resource type="SpriteFrames" id="SpriteFrames_koerper"]
-animations = [{
-"frames": [{
-"duration": 1.0,
-"texture": ExtResource("st_koerper1")
-}, {
-"duration": 1.0,
-"texture": ExtResource("st_koerper2")
-}],
-"loop": true,
-"name": &"stehen",
-"speed": 6.0
-}]
-
 [sub_resource type="SpriteFrames" id="SpriteFrames_kopf"]
 animations = [{
 "frames": [{
-"duration": 1.0,
+"duration": 2.0,
 "texture": ExtResource("st_kopf1")
 }, {
 "duration": 1.0,
@@ -217,8 +200,52 @@ animations = [{
 }],
 "loop": true,
 "name": &"stehen",
-"speed": 6.0
+"speed": 3.0
+}, {
+"frames": [{
+"duration": 2.0,
+"texture": ExtResource("wa_kopf1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("wa_kopf2")
+}],
+"loop": true,
+"name": &"warten",
+"speed": 3.0
 }]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_koerper"]
+animations = [{
+"frames": [{
+"duration": 2.0,
+"texture": ExtResource("st_koerper1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("st_koerper2")
+}],
+"loop": true,
+"name": &"stehen",
+"speed": 3.0
+}, {
+"frames": [{
+"duration": 2.0,
+"texture": ExtResource("wa_koerper1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("wa_koerper2")
+}],
+"loop": true,
+"name": &"warten",
+"speed": 3.0
+}]
+
+[sub_resource type="Gradient" id="Gradient_taste"]
+colors = PackedColorArray(1, 1, 1, 0.35, 1, 1, 1, 0.35)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_taste"]
+gradient = SubResource("Gradient_taste")
+width = 200
+height = 200
 
 [node name="Spiel" type="Node2D" unique_id=218368046]
 script = ExtResource("5_spiel")
@@ -481,10 +508,11 @@ texture = ExtResource("45_tonne")
 position = Vector2(0, -230.7)
 
 [node name="Aufstehen" type="AnimatedSprite2D" parent="Kanone" unique_id=1527670631]
-position = Vector2(-130, 1115)
-scale = Vector2(0.9351437, 0.93514365)
+position = Vector2(18.999992, 1170)
+scale = Vector2(0.8322026, 0.840139)
 sprite_frames = SubResource("SpriteFrames_aufstehen")
 animation = &"aufstehen"
+frame_progress = 0.94876117
 
 [node name="RechteHand" type="ColorRect" parent="Kanone" unique_id=2088670462]
 offset_left = 560.0
@@ -576,27 +604,33 @@ offset_right = 66.0
 offset_bottom = -858.0
 color = Color(0.7, 0.7, 0.7, 1)
 
-[node name="Gesicht" type="AnimatedSprite2D" parent="Kanone/Figur"]
-position = Vector2(-274.4, -1108.2)
+[node name="Gesicht" type="AnimatedSprite2D" parent="Kanone/Figur" unique_id=861410405]
+position = Vector2(-287.5, -1094.2)
 scale = Vector2(0.935, 0.935)
 sprite_frames = SubResource("SpriteFrames_kopf")
 animation = &"stehen"
 autoplay = "stehen"
 centered = false
 
-[node name="Koerper" type="AnimatedSprite2D" parent="Kanone/Figur"]
-position = Vector2(-274.4, -1108.2)
+[node name="Koerper" type="AnimatedSprite2D" parent="Kanone/Figur" unique_id=667957148]
+position = Vector2(-287.5, -1094.2)
 scale = Vector2(0.935, 0.935)
 sprite_frames = SubResource("SpriteFrames_koerper")
 animation = &"stehen"
 autoplay = "stehen"
 centered = false
 
+[node name="Warten" type="Node" parent="Kanone/Figur" node_paths=PackedStringArray("koerper", "gesicht", "schulter")]
+script = ExtResource("warten_skript")
+koerper = NodePath("../Koerper")
+gesicht = NodePath("../Gesicht")
+schulter = NodePath("../Schulter")
+
 [node name="Schulterpunkt" type="Marker2D" parent="Kanone/Figur" unique_id=472194480]
-position = Vector2(-123.9, -540.6)
+position = Vector2(-123.9, -526.6)
 
 [node name="Schulter" type="Node2D" parent="Kanone/Figur" unique_id=542994082]
-position = Vector2(-123.9, -540.6)
+position = Vector2(-123.9, -526.6)
 
 [node name="Armbild" type="Node2D" parent="Kanone/Figur/Schulter" unique_id=486998110]
 
@@ -617,10 +651,11 @@ offset_right = 60.0
 offset_bottom = -395.0
 color = Color(0.6, 0.6, 0.6, 1)
 
-[node name="ForscherArm" parent="Kanone/Figur/Schulter/Armbild" instance=ExtResource("arm_foto")]
+[node name="ForscherArm" parent="Kanone/Figur/Schulter/Armbild" unique_id=1769562574 instance=ExtResource("arm_foto")]
+position = Vector2(-18.099998, 47.599976)
 
 [node name="Bild" type="Sprite2D" parent="Kanone/Figur/Schulter/Armbild" unique_id=1591095807]
-position = Vector2(-0.3, -403.9)
+position = Vector2(-23.099998, -445.40005)
 scale = Vector2(0.21, 0.21)
 texture = ExtResource("43_kanone")
 
@@ -888,7 +923,7 @@ zonen = NodePath("../Zonen")
 zone = NodePath("../Zonen/Scheue")
 stichstelle = NodePath("../Kanone/RechteHand/Stichstelle")
 
-[node name="Punktanzeige" type="CanvasLayer" parent="." node_paths=PackedStringArray("spiel") groups=["punktanzeige"]]
+[node name="Punktanzeige" type="CanvasLayer" parent="." unique_id=834256822 node_paths=PackedStringArray("spiel") groups=["punktanzeige"]]
 layer = 3
 script = ExtResource("punkt_skript")
 zahl_szene = ExtResource("zahl_szene")
