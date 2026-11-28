@@ -8266,3 +8266,29 @@ Der fallende Forscher verschwindet und steht wieder am Boden-Platz bereit (dort 
 **So wurde es angeschaut.** Schnellcheck PASS (`spiel.gd`, `uebergabe.gd`), Verify PASS. Probe mit vier Bildern: Kanone in Wurfstellung unter der Hand liegt vor dem Aermel. 0,08 Sekunden nach Beginn eines Absturzes (6 Fliegen verloren) sind Kanone und Hand weg und der Forscher ist schon mit Rumpf und Beinen im Bild (vorher zu diesem Zeitpunkt noch nichts). Nach dem Absturz sind Kanone und Hand wieder da. Nicht angeschaut: wie es in Bewegung wirkt, und ein Absturz, waehrend die Kanone gerade ein Seil zur Hand faehrt (das Seil haengt dann kurz an der unsichtbaren Kanone). Die Flugkraft-Leiste bleibt beim Absturz stehen.
 
 **Fragen.** 1. Warum reicht `z_index = 1`, obwohl der Aermel dieselbe Zahl hat? 2. Warum `kanone_da` und nicht einfach `true`? 3. Was passiert mit `gegen_schwung = 0` in `schwung_setzen`?
+
+### Nachtrag: Jede Fliege schaut in ihre Flugrichtung (28.11.2026)
+
+Vorher spiegelten sich nur die schnelle Fliege und die Heuschrecke, jede mit eigenem Code. Jetzt macht das `skripte/fliege.gd` fuer alle.
+
+Neue Werte: `kopf_rechts` (im Bild schaut der Kopf nach rechts; nur bei der Heuschrecke `true`, in `fliege_heuschrecke.tscn`), `blick_folgt` (aus bei der normalen Fliege, die sich dauernd im Kreis dreht, `fliege_normal.tscn`), `wende_weg` (20 Pixel). Neue Variablen: `gespiegelt` und `blick_x`.
+
+`_process` ruft nach dem Fliegen (oder Fliehen) `blick_richten()` auf:
+```gdscript
+	var weg: float = position.x - blick_x
+	if absf(weg) < wende_weg:
+		return
+	blick_x = position.x
+	blick_setzen(weg > 0.0)
+```
+`blick_x` ist die Stelle, an der zuletzt gemessen wurde. Erst wenn die Fliege 20 Pixel seitlich weiter ist, wird neu entschieden. Ist `weg` positiv, fliegt sie nach rechts. So dreht sie sich nicht bei jedem kleinen Wackeln um.
+
+`blick_setzen(nach_rechts)`: Gespiegelt werden muss, wenn sie anders schauen soll als im Bild (`nach_rechts != kopf_rechts`). Nur wenn sich das gegenueber jetzt aendert, wird `spiegeln(self)` aufgerufen.
+
+`spiegeln(knoten)` geht durch alle Kinder: `position.x` mal -1 (auf die andere Seite der Mittellinie) und bei Bildern `flip_h` umgedreht. Dann ruft es sich selbst fuer die Kinder des Kindes auf (so werden auch `Gefahr/Rand` und `Leuchten/Ring1` bis `Ring3` mitgespiegelt). Eine Funktion, die sich selbst aufruft, heisst rekursiv. Knoten mit eigenem Skript (eine Nadel, die im Boss steckt) werden uebersprungen.
+
+`_ready`: gleich nach `losfliegen()` schaut die Fliege in die Richtung, in die sie startet (`blick_setzen(richtung > 0.0)`).
+
+`fliege_schnell.gd` und `fliege_heuschrecke.gd`: ihr eigenes Spiegeln (`bild_richten`, `gespiegelt`) ist raus. `fliege_teleport.gd`: Nach einem Sprung wird `blick_x` neu gesetzt, damit der Sprung selbst sie nicht umdreht.
+
+Angeschaut: Schnellcheck PASS (`fliege.gd`, `fliege_schnell.gd`, `fliege_heuschrecke.gd`, `fliege_teleport.gd`), Verify PASS. Probe ueber 600 Bilder mit wandernder Kanone: Die Bilder, in denen eine Fliege falsch herum schaut, sind die ersten 20 Pixel nach einer Wende (schnelle 24 von 573, Heuschrecke 3 von 169, scheue 0 von 182). Standbild aller sechs Arten nach links und nach rechts: Fluegel, Warnumriss, Ringe und Boss-Aura gehen mit.

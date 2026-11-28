@@ -86,6 +86,8 @@ func springen() -> void:
 		weit = -weit
 	position.x += weit
 	mitte_x += weit
+	# Der Sprung selbst soll sie nicht umdrehen: Von hier aus wird neu gemessen.
+	blick_x = position.x
 	taucht_noch = auftauch_zeit
 	entkommt = false
 	uebrig -= 1

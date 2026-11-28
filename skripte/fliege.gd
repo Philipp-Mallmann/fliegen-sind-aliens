@@ -17,6 +17,14 @@ extends Node2D
 # Wie tief und wie hoch das Summen hoechstens klingt. 1 ist die Tonhoehe der Datei. Jede Fliege wuerfelt ihre eigene.
 @export var tonhoehe_tief: float = 0.8
 @export var tonhoehe_hoch: float = 1.4
+# true heisst: Im Bild (in der Szene) schaut der Kopf nach rechts. Bei den meisten Fliegen schaut er nach links.
+@export var kopf_rechts: bool = false
+# true heisst: Die Fliege schaut immer in die Richtung, in die sie seitlich fliegt (sie wird gespiegelt).
+# Aus bei der normalen Fliege, die sich ohnehin dauernd im Kreis dreht.
+@export var blick_folgt: bool = true
+# So viele Pixel muss sie seitlich in die andere Richtung fliegen, bevor sie sich umdreht.
+# Sonst wuerde sie bei jedem kleinen Wackeln hin und her springen.
+@export var wende_weg: float = 20.0
 # Wie schnell der Warnstreifen-Umriss blinkt: so lange dauert einmal an und aus, in Sekunden.
 @export var gefahr_takt: float = 0.3
 
@@ -53,6 +61,10 @@ var gefahr_farbe: Color = Color.WHITE
 var gefahr_rand_farbe: Color = Color(0, 0, 0, 0)
 # Die Uhr fuer das Blinken.
 var gefahr_uhr: float = 0.0
+# true heisst: Alle Bilder der Fliege sind gerade gespiegelt.
+var gespiegelt: bool = false
+# Wo die Fliege seitlich stand, als zuletzt nachgesehen wurde, in welche Richtung sie fliegt.
+var blick_x: float = 0.0
 
 
 func _ready() -> void:
@@ -66,6 +78,10 @@ func _ready() -> void:
 		richtung = -1.0
 	$Summen.pitch_scale = randf_range(tonhoehe_tief, tonhoehe_hoch)
 	losfliegen()
+	# Gleich zu Anfang in die Richtung schauen, in die sie losfliegt.
+	blick_x = position.x
+	if blick_folgt:
+		blick_setzen(richtung > 0.0)
 
 
 func _process(delta: float) -> void:
@@ -76,8 +92,9 @@ func _process(delta: float) -> void:
 	zeit += delta
 	if flucht != Vector2.ZERO:
 		position += flucht * tempo * delta
-		return
-	fliegen(delta)
+	else:
+		fliegen(delta)
+	blick_richten()
 
 
 # Wird einmal aufgerufen, wenn die Fliege ins Spiel kommt. Hier leer, eine Art kann sie ueberschreiben.
@@ -104,3 +121,36 @@ func gefahr_zeigen(delta: float) -> void:
 	# self_modulate faerbt nur den Knoten selbst, nicht sein Kind Rand. modulate wuerde den Rand mitfaerben (Schwarz mal Orange = Schwarz).
 	$Gefahr.self_modulate = gefahr_farbe
 	$Gefahr/Rand.self_modulate = gefahr_rand_farbe
+
+
+# Schaut nach, in welche Richtung die Fliege seitlich fliegt, und dreht sie, wenn noetig, dorthin.
+func blick_richten() -> void:
+	if not blick_folgt:
+		return
+	var weg: float = position.x - blick_x
+	if absf(weg) < wende_weg:
+		return
+	blick_x = position.x
+	blick_setzen(weg > 0.0)
+
+
+# nach_rechts true heisst: Der Kopf soll nach rechts schauen.
+func blick_setzen(nach_rechts: bool) -> void:
+	# Gespiegelt werden muss, wenn sie in die andere Richtung schaut als im Bild.
+	var soll: bool = nach_rechts != kopf_rechts
+	if soll != gespiegelt:
+		gespiegelt = soll
+		spiegeln(self)
+
+
+# Spiegelt alle Bilder unter einem Knoten an der senkrechten Mittellinie der Fliege: Jedes Bild wird umgedreht
+# (flip_h) und auf die andere Seite gesetzt (position.x mal -1). Das geht auch in die Kinder hinein
+# (Gefahr/Rand, Leuchten/Ring1 ...). Knoten mit eigenem Skript (eine steckende Nadel) bleiben, wie sie sind.
+func spiegeln(knoten: Node) -> void:
+	for kind in knoten.get_children():
+		if not kind is Node2D or kind.get_script() != null:
+			continue
+		kind.position.x = -kind.position.x
+		if kind is Sprite2D:
+			kind.flip_h = not kind.flip_h
+		spiegeln(kind)
