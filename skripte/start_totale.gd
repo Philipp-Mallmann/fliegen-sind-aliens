@@ -31,7 +31,10 @@ signal spielstart(nadel: Node2D)
 # Wie lange der Draht braucht, um von der Kanonenspitze in die Hand zu gleiten, in Sekunden.
 @export var gleit_dauer: float = 0.2
 # Wie lange der Forscher danach noch ganz zu sehen ist, ueber der Wiese haengend, bevor die Kamera heranfaehrt, in Sekunden.
+# In dieser Zeit laeuft der Draht durch die Hand weiter bis zur Kanonenspitze, und der Arm geht ein Stueck zurueck.
 @export var halte_dauer: float = 0.7
+# Wie weit der Kanonenarm dabei zurueckgeht, in Grad.
+@export var rueck_winkel: float = 35.0
 # Wie weit der Kanonenarm beim Heranfahren nach links unten wegschwenkt, in Grad.
 @export var wegschwenk_winkel: float = 160.0
 
@@ -51,10 +54,14 @@ var folgt: bool = false
 var relativ: Transform2D = Transform2D.IDENTITY
 # Wo die Figur am Anfang steht. Dorthin kommt sie zurueck, wenn sie nicht mehr mitpendelt.
 var start_lage: Transform2D = Transform2D.IDENTITY
-# true heisst: Der Draht haengt noch an der Kanone oder gleitet gerade in die Hand. Dann wird sein Ende in jedem Bild neu gesetzt.
-var haelt_draht: bool = false
-# Wo das Drahtende gerade ist: 0 heisst an der Kanonenspitze, 1 heisst in der Hand, dazwischen unterwegs.
+# true heisst: Der Draht haengt an der Kanonenspitze und wird gerade in die Hand eingehakt.
+var hakt_ein: bool = false
+# Wo der Draht gehalten wird: 0 heisst an der Kanonenspitze, 1 heisst in der Hand, dazwischen unterwegs.
 var halt: float = 0.0
+# true heisst: Der Draht sitzt fest in der Hand, und sein Rest loest sich gerade von der Kanonenspitze.
+var laesst_los: bool = false
+# Wo das Ende des Rests ist: 0 heisst noch an der Kanonenspitze, 1 heisst in der Hand angekommen.
+var los: float = 0.0
 # Der Ablauf nach dem ersten Treffer. null heisst: Es gab noch keinen.
 var ablauf: Tween = null
 
@@ -80,14 +87,19 @@ func _process(delta: float) -> void:
 	# Haengt der Forscher, sitzt die Figur (mit dem Kanonenarm) immer gleich zu ihm und pendelt so mit.
 	if folgt:
 		global_transform = haenger.get_node("Inhalt").global_transform * relativ
-	# Das Drahtende sitzt genau an der Kanonenspitze oder auf dem Weg von dort in die Hand.
-	# Dort, wo der Draht gehalten wird, ist auch der Punkt, um den der Forscher pendelt.
-	if haelt_draht:
+	# Einhaken: Der Punkt, an dem der Draht gehalten wird, wandert von der Kanonenspitze in die Hand.
+	# Um diesen Punkt pendelt der Forscher. Der Draht selbst bleibt dabei am Lauf der Kanone haengen.
+	if hakt_ein:
 		var spitze: Vector2 = $Schulter/Armbild/Bild/Spitze.global_position
 		var hand: Vector2 = haenger.get_node("Inhalt").global_position
 		var ort: Vector2 = spitze.lerp(hand, halt)
 		kanone.get_node("Fadenpunkt").global_position = ort
 		haenger.drehpunkt_setzen(ort)
+	# Loslassen: Das Ende des Drahts wandert von der Kanonenspitze in die Hand.
+	if laesst_los:
+		var von: Vector2 = $Schulter/Armbild/Bild/Spitze.global_position
+		var bis: Vector2 = haenger.get_node("Inhalt").global_position
+		kanone.get_node("Fadenpunkt").global_position = von.lerp(bis, los)
 	if not aktiv or wand_offen:
 		return
 	kippen(delta)
@@ -142,8 +154,8 @@ func erster_treffer(nadel: Node2D) -> void:
 
 
 # Der stehende Koerper wird zum haengenden Forscher, er hebt ein Stueck ab und pendelt.
-# Der Draht bleibt an der Kanonenspitze, waehrend der Arm zur Hand schwenkt. Dann gleitet er in die Hand.
-# Danach haengt der Forscher noch kurz ueber der Wiese, erst dann beginnt das Spiel.
+# Der Draht haengt am Lauf der Kanone, waehrend der Arm zur Hand schwenkt. Dort hakt er zwischen Daumen und Fingern ein
+# und laeuft durch die Hand weiter bis zur Kanone. Erst wenn er fest sitzt, loest sich sein Rest vom Lauf.
 func anhaengen() -> void:
 	$Koerper.visible = false
 	$Gesicht.visible = false
@@ -151,8 +163,8 @@ func anhaengen() -> void:
 	relativ = haenger.get_node("Inhalt").global_transform.affine_inverse() * global_transform
 	folgt = true
 	halt = 0.0
-	haelt_draht = true
-	erste_nadel.anker = kanone.get_node("Fadenpunkt")
+	hakt_ein = true
+	erste_nadel.anker = $Schulter/Armbild/Bild/Spitze
 	haenger.anstossen()
 	# Die Richtung von der Schulter zur Hand, gemessen in der Figur. Die Figur pendelt mit, darum bleibt sie gleich.
 	var zur_hand: Vector2 = to_local(haenger.get_node("Inhalt").global_position) - $Schulter.position
@@ -162,17 +174,40 @@ func anhaengen() -> void:
 	ablauf.tween_property($Schulter, "rotation", ziel_winkel, schwenk_dauer)
 	ablauf.parallel().tween_property(kanone, "position:y", -abheben, einstieg_dauer)
 	ablauf.parallel().tween_property(erste_nadel, "rotation", 0.0, einstieg_dauer)
+	ablauf.tween_callback(einhaken)
 	ablauf.tween_property(self, "halt", 1.0, gleit_dauer)
 	ablauf.tween_callback(in_der_hand)
-	ablauf.tween_interval(halte_dauer)
-	ablauf.tween_callback(sequenz_fertig)
+	ablauf.tween_property($Schulter, "rotation", ziel_winkel - deg_to_rad(rueck_winkel), halte_dauer)
+	ablauf.tween_callback(loslassen)
+	ablauf.tween_property(self, "los", 1.0, gleit_dauer)
+	ablauf.tween_callback(frei)
 
 
-# Der Draht steckt in der Hand: Ab jetzt ist die Hand der Drehpunkt, und der Draht haengt am Forscher.
+# Die Kanonenspitze ist bei der Hand: Ab jetzt laeuft der Draht ueber den Haltepunkt und von dort weiter zum Lauf.
+func einhaken() -> void:
+	erste_nadel.ueber = kanone.get_node("Fadenpunkt")
+
+
+# Der Draht steckt in der Hand: Ab jetzt ist die Hand der Drehpunkt. Sein Rest haengt noch am Lauf der Kanone.
 func in_der_hand() -> void:
-	haelt_draht = false
+	hakt_ein = false
 	haenger.drehpunkt_setzen(haenger.get_node("Inhalt").global_position)
+	erste_nadel.ueber = haenger
+
+
+# Der Draht sitzt fest: Sein Rest loest sich vom Lauf und rutscht in die Hand.
+func loslassen() -> void:
+	los = 0.0
+	laesst_los = true
+	erste_nadel.anker = kanone.get_node("Fadenpunkt")
+
+
+# Der Rest ist in der Hand angekommen: Der Draht endet jetzt in der Hand, die Fliege kann nicht mehr entkommen.
+func frei() -> void:
+	laesst_los = false
+	erste_nadel.ueber = null
 	erste_nadel.anker = haenger
+	sequenz_fertig()
 
 
 func sequenz_fertig() -> void:
@@ -197,6 +232,7 @@ func wegschwenken(dauer: float) -> void:
 func ausschalten() -> void:
 	aktiv = false
 	folgt = false
-	haelt_draht = false
+	hakt_ein = false
+	laesst_los = false
 	transform = start_lage
 	$Schulter.visible = false

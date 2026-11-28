@@ -7797,3 +7797,63 @@ In jedem Bild: Das Drahtende sitzt zwischen Spitze und Hand, je nach `halt`. `le
 **So wurde es angeschaut.** Schnellcheck PASS fuer `start_totale.gd`, `spiel.gd`, `uebergabe.gd`, Verify PASS. Probe mit einer Nadel, die in einer Fliege steckt, Arm schraeg nach links. Gemessen nach jedem gezeichneten Bild: Abstand zwischen Drahtende und der Stelle, an der es sitzen soll, hoechstens 0,00 Pixel in 3787 Bildern. Bilder: Bis 1,3 s haengt der ganze Forscher ueber der Wiese, die Fuesse in der Luft. Bis 2,35 s Zoom auf den Arm, der Kanonenarm verschwindet links. Am Ende nur Hand, Unterarm und Aermel rechts, die Kanone kommt von unten und laeuft ab 2,75 s. Nicht angeschaut: das Gefuehl beim Spielen.
 
 **Fragen.** 1. Warum wird der Ablauf mit `custom_step` von Hand weitergestellt? 2. Was liefert `spitze.lerp(hand, halt)` bei `halt` 0,5? 3. Warum sieht man bei Groesse 1,9 den Kopf nicht mehr?
+
+### Nachtrag: Der Draht laeuft durch die Hand bis zum Lauf der Kanone (28.11.2026)
+
+Dein Wunsch: Der Draht endet nicht am Daumen, sondern reicht durch die Hand weiter hinunter bis zur Kanone. Er bleibt am Lauf haengen, bis er wirklich fest zwischen Daumen und Fingern sitzt, damit die Fliege nicht entkommen kann. Das gilt beim Abheben und bei jedem spaeteren Fang im Flug.
+
+**`skripte/nadel.gd` und `szenen/nadel.tscn`.**
+
+```gdscript
+var ueber: Node2D = null
+```
+Neu. Der Punkt, ueber den der Draht laeuft, bevor er zum Anker weitergeht: die Hand. `null` heisst: Er geht gerade zum Anker, wie bisher.
+
+```gdscript
+	if ueber != null:
+		unten = ueber.global_position
+		$Rest.points = PackedVector2Array([$Rest.to_local(unten), $Rest.to_local(anker.global_position)])
+	elif $Rest.points.size() > 0:
+		$Rest.clear_points()
+```
+Neu in `faden_spannen`. Gibt es einen `ueber`-Punkt, endet das Hauptstueck des Drahts (mit den Fliegen daran) dort. `Rest` ist eine zweite Linie in der Nadel-Szene, gleich eingestellt wie `Faden`: Sie geht von der Hand weiter zum Anker, also zum Lauf der Kanone. Ohne `ueber`-Punkt wird der Rest geloescht. `faden_loesen` raeumt beides ab.
+
+**`skripte/start_totale.gd` (Abheben).** Statt `haelt_draht` gibt es zwei Phasen: `hakt_ein` (mit `halt`) und `laesst_los` (mit `los`). Neu ist `rueck_winkel = 35.0`.
+
+Der Ablauf in `anhaengen()`:
+1. Der Anker der Nadel ist die Kanonenspitze selbst (`erste_nadel.anker = $Schulter/Armbild/Bild/Spitze`). Der Arm schwenkt zur Hand.
+2. `einhaken()`: `erste_nadel.ueber = Fadenpunkt`. Der Fadenpunkt steht noch an der Spitze und wandert dann in 0,2 s in die Hand (`halt` von 0 auf 1). Der Draht knickt dabei immer weiter zur Hand hin ab, sein Ende bleibt am Lauf.
+3. `in_der_hand()`: Der Draht laeuft jetzt fest ueber die Hand (`ueber = haenger`), die Hand ist der Drehpunkt. Der Arm geht in 0,7 s um 35 Grad zurueck: Man sieht den Draht von der Fliege durch die Hand bis hinunter zur Kanone.
+4. `loslassen()`: Der Anker wird der Fadenpunkt, der von der Spitze in die Hand wandert (`los` von 0 auf 1): Der Rest rutscht in die Hand.
+5. `frei()`: `ueber = null`, `anker = haenger`. Der Draht endet in der Hand. Dann `sequenz_fertig`.
+
+In `_process` setzt die Phase `laesst_los` den Fadenpunkt in jedem Bild auf `von.lerp(bis, los)`, genauso wie beim Einhaken.
+
+**`skripte/uebergabe.gd` (jeder Fang im Flug).**
+
+```gdscript
+func _ready() -> void:
+	process_priority = -1
+```
+Dieses Skript ist in jedem Bild vor den Nadeln dran. Knoten mit kleinerer Zahl laufen frueher, der Standard ist 0.
+
+```gdscript
+func _process(delta: float) -> void:
+	for fahrt in fahrten.duplicate():
+		if fahrt.is_valid():
+			fahrt.custom_step(delta)
+		else:
+			fahrten.erase(fahrt)
+```
+Alle Fahrten der Uebergabe werden hier von Hand weitergestellt, aus demselben Grund wie beim Abheben: Sonst waere die Kanone schon weiter als der Draht. `duplicate()` macht eine Kopie der Liste, weil waehrend der Schleife Eintraege geloescht werden. `fahrt_anlegen()` legt einen angehaltenen Tween an und merkt ihn in `fahrten`.
+
+`uebergeben()`: Die Hinfahrt ist wie vorher. Neu ist die Rueckfahrt:
+- Der Anker bleibt die Muendung. Der Fadenpunkt startet an der Muendung, `nadel.ueber = fadenpunkt`, und wandert in den ersten 40 Prozent der Rueckfahrt (`einhak_anteil`) zum Griff: Der Draht hakt in die Hand ein und haengt weiter am Lauf.
+- `vom_lauf_loesen(nadel, muendung)`: Jetzt laeuft der Draht fest ueber den Griff (`ueber = griff`). Der Fadenpunkt springt an die Muendung, wird der Anker und wandert in den restlichen 60 Prozent zum Griff: Das Ende loest sich vom Lauf und rutscht in die Hand.
+- Am Ende: `ueber = null`, `anker = griff`.
+
+Die Pruefung `is_instance_valid(nadel)` steht jetzt direkt nach der Hinfahrt: Hat ein Hindernis die Nadel inzwischen abgeschossen, geht es mit der naechsten weiter (`continue`).
+
+**So wurde es angeschaut.** Schnellcheck PASS fuer `nadel.gd`, `start_totale.gd`, `uebergabe.gd`, Verify PASS. Probe Abheben: Der Draht geht durch die Hand bis zur Kanonenspitze, waehrend der Arm zurueckgeht. Gemessen nach jedem Bild an allen Enden (Hauptstueck an der Hand, Rest an der Hand, Rest am Lauf): hoechstens 0,00 Pixel Luecke in 3535 Bildern. Probe zweiter Fang im Flug: Der Draht laeuft von der Fliege durch die Hand hinunter zur Muendung, loest sich dann und rutscht in die Hand. Hoechstens 2,25 Pixel in 768 Bildern, und zwar am Griff, wenn die Nadeln im Faecher nachruecken (das Nachruecken stellt `faecher.gd` noch auf die alte Art weiter). Nicht angeschaut: das Gefuehl beim Spielen.
+
+**Fragen.** 1. Was zeichnet die Linie `Rest`, und wann ist sie leer? 2. Warum bleibt beim Einhaken der Anker die Muendung? 3. Was bewirkt `process_priority = -1`?

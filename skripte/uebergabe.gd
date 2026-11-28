@@ -17,11 +17,38 @@ signal gefangen(flugkraft: int)
 @export var griff: Node2D
 # Ein Punkt, der das Drahtende von der Muendung zur Hand traegt. Muss ein Kind der Kanone sein, wie der Griff.
 @export var fadenpunkt: Node2D
+# Welcher Anteil der Rueckfahrt fuer das Einhaken in die Hand gebraucht wird. Im Rest loest sich der Draht vom Lauf.
+@export var einhak_anteil: float = 0.4
 
 # true heisst: Gerade laeuft eine Uebergabe. Die Kanone faehrt und schiesst dann nicht.
 var laeuft: bool = false
 # Nadeln mit Fliege, die noch uebergeben werden muessen, der Reihe nach.
 var warteschlange: Array[Node2D] = []
+# Die Fahrten, die gerade laufen. Sie werden in _process von Hand weitergestellt.
+var fahrten: Array[Tween] = []
+
+
+# Dieses Skript ist in jedem Bild vor den Nadeln dran (kleinere Zahl heisst frueher).
+func _ready() -> void:
+	process_priority = -1
+
+
+# Godot stellt Tweens erst nach allen _process-Funktionen weiter. Dann haette die Nadel ihren Draht schon gespannt,
+# und die Kanone waere danach ein Stueck weitergefahren: eine Luecke am Lauf. Darum werden die Fahrten hier weitergestellt.
+func _process(delta: float) -> void:
+	for fahrt in fahrten.duplicate():
+		if fahrt.is_valid():
+			fahrt.custom_step(delta)
+		else:
+			fahrten.erase(fahrt)
+
+
+# Legt eine Fahrt an, die nicht von selbst laeuft, sondern in _process weitergestellt wird.
+func fahrt_anlegen() -> Tween:
+	var fahrt: Tween = create_tween()
+	fahrt.pause()
+	fahrten.append(fahrt)
+	return fahrt
 
 
 func starten(nadel: Node2D) -> void:
@@ -61,23 +88,40 @@ func uebergeben() -> void:
 		faecher.aufnehmen(nadel)
 		$TonArm.play()
 		var fahrzeit: float = dauer - verzoegerung
-		var hin: Tween = create_tween()
+		var hin: Tween = fahrt_anlegen()
 		hin.tween_property(arm, "position", Vector2(ziel_x, 0.0), dauer)
 		var ziel: Vector2 = faecher.platz(nadel)
 		hin.parallel().tween_property(nadel, "position:y", ziel.y, fahrzeit / 2.0).set_delay(verzoegerung)
 		hin.parallel().tween_property(nadel, "position:x", ziel.x, fahrzeit / 2.0).set_delay(verzoegerung + fahrzeit / 2.0)
 		hin.parallel().tween_property(nadel, "scale", Vector2.ONE * faecher.groesse(), fahrzeit).set_delay(verzoegerung)
 		await hin.finished
-		nadel.haengt = true
-		# Das Drahtende springt nicht zur Hand: Es startet an der Muendung und wandert hinueber,
-		# waehrend die Kanone zurueckfaehrt. Erst danach haengt der Draht wirklich am Griff.
-		fadenpunkt.global_position = nadel.anker.global_position
-		nadel.anker = fadenpunkt
-		var zurueck: Tween = create_tween()
-		zurueck.tween_property(arm, "position", Vector2.ZERO, dauer)
-		zurueck.parallel().tween_property(fadenpunkt, "position", griff.position, dauer)
-		await zurueck.finished
 		# Ein Hindernis kann die Nadel in der Zwischenzeit abgeschossen haben, dann gibt es sie nicht mehr.
+		if not is_instance_valid(nadel):
+			continue
+		nadel.haengt = true
+		# Die Kanone ist bei der Hand. Der Draht haengt weiter am Lauf (Anker bleibt die Muendung).
+		# Zuerst hakt er in die Hand ein: Der Punkt, ueber den er laeuft, wandert von der Muendung zum Griff.
+		var muendung: Node2D = nadel.anker
+		fadenpunkt.global_position = muendung.global_position
+		nadel.ueber = fadenpunkt
+		var zurueck: Tween = fahrt_anlegen()
+		zurueck.tween_property(arm, "position", Vector2.ZERO, dauer)
+		var draht: Tween = fahrt_anlegen()
+		draht.tween_property(fadenpunkt, "position", griff.position, dauer * einhak_anteil)
+		draht.tween_callback(vom_lauf_loesen.bind(nadel, muendung))
+		draht.tween_property(fadenpunkt, "position", griff.position, dauer * (1.0 - einhak_anteil))
+		await zurueck.finished
 		if is_instance_valid(nadel):
+			nadel.ueber = null
 			nadel.anker = griff
 	laeuft = false
+
+
+# Der Draht sitzt fest in der Hand: Er laeuft jetzt ueber den Griff, und sein Ende loest sich vom Lauf.
+# Der Fadenpunkt springt dafuer an die Muendung und traegt das Ende von dort zum Griff.
+func vom_lauf_loesen(nadel: Node2D, muendung: Node2D) -> void:
+	if not is_instance_valid(nadel):
+		return
+	nadel.ueber = griff
+	fadenpunkt.global_position = muendung.global_position
+	nadel.anker = fadenpunkt

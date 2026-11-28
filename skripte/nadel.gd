@@ -43,6 +43,9 @@ var halbe_groessen: Array[Vector2] = []
 var vorn_stuecke: Array[Line2D] = []
 # Der Punkt, an dem der Faden der Nadel festhaengt: erst die Muendung der Kanone, im Faecher die rechte Hand.
 var anker: Node2D = null
+# Der Punkt, ueber den der Draht laeuft, bevor er zum Anker weitergeht: die Hand, solange der Draht noch an der Kanone haengt.
+# null heisst: Der Draht geht gerade zum Anker.
+var ueber: Node2D = null
 # Die Kanone, die die Nadel geschossen hat. Solange die Nadel fliegt, bleibt sie genau ueber ihr. Setzt kanone.gd.
 # null heisst: Die Nadel kommt aus der Totale (start_totale.gd) und fliegt frei in ihre Richtung.
 var kanone: Node2D = null
@@ -169,7 +172,9 @@ func stecken_in(grosse: Node2D) -> void:
 # Der Faden geht ab: Er haengt nirgends mehr fest und wird nicht mehr gezeichnet.
 func faden_loesen() -> void:
 	anker = null
+	ueber = null
 	$Faden.clear_points()
+	$Rest.clear_points()
 	for stueck in vorn_stuecke:
 		stueck.clear_points()
 
@@ -202,6 +207,12 @@ func faden_spannen() -> void:
 		return
 	var oben: Vector2 = $Oese.global_position
 	var unten: Vector2 = anker.global_position
+	# Laeuft der Draht ueber die Hand, endet das Hauptstueck dort. Der Rest geht von der Hand weiter zum Anker (zur Kanone).
+	if ueber != null:
+		unten = ueber.global_position
+		$Rest.points = PackedVector2Array([$Rest.to_local(unten), $Rest.to_local(anker.global_position)])
+	elif $Rest.points.size() > 0:
+		$Rest.clear_points()
 	var bogen: Vector2 = durchbiegung(oben, unten)
 	var punkte: PackedVector2Array = []
 	for nummer in draht_stuecke + 1:
