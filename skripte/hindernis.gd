@@ -20,8 +20,10 @@ extends Node2D
 # Wie laut der Warnton am Anfang und am Ende der Warnung piept, in Dezibel. 0 ist die Lautstaerke der Datei.
 @export var ton_leise: float = -30.0
 @export var ton_laut: float = -20.0
-# Wie weit unter der Kanone der Gegenstand verschwindet, in Pixeln. Der untere Bildrand liegt hoechstens 190 darunter.
-@export var weg_unter: float = 300.0
+# Wie weit der Stein unter dem unteren Bildrand sein muss, bevor er verschwindet, in Pixeln.
+# So gross, dass er auch dann nicht fehlt, wenn man abstuerzt und die Kamera weit herauszoomt:
+# In der Totale reicht das Bild 1840 Pixel unter die Kanone, im Flug nur 20.
+@export var weg_abstand: float = 1900.0
 # Die Szene des Matsches. Bei jeder zermatschten Fliege entsteht daraus ein Fleck.
 @export var matsch_szene: PackedScene
 # Die Farbe der Spalte auf jeder Pappe, von unten (blau) nach oben (fast schwarz). Die vierte Zahl ist die Deckkraft.
@@ -114,8 +116,17 @@ func fallen(delta: float) -> void:
 	for fliege in get_tree().get_nodes_in_group("fliegen"):
 		if im_klotz(fliege):
 			zermatschen(fliege)
-	if position.y > kanone.position.y + weg_unter:
+	# Der Stein verschwindet erst, wenn seine Oberkante mit klarem Abstand unter dem Bild liegt.
+	# Gemessen wird am Bild, das die Kamera gerade zeigt, nicht an der Kanone.
+	if position.y - hoehe > bildrand_unten() + weg_abstand:
 		queue_free()
+
+
+# Wo der untere Bildrand gerade in der Welt liegt: die Bildmitte der Kamera plus die halbe Bildhoehe.
+# Ist die Kamera herausgezoomt (zoom kleiner als 1), zeigt das Bild mehr, darum wird durch den Zoom geteilt.
+func bildrand_unten() -> float:
+	var kamera: Camera2D = get_viewport().get_camera_2d()
+	return kamera.get_screen_center_position().y + 540.0 / kamera.zoom.y
 
 
 # true heisst: Die Fliege ist in der Spalte unter dem Stein, der Stein trifft sie, wenn sie dort bleibt.

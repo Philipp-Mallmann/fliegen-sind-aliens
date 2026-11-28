@@ -8088,3 +8088,41 @@ In `haengen.gd` steht in `_ready` neu `process_priority = -1`: Der haengende For
 **So wurde es angeschaut.** Schnellcheck PASS fuer `nadel.gd`, `uebergabe.gd`, `haengen.gd`, `start_totale.gd`, Verify PASS. Probe mit 60 Bildern pro Sekunde: Beim Haengen laeuft der Aermel des Kanonenarms hinter dem Kopf vorbei. Beim Fang im Flug hebt und kippt die Kanone zur Hand, das Seil schwingt im Bogen hinein. Luecken 0,00 und 0,25 Pixel. Das geloeste Ende startet 143 Pixel neben der Hand und haengt nach 1,5 Sekunden still. Aufgefallen: Die geworfene Kanone steht dabei zum Teil hinter dem Aermel. Nicht angeschaut: wie der Wurf in Bewegung wirkt.
 
 **Fragen.** 1. Was bewirkt `EASE_IN` beim Wurf? 2. Warum liegt der Arm nach `move_child` hinter dem Koerper? 3. Wozu braucht `haengen.gd` jetzt `process_priority = -1`?
+
+## Steine verschwinden erst mit klarem Abstand unter dem Bild (`skripte/hindernis.gd`, 28.11.2026)
+
+Dein Hinweis: Ein fallender Stein darf nicht verschwinden, solange man ihn noch sehen kann oder gleich wieder sehen koennte. Stuerzt man ab, kommt man wieder in sein Blickfeld.
+
+Vorher verschwand der Stein, sobald er 300 Pixel unter der Kanone war. Im Flug liegt der untere Bildrand 20 Pixel unter der Kanone, das reichte. Beim Absturz bis zum Boden zoomt die Kamera aber heraus: Dann reicht das Bild bis 1840 Pixel unter die Kanone, und dort fehlte der Stein.
+
+```gdscript
+@export var weg_abstand: float = 1900.0
+```
+Ersetzt `weg_unter`. So weit muss der Stein unter dem unteren Bildrand sein, bevor er verschwindet. 1900 ist mehr als der Sprung des Bildrands beim Herauszoomen (von 20 auf 1840 unter der Kanone).
+
+```gdscript
+	if position.y - hoehe > bildrand_unten() + weg_abstand:
+		queue_free()
+```
+`position.y` ist die Unterkante des Steins, minus `hoehe` ist seine Oberkante. Erst wenn auch die Oberkante weit genug unter dem Bild liegt, wird er geloescht.
+
+```gdscript
+func bildrand_unten() -> float:
+	var kamera: Camera2D = get_viewport().get_camera_2d()
+	return kamera.get_screen_center_position().y + 540.0 / kamera.zoom.y
+```
+Neu. Gemessen wird am Bild, das die Kamera gerade zeigt, nicht mehr an der Kanone. `get_screen_center_position()` ist die Bildmitte in der Welt, 540 ist die halbe Bildhoehe. Bei Zoom 0,43 zeigt das Bild mehr, darum wird durch den Zoom geteilt: 540 / 0,43 = 1256 Pixel bis zum unteren Rand.
+
+Ein Stein lebt dadurch etwa 1,3 Sekunden laenger (1900 Pixel bei 1500 Pixeln pro Sekunde). Mehr als ein paar Steine gleichzeitig gibt es trotzdem nicht.
+
+### So wurde es angeschaut
+
+- Schnellcheck PASS fuer `hindernis.gd`, Verify PASS.
+- Probe mit 60 Bildern pro Sekunde: ein Stein links neben der Kanone, er faellt aus dem Bild. Als seine Oberkante 935 Pixel unter dem Bildrand war (mit der alten Regel waere er schon geloescht), begann der Absturz bis zum Boden. Der Stein war in allen drei Messungen waehrend des Herauszoomens noch da und lag wieder im Bild (1817 bis 2608 Pixel ueber dem unteren Rand). Geloescht wurde er erst 3,6 Sekunden spaeter.
+- Nicht angeschaut: Der Stein faellt am Boden durch die Wiese weiter, bis er unter dem Bild ist. Das war vorher auch so, faellt jetzt aber eher auf, weil er laenger lebt.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum wird durch den Zoom geteilt?
+2. Warum zaehlt die Oberkante des Steins und nicht die Unterkante?
+3. Woher kommt die Zahl 1900?
