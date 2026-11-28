@@ -29,3 +29,10 @@ func fliegen(delta: float) -> void:
 
 func angeschossen() -> void:
 	sack_rest += absacken
+
+
+# Wie fliege.gd, dazu: Ist der Boss gefangen, ist seine Aura weg.
+func _process(delta: float) -> void:
+	super(delta)
+	if gefangen:
+		$Aura.visible = false

@@ -39,8 +39,11 @@ func _process(delta: float) -> void:
 	letzter_ort = global_position
 	letztes_tempo = tempo
 	# Ein Pendel: Es zieht zur Mitte zurueck, klingt ab, und eine Bewegung des Drehpunkts stoesst es entgegen an.
+	# Der Koerper haengt unter dem Drehpunkt. Ein positiver Winkel dreht im Uhrzeigersinn, dabei geht das untere Ende
+	# nach links. Faehrt der Drehpunkt nach rechts an (ruck positiv), soll der Koerper nach links zurueckbleiben:
+	# darum + ruck. (Bis 28.11. stand hier - ruck, da schwang er in Fahrtrichtung.)
 	var eigen: float = TAU / schwingdauer
-	var beschleunigung: float = -eigen * eigen * winkel - daempfung * winkeltempo - ruck * mitnahme
+	var beschleunigung: float = -eigen * eigen * winkel - daempfung * winkeltempo + ruck * mitnahme
 	winkeltempo += beschleunigung * delta
 	winkel += winkeltempo * delta
 	var grenze: float = deg_to_rad(groesster_winkel)

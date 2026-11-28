@@ -8365,3 +8365,11 @@ Der Draht besteht aus drei Teilen: dem Faden, dem Seilende (`Rest`) und den kurz
 - `im_klotz` misst jetzt an der Mitte des Steinbilds (`$Klotz.global_position.y`), weil der Stein nicht mehr direkt am Hindernispunkt sitzt.
 
 Angeschaut: Schnellcheck PASS, Verify PASS. Probe: Warnung neben der Kanone, dann Fang mit 15 Flugkraft (schnellstes Steigen) und gleichzeitig 24 Pixel Wackeln, Bilder waehrend des Steigens: Der Schatten reicht in jedem Bild von oben bis unten, der Stein ist nicht zu sehen.
+
+### Nachtrag: Boss-Aura halb so stark und weg nach dem Fang, Forscher pendelt richtig herum (28.11.2026)
+
+- `szenen/fliege_boss.tscn`: Knoten `Aura` hat `modulate = Color(1, 1, 1, 0.5)`, die Aura ist also nur noch halb so deckend. Der Shader nimmt die Knotenfarbe mit (`knoten_farbe`), darum wirkt das.
+- `skripte/fliege_boss.gd`: neues `_process`. `super(delta)` ruft zuerst das `_process` aus `fliege.gd` auf (das Fliegen, der Warnumriss); danach: ist der Boss `gefangen`, wird `$Aura` versteckt. `super` heisst: die gleichnamige Funktion des Skripts, auf dem dieses aufbaut.
+- `skripte/haengen.gd` (der haengende Forscher): In der Pendel-Formel stand `- ruck * mitnahme`, jetzt `+ ruck * mitnahme`. Der Koerper haengt unter dem Drehpunkt. Ein positiver Winkel dreht im Uhrzeigersinn, dabei geht das untere Ende nach links. Faehrt die Kanone nach rechts an, ist `ruck` positiv, der Winkel soll positiv werden, der Koerper bleibt links zurueck wie ein echtes Pendel. Mit dem Minus schwang er in Fahrtrichtung.
+
+Angeschaut: Schnellcheck PASS (`haengen.gd`, `fliege_boss.gd`), Verify PASS. Probe: Kanone faehrt beschleunigt nach rechts, groesster Winkel +3 Grad (Koerper bleibt links zurueck); Boss vor dem Fang Aura sichtbar mit Deckkraft 0,5, nach `gefangen = true` unsichtbar.
