@@ -78,10 +78,11 @@ func schiessen(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("schiessen"):
 		var nadel: Node2D = nadel_szene.instantiate()
-		nadel.position = $Schulter/Armbild/Spitze.global_position
+		# Die Spitze haengt am Kanonenbild (oben am Lauf). Verschiebt man das Bild, wandert sie mit.
+		nadel.position = $Schulter/Armbild/Bild/Spitze.global_position
 		nadel.rotation = $Schulter.global_rotation
 		nadel.richtung = Vector2.UP.rotated($Schulter.global_rotation)
-		nadel.anker = $Schulter/Armbild/Spitze
+		nadel.anker = $Schulter/Armbild/Bild/Spitze
 		kanone.get_parent().add_child(nadel)
 		nadel.getroffen.connect(erster_treffer)
 		nachladen_noch = nachladezeit

@@ -659,8 +659,8 @@ position = Vector2(-23.099998, -445.40005)
 scale = Vector2(0.21, 0.21)
 texture = ExtResource("43_kanone")
 
-[node name="Spitze" type="Marker2D" parent="Kanone/Figur/Schulter/Armbild" unique_id=1917775842]
-position = Vector2(0, -540)
+[node name="Spitze" type="Marker2D" parent="Kanone/Figur/Schulter/Armbild/Bild" unique_id=1917775842]
+position = Vector2(1.5, -648)
 
 [node name="Bedienung" type="CanvasLayer" parent="." unique_id=1432991439]
 

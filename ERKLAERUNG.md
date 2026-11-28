@@ -7612,3 +7612,15 @@ Auf den dunklen Pappen sind die schwarzen Striche jetzt duenn orange umrandet. J
 `skripte/hindernis.gd`: neu `gefahr_rand_farben`, eine Farbe je Pappe. Durchsichtig (`Color(0, 0, 0, 0)`) heisst kein Rand; ab Indigo Orange (1.0, 0.55, 0.1). `fliege_schnell.gd` und `fliege_heuschrecke.gd` spiegeln `Gefahr/Rand` mit.
 
 Angeschaut: Schnellcheck PASS (`fliege.gd`, `hindernis.gd`, `fliege_schnell.gd`, `fliege_heuschrecke.gd`), Verify PASS. Probe auf dunklem Grund, beide Fluegelbilder: Der Rand sitzt um jeden schwarzen Strich, auch bei den gespiegelten Fliegen (beim ersten Versuch hing er bei der schnellen Fliege seitenverkehrt, weil er nicht mitgespiegelt wurde).
+
+### Nachtrag: Abschusspunkt in der Totale haengt am Kanonenbild (28.11.2026)
+
+Du hattest in der Totale das Kanonenbild in der Hand verschoben (`Kanone/Figur/Schulter/Armbild/Bild`, von (-0.3, -403.9) nach (-23.1, -445.4)). Der Abschusspunkt `Spitze` war ein Geschwister des Bilds und blieb stehen, darum kamen Nagel und Draht neben dem Lauf heraus.
+
+Jetzt ist `Spitze` ein **Kind** von `Bild`, auf `Vector2(1.5, -648)`. Das ist die Stelle im Kanonenbild selbst: Das Bild ist 606 x 1300 Pixel gross, seine Mitte ist (0, 0), der Lauf endet oben bei Pixel 304/2, also 1,5 rechts und 648 ueber der Mitte. Weil ein Kind mit seinem Elternknoten mitwandert (und mit ihm skaliert), stimmt der Punkt, egal wohin du das Bild schiebst.
+
+`skripte/start_totale.gd`: Der Pfad heisst jetzt `$Schulter/Armbild/Bild/Spitze` (zweimal, fuer die Startstelle der Nadel und fuer `anker`, an dem der Draht haengt).
+
+Im normalen Spiel (`Kanone/Arm/Muendung`) stimmt die Muendung noch: nachgerechnet gegen `kanone-hinten.png`, Abweichung unter 0,2 Pixel.
+
+Angeschaut: Schnellcheck PASS, Verify PASS, Probe: roter Punkt an `Spitze` in der Totale sitzt genau an der Laufspitze.
