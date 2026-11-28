@@ -25,6 +25,12 @@ signal spielstart(nadel: Node2D)
 @export var einstieg_dauer: float = 0.3
 # Wie hoch die Figur dabei schon abhebt, in Pixeln. 132 ist eine Kopfhoehe.
 @export var abheben: float = 132.0
+# Der Forscher, der am Draht haengt (haengen.gd). Er ersetzt beim ersten Treffer den stehenden Koerper.
+@export var haenger: Node2D
+# Wie lange der Kanonenarm braucht, um den Draht in die Hand zu schwenken, in Sekunden.
+@export var schwenk_dauer: float = 0.45
+# Wie weit der Arm dabei ueber die Richtung zur Hand hinaus nach rechts geht, in Grad.
+@export var schwenk_extra: float = 10.0
 
 # true heisst: Man steuert die Figur. false ab dem ersten Treffer.
 var aktiv: bool = true
@@ -36,6 +42,12 @@ var maus_zielt: bool = false
 var nachladen_noch: float = 0.0
 # Die Nadel, die als erste getroffen hat. Sie wird am Ende der Sequenz an das Spiel uebergeben.
 var erste_nadel: Node2D = null
+# true heisst: Die Figur (mit dem Kanonenarm) pendelt mit dem haengenden Forscher mit.
+var folgt: bool = false
+# Wo die Figur relativ zum haengenden Forscher sitzt. Wird beim Anhaengen gemessen.
+var relativ: Transform2D = Transform2D.IDENTITY
+# Wo die Figur am Anfang steht. Dorthin kommt sie zurueck, wenn sie nicht mehr mitpendelt.
+var start_lage: Transform2D = Transform2D.IDENTITY
 
 
 # Setzt den Arm an den Koerper. Zwei Marker sagen, wo: Schulterpunkt liegt auf dem Koerper an der Schulter,
@@ -43,6 +55,7 @@ var erste_nadel: Node2D = null
 func _ready() -> void:
 	$Schulter.position = $Schulterpunkt.position
 	$Schulter/Armbild.position = -$Schulter/Armbild/Drehpunkt.position
+	start_lage = transform
 
 
 func _input(ereignis: InputEvent) -> void:
@@ -51,6 +64,9 @@ func _input(ereignis: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	# Haengt der Forscher, sitzt die Figur (mit dem Kanonenarm) immer gleich zu ihm und pendelt so mit.
+	if folgt:
+		global_transform = haenger.get_node("Inhalt").global_transform * relativ
 	if not aktiv or wand_offen:
 		return
 	kippen(delta)
@@ -103,16 +119,48 @@ func erster_treffer(nadel: Node2D) -> void:
 	ablauf.parallel().tween_property(self, "rotation_degrees", 0.0, einstieg_dauer)
 	ablauf.parallel().tween_property($Schulter, "rotation", 0.0, einstieg_dauer)
 	ablauf.parallel().tween_property(nadel, "rotation", 0.0, einstieg_dauer)
-	ablauf.tween_callback(sequenz_fertig)
+	ablauf.tween_callback(anhaengen)
+
+
+# Der stehende Koerper wird zum haengenden Forscher. Erst pendelt er um die Kanonenspitze, an der der Draht haengt.
+# Dann schwenkt der Arm nach rechts, der Draht gleitet zwischen Daumen und Finger, und ab da pendelt er um die Hand.
+func anhaengen() -> void:
+	$Koerper.visible = false
+	$Gesicht.visible = false
+	haenger.visible = true
+	relativ = haenger.get_node("Inhalt").global_transform.affine_inverse() * global_transform
+	folgt = true
+	var spitze: Node2D = $Schulter/Armbild/Bild/Spitze
+	var griff: Vector2 = haenger.get_node("Inhalt").global_position
+	haenger.drehpunkt_setzen(spitze.global_position)
+	haenger.anstossen()
+	# Der Draht haengt an einem Punkt, der von der Spitze in die Hand wandert.
+	var faden: Node2D = kanone.get_node("Fadenpunkt")
+	faden.global_position = spitze.global_position
+	erste_nadel.anker = faden
+	var zur_hand: Vector2 = griff - $Schulter.global_position
+	var ziel_winkel: float = zur_hand.angle() + PI / 2.0 + deg_to_rad(schwenk_extra)
+	var schwenk: Tween = create_tween()
+	schwenk.tween_property($Schulter, "rotation", ziel_winkel, schwenk_dauer)
+	schwenk.parallel().tween_property(faden, "global_position", griff, schwenk_dauer)
+	schwenk.tween_callback(in_der_hand)
+
+
+# Der Draht steckt in der Hand: Ab jetzt ist die Hand der Drehpunkt, und der Draht haengt am Forscher.
+func in_der_hand() -> void:
+	haenger.drehpunkt_setzen(haenger.get_node("Inhalt").global_position)
+	erste_nadel.anker = haenger
+	sequenz_fertig()
 
 
 func sequenz_fertig() -> void:
 	spielstart.emit(erste_nadel)
 
 
-# Wird von spiel.gd gerufen, wenn das Spiel beginnt: Die Figur steht gerade, ihr Arm mit der Kanone verschwindet.
-# An seiner Stelle sieht man ab jetzt die Kanone des Spiels.
+# Wird von spiel.gd gerufen, wenn das Spiel beginnt: Ihr Arm mit der Kanone verschwindet, sie pendelt nicht mehr mit.
+# An ihrer Stelle sieht man ab jetzt die Kanone des Spiels und den haengenden Forscher.
 func ausschalten() -> void:
 	aktiv = false
-	rotation = 0.0
+	folgt = false
+	transform = start_lage
 	$Schulter.visible = false

@@ -87,6 +87,12 @@
 [ext_resource type="Texture2D" path="res://assets/forscher/stehen/warten-kopf-1.png" id="wa_kopf1"]
 [ext_resource type="Texture2D" path="res://assets/forscher/stehen/warten-kopf-2.png" id="wa_kopf2"]
 [ext_resource type="Script" path="res://skripte/warten.gd" id="warten_skript"]
+[ext_resource type="Script" path="res://skripte/haengen.gd" id="haengen_skript"]
+[ext_resource type="Texture2D" path="res://assets/forscher/haengen/haengen-kopf.png" id="hg_kopf"]
+[ext_resource type="Texture2D" path="res://assets/forscher/haengen/haengen-hose.png" id="hg_hose"]
+[ext_resource type="Texture2D" path="res://assets/forscher/haengen/haengen-daumen.png" id="hg_daumen"]
+[ext_resource type="Texture2D" path="res://assets/forscher/haengen/haengen-arm-links.png" id="hg_arm-links"]
+[ext_resource type="Texture2D" path="res://assets/forscher/haengen/haengen-oberkoerper.png" id="hg_oberkoerper"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_feuer"]
 animations = [{
@@ -514,12 +520,47 @@ sprite_frames = SubResource("SpriteFrames_aufstehen")
 animation = &"aufstehen"
 frame_progress = 0.94876117
 
+[node name="Haenger" type="Node2D" parent="Kanone"]
+position = Vector2(135.1, 51.5)
+script = ExtResource("haengen_skript")
+
+[node name="Inhalt" type="Node2D" parent="Kanone/Haenger"]
+scale = Vector2(0.935, 0.935)
+
+[node name="Kopf" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
+position = Vector2(-211, -42)
+texture = ExtResource("hg_kopf")
+centered = false
+
+[node name="Hose" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
+position = Vector2(-211, -42)
+texture = ExtResource("hg_hose")
+centered = false
+
+[node name="Daumen" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
+position = Vector2(-211, -42)
+texture = ExtResource("hg_daumen")
+centered = false
+
+[node name="ArmLinks" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
+z_index = 1
+position = Vector2(-211, -42)
+texture = ExtResource("hg_arm-links")
+centered = false
+
+[node name="Oberkoerper" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
+z_index = 1
+position = Vector2(-211, -42)
+texture = ExtResource("hg_oberkoerper")
+centered = false
+
 [node name="RechteHand" type="ColorRect" parent="Kanone" unique_id=2088670462]
+z_index = 2
 offset_left = 560.0
 offset_top = -700.0
 offset_right = 680.0
 offset_bottom = -620.0
-color = Color(0.6, 0.6, 0.6, 1)
+color = Color(0.6, 0.6, 0.6, 0)
 
 [node name="Leiste" type="ProgressBar" parent="Kanone/RechteHand" unique_id=552392177]
 layout_mode = 0
@@ -573,7 +614,8 @@ stream = ExtResource("10_schuss")
 volume_db = -12.0
 bus = &"Effekte"
 
-[node name="Figur" type="Node2D" parent="Kanone" unique_id=319349142 node_paths=PackedStringArray("kanone", "erzeuger", "joystick")]
+[node name="Figur" type="Node2D" parent="Kanone" unique_id=319349142 node_paths=PackedStringArray("kanone", "erzeuger", "joystick", "haenger")]
+haenger = NodePath("../Haenger")
 position = Vector2(130, 1212)
 script = ExtResource("25_totale")
 nadel_szene = ExtResource("2_nadel")
@@ -630,6 +672,7 @@ schulter = NodePath("../Schulter")
 position = Vector2(-123.9, -526.6)
 
 [node name="Schulter" type="Node2D" parent="Kanone/Figur" unique_id=542994082]
+z_index = 2
 position = Vector2(-123.9, -526.6)
 
 [node name="Armbild" type="Node2D" parent="Kanone/Figur/Schulter" unique_id=486998110]

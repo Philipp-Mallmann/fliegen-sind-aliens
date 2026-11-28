@@ -7624,3 +7624,115 @@ Jetzt ist `Spitze` ein **Kind** von `Bild`, auf `Vector2(1.5, -648)`. Das ist di
 Im normalen Spiel (`Kanone/Arm/Muendung`) stimmt die Muendung noch: nachgerechnet gegen `kanone-hinten.png`, Abweichung unter 0,2 Pixel.
 
 Angeschaut: Schnellcheck PASS, Verify PASS, Probe: roter Punkt an `Spitze` in der Totale sitzt genau an der Laufspitze.
+
+## Abheben: Der Forscher haengt am Draht und pendelt (`skripte/haengen.gd`, `skripte/start_totale.gd`, `skripte/spiel.gd`, `szenen/spiel.tscn`, 28.11.2026)
+
+Dein Wunsch: Beim ersten Treffer wird der Forscher zu deinem Abheben-Bild (Bild 7 mit der Hand). Der Kanonenarm schwenkt mit Draht und Fliege nach rechts, der Draht gleitet zwischen Daumen und Finger und bleibt dort. Dann faehrt die Kamera nach oben und zoomt heran: Hand und Unterarm landen oben rechts, die Kanone kommt unten in die Mitte. Ab dem Fang pendelt der ganze Koerper leicht, 3 Grad, erst um die Kanonenspitze, dann um die Hand.
+
+### Die Bilder (`assets/forscher/haengen/`)
+
+Fuenf Ebenen aus deiner Krita-Datei `forscher-abheben-hand.kra`, genau deine Pixel, alle mit demselben Ausschnitt: `haengen-kopf`, `-hose`, `-daumen`, `-arm-links`, `-oberkoerper`. Der Griffpunkt zwischen Daumen und Fingern liegt in deiner Datei bei (768, 712). Von dort aus sind die Bilder um (-211, -42) verschoben, damit der Griff genau auf dem Nullpunkt liegt.
+
+### `szenen/spiel.tscn` - neu: `Kanone/Haenger`
+
+- `Haenger` (Node2D, Skript `haengen.gd`): Er ist der Drehpunkt. In der Totale steht er bei (135.1, 51.5), das ist die Stelle deiner Hand ueber dem stehenden Forscher.
+- `Haenger/Inhalt` (Node2D, `scale` 0.935, die Spielgroesse deiner Fotos): Darin die fuenf Bilder, `centered = false`, `position` (-211, -42).
+- Die Reihenfolge ist wie in deiner Datei: Kopf, Hose, Daumen hinten, davor Arm links und Oberkoerper. Der Draht ist der Faden der Nadel. Er wird spaeter in der Liste gezeichnet (im Faecher), liegt also vor Kopf, Hose und Daumen. `ArmLinks` und `Oberkoerper` haben `z_index = 1`: Damit liegen sie vor dem Draht. So laeuft der Draht vor dem Daumen und hinter den Fingern.
+- `RechteHand` (das graue Kaestchen): Farbe jetzt durchsichtig (`Color(0.6, 0.6, 0.6, 0)`), `z_index = 2`. Die Leiste und die Stichstelle darauf bleiben und liegen vor dem Forscher.
+- `Figur/Schulter`: `z_index = 2`, der Kanonenarm liegt ueber allem, wie bei dir in Krita.
+- `Figur`: kennt den Haenger (`haenger = NodePath("../Haenger")`).
+
+### `skripte/haengen.gd` - neu
+
+```gdscript
+@export var groesster_winkel: float = 3.0
+@export var schwingdauer: float = 1.6
+@export var daempfung: float = 0.8
+@export var mitnahme: float = 0.004
+```
+Hoechstens 3 Grad zur Seite. Eine ganze Schwingung dauert 1,6 Sekunden. `daempfung` laesst das Schwingen abklingen. `mitnahme` sagt, wie stark eine Bewegung des Drehpunkts den Koerper anstoesst.
+
+```gdscript
+var winkel: float = 0.0
+var winkeltempo: float = 0.0
+var letzter_ort: Vector2 = Vector2.ZERO
+var letztes_tempo: float = 0.0
+var pendelt: bool = false
+```
+Der Winkel und wie schnell er sich aendert (im Bogenmass), wo der Drehpunkt im letzten Bild war und wie schnell er da war. `pendelt` ist erst nach dem Treffer `true`.
+
+```gdscript
+func _process(delta: float) -> void:
+	if not pendelt or delta <= 0.0:
+		letzter_ort = global_position
+		return
+	var tempo: float = (global_position.x - letzter_ort.x) / delta
+	var ruck: float = (tempo - letztes_tempo) / delta
+	letzter_ort = global_position
+	letztes_tempo = tempo
+```
+In jedem Bild: Wie schnell bewegt sich der Drehpunkt zur Seite (Weg durch Zeit), und wie stark aendert sich dieses Tempo (`ruck`, die Beschleunigung). Faehrt die Kanone los, ist `ruck` gross.
+
+```gdscript
+	var eigen: float = TAU / schwingdauer
+	var beschleunigung: float = -eigen * eigen * winkel - daempfung * winkeltempo - ruck * mitnahme
+	winkeltempo += beschleunigung * delta
+	winkel += winkeltempo * delta
+```
+Das ist ein Pendel. Drei Teile ziehen am Winkel: Er will zur Mitte zurueck (je weiter weg, desto staerker, so entsteht die Schwingung mit 1,6 Sekunden), er klingt ab (`daempfung`), und beschleunigt der Drehpunkt zur Seite, bleibt der Koerper zurueck (`- ruck * mitnahme`). Danach werden Tempo und Winkel um ein Bild weitergerechnet.
+
+```gdscript
+	var grenze: float = deg_to_rad(groesster_winkel)
+	if absf(winkel) > grenze:
+		winkel = clampf(winkel, -grenze, grenze)
+		winkeltempo = 0.0
+	rotation = winkel
+```
+Mehr als 3 Grad gibt es nicht: Am Rand bleibt der Winkel stehen und schwingt von dort zurueck. Dann wird der Knoten gedreht, und mit ihm alles darin.
+
+```gdscript
+func anstossen() -> void:
+	pendelt = true
+	letzter_ort = global_position
+	letztes_tempo = 0.0
+	winkeltempo = deg_to_rad(groesster_winkel) * TAU / schwingdauer
+```
+Das Pendeln beginnt mit einem Schwung, der gerade bis 3 Grad reicht.
+
+```gdscript
+func drehpunkt_setzen(neuer_ort: Vector2) -> void:
+	var vorher: Transform2D = $Inhalt.global_transform
+	global_position = neuer_ort
+	$Inhalt.global_transform = vorher
+	letzter_ort = global_position
+```
+Verlegt den Drehpunkt, ohne dass der Forscher springt: Erst wird gemerkt, wo der Inhalt auf dem Bildschirm ist (`global_transform`: Ort, Drehung, Groesse). Dann wandert der Drehpunkt, und der Inhalt bekommt genau seinen alten Platz zurueck. Ab dann dreht er sich um den neuen Punkt.
+
+### `skripte/start_totale.gd` - geaendert
+
+- Neu: `haenger`, `schwenk_dauer` (0,45 s), `schwenk_extra` (10 Grad), `folgt`, `relativ`, `start_lage`.
+- `_ready` merkt sich `start_lage = transform`, wo die Figur am Anfang steht.
+- `_process`: Ist `folgt` an, setzt sie sich in jedem Bild auf `haenger.get_node("Inhalt").global_transform * relativ`. Heisst: Die Figur (mit dem Kanonenarm) sitzt immer gleich zum haengenden Forscher und pendelt so mit ihm.
+- `erster_treffer`: wie vorher (abheben, gerade stellen), am Ende aber `anhaengen` statt `sequenz_fertig`.
+- `anhaengen()`: blendet den stehenden Koerper und Kopf aus und den Haenger ein. `relativ` misst, wo die Figur zum Forscher sitzt. Der Drehpunkt kommt an die Kanonenspitze (dort haengt der Draht), das Pendeln beginnt. Der Draht haengt jetzt am `Fadenpunkt`, der an der Spitze startet. Dann ein Tween: Der Arm dreht in 0,45 Sekunden in Richtung Hand und 10 Grad weiter nach rechts, gleichzeitig wandert der Fadenpunkt in die Hand.
+- `in_der_hand()`: Der Drehpunkt kommt in die Hand, der Draht haengt ab jetzt am Haenger selbst (dessen Nullpunkt ist der Griff). Dann `sequenz_fertig`.
+- `ausschalten()`: Die Figur folgt nicht mehr und steht wieder an ihrem Anfangsplatz.
+
+### `skripte/spiel.gd` - geaendert
+
+- Neu: `hand_groesse = 0.7`, im Flug ist der Forscher etwas kleiner als in der Totale (0,935).
+- `_ready`: Der Haenger ist am Anfang unsichtbar.
+- `losgehen()` ruft `hand_in_die_ecke()`: Der Haenger gleitet in `steigdauer` (0,8 Sekunden, so lange wie die Kamerafahrt) an den `Griff` oben rechts, und `Inhalt` wird dabei auf 0,7 verkleinert.
+- `erster_fang`: Die Zeile, die den Draht an die Muendung haengte, ist weg. Er steckt schon in der Hand.
+- `zwischenfall`: Waehrend der fallende Forscher von unten kommt, ist der Haenger ausgeblendet, danach wieder da. Sonst saehe man ihn zweimal.
+- `fallen`: Haenger aus. `aufstehen_abbrechen`: Haenger wieder an, wenn das Spiel schon laeuft.
+
+### So wurde es angeschaut
+
+Schnellcheck PASS fuer alle drei Skripte, Verify PASS. Probe mit einer Nadel, die schon steckt, dann `erster_treffer`: nach 0,4 s haengt der Forscher und pendelt um die Kanonenspitze, der Draht wandert. Nach 0,8 s steckt er in der Hand. Nach 1,7 s ist die Hand oben rechts am Griff (620, -700), der Draht haengt am Griff. Pendeln gemessen: in 4 Sekunden hoechstens 2,2 Grad, 5 Nulldurchgaenge (also etwa 1,6 s je Schwingung). Kanone 400 Pixel zur Seite gefahren: Ausschlag 3,0 Grad. Nicht angeschaut: wie es sich anfuehlt, und am Handy.
+
+### Drei Fragen zur Selbstkontrolle
+
+1. Warum springt der Forscher nicht, wenn `drehpunkt_setzen` den Drehpunkt verlegt?
+2. Was bewirkt `- ruck * mitnahme`, wenn die Kanone nach rechts losfaehrt?
+3. Warum liegt der Draht hinter den Fingern, aber vor dem Daumen?

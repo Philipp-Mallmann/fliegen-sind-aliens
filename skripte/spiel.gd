@@ -26,6 +26,9 @@ extends Node2D
 @export var koerper_einflug: float = 1600.0
 # Welcher Anteil des Absturzes fuer das Hereinkommen gebraucht wird. Genauso lang dauert am Ende das Hinausgehen.
 @export var koerper_anteil: float = 0.3
+# Wie gross der haengende Forscher im Flug ist. In der Totale ist er 0.935 gross, oben in der Ecke etwas kleiner,
+# damit der Aermel nicht ganz unten in der Ecke endet.
+@export var hand_groesse: float = 0.7
 
 # Die Flugkraft aller Fliegen, die oben im Faecher haengen.
 var flugkraft: int = 0
@@ -57,6 +60,8 @@ func _ready() -> void:
 	$Kanone/RechteHand.visible = false
 	# Im Editor ist der Forscher sichtbar, damit man ihn hinziehen kann. Im Spiel erst beim Absturz.
 	$Kanone/Aufstehen.visible = false
+	# Der haengende Forscher erscheint erst beim ersten Treffer (start_totale.gd, anhaengen).
+	$Kanone/Haenger.visible = false
 	koerper_unten = $Kanone/Aufstehen.position.y
 	$Kanone.set_process(false)
 	$Hindernisse.set_process(false)
@@ -88,12 +93,26 @@ func losgehen() -> void:
 	$Kanone.set_process(true)
 	$Hindernisse.set_process(true)
 	$Musik.laut()
+	hand_in_die_ecke()
+
+
+# Waehrend die Kamera nach oben faehrt und heranzoomt, gleitet die Hand mit dem Forscher in die Ecke oben rechts
+# (an den Griff, wo die Faeden haengen) und wird dabei etwas kleiner. Der Koerper haengt darunter und verlaesst das Bild.
+func hand_in_die_ecke() -> void:
+	var haenger: Node2D = $Kanone/Haenger
+	haenger.visible = true
+	if not haenger.pendelt:
+		haenger.anstossen()
+	var hand: Tween = create_tween()
+	hand.set_parallel(true)
+	hand.tween_property(haenger, "position", $Kanone/Griff.position, steigdauer)
+	hand.tween_property(haenger.get_node("Inhalt"), "scale", Vector2.ONE * hand_groesse, steigdauer)
 
 
 # Wird von der Figur gerufen, wenn die Einstiegs-Sequenz nach dem ersten Treffer vorbei ist. Mit dabei: die Nadel mit der Fliege.
+# Ihr Draht steckt schon in der Hand des Forschers (start_totale.gd, in_der_hand).
 func erster_fang(nadel: Node2D) -> void:
 	losgehen()
-	nadel.anker = $Kanone/Arm/Muendung
 	$Kanone/Uebergabe.starten(nadel)
 
 
@@ -158,11 +177,14 @@ func zwischenfall(dauer: float) -> void:
 	koerper_zuruecksetzen()
 	koerper.visible = true
 	koerper.play("fallen")
+	# Waehrenddessen haengt niemand an der Hand, sonst saehe man den Forscher zweimal.
+	$Kanone/Haenger.visible = false
 	koerperfahrt = create_tween()
 	koerperfahrt.tween_property(koerper, "position:y", koerper_unten - koerper_einflug, dauer * koerper_anteil)
 	koerperfahrt.tween_interval(dauer * (1.0 - 2.0 * koerper_anteil))
 	koerperfahrt.tween_property(koerper, "position:y", koerper_unten, dauer * koerper_anteil)
 	koerperfahrt.tween_callback(koerper.hide)
+	koerperfahrt.tween_callback($Kanone/Haenger.show)
 
 
 # Haelt eine laufende Fahrt des Forschers an und stellt ihn wieder unten hin.
@@ -177,6 +199,7 @@ func fallen() -> void:
 	koerper_zuruecksetzen()
 	$Kanone/Arm.visible = false
 	$Kanone/Figur.visible = false
+	$Kanone/Haenger.visible = false
 	$Kanone/Aufstehen.visible = true
 	$Kanone/Aufstehen.play("fallen")
 
@@ -198,6 +221,9 @@ func aufstehen_abbrechen() -> void:
 	$Kanone/Figur.visible = true
 	$Kanone/Arm.visible = true
 	$Bedienung/Absturz.visible = false
+	# Nach dem ersten Treffer haengt der Forscher wieder an der Hand (beim ersten Fang macht das hand_in_die_ecke).
+	if not $Kanone/Figur.aktiv:
+		$Kanone/Haenger.visible = true
 
 
 func neustart() -> void:
