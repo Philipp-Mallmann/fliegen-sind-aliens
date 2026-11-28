@@ -8293,6 +8293,32 @@ Neue Werte: `kopf_rechts` (im Bild schaut der Kopf nach rechts; nur bei der Heus
 
 Angeschaut: Schnellcheck PASS (`fliege.gd`, `fliege_schnell.gd`, `fliege_heuschrecke.gd`, `fliege_teleport.gd`), Verify PASS. Probe ueber 600 Bilder mit wandernder Kanone: Die Bilder, in denen eine Fliege falsch herum schaut, sind die ersten 20 Pixel nach einer Wende (schnelle 24 von 573, Heuschrecke 3 von 169, scheue 0 von 182). Standbild aller sechs Arten nach links und nach rechts: Fluegel, Warnumriss, Ringe und Boss-Aura gehen mit.
 
+
+## Die zweite bewegte Wolke ersetzt die Wolken auf dem Kopf (`szenen/spiel.tscn`, 28.11.2026)
+
+Dein Wunsch: Die Wolken, die auf dem Kopf stehen, kommen raus. An ihre Stelle kommt die neue Wolke aus deinem zweiten Video, wieder ohne den blauen Hintergrund, einmal ab dem Anfang und einmal ab Sekunde 15. Sie darf etwa ein Drittel groesser sein als die alte.
+
+**Die Bilder (`assets/hintergrund/wolken/bewegt2/wolke-001.png` bis `wolke-150.png`).** Gleich gemacht wie bei der ersten Wolke: Das Video hat 30 Bilder pro Sekunde und dauert 30 Sekunden, genommen ist jedes sechste Bild, also 150 Bilder, 5 pro Sekunde, auf 320 Pixel Breite verkleinert. Das Blau ist herausgerechnet, die Farbe am Bildrand ist der Hintergrund. Diese Wolke ist im Video viel blasser als die erste, fast so hell wie der Himmel. Mit den Werten der ersten Wolke waere von ihr nur ein Fetzen uebrig geblieben. Darum zaehlt hier schon ein kleinerer Farbabstand zum Blau als Wolke (`--unten 10 --oben 45` statt 40 und 110). Dein Video ist unveraendert. Gemacht mit dem Kit-Befehl `media.py freistellen`, er gehoert nicht zum Spiel.
+
+**`szenen/wolke_bewegt2.tscn` - neu.** Eine Kopie von `wolke_bewegt.tscn`, nur zeigen die 150 Bilder auf den Ordner `bewegt2`, und der Knoten heisst `WolkeBewegt2`. Darum hat sie dieselben zwei Animationen: `default` faengt bei Bild 1 an, `mitte` bei Bild 76, also bei Sekunde 15.
+
+**`szenen/spiel.tscn`.** Oben bei den Dateien steht eine neue Zeile: `wolke_bewegt2.tscn` mit dem Kuerzel `w5`. Die zwei Kopf-Wolken sind umgebaut:
+
+| vorher | jetzt | Ort | Animation |
+|--------|-------|-----|-----------|
+| `MitteKopf` | `NeuMitte` | (1700, 420) | `mitte` (ab Sekunde 15) |
+| `AnfangKopf` | `NeuAnfang` | (2250, 1040) | `default` (ab Sekunde 0) |
+
+- `instance=ExtResource("w5")`: Der Knoten ist jetzt eine Kopie der neuen Wolkenszene statt der alten.
+- `rotation` ist weg: Die neue Wolke steht richtig herum.
+- `scale = Vector2(2.27, 2.27)` statt 1,7: 1,7 mal 4/3 ist 2,27, also ein Drittel groesser.
+
+Die Orte sind dieselben wie vorher, darum gilt die Rechnung von oben weiter: Es ist immer mindestens eine Wolke im Bild. `AnfangNormal` und `MitteNormal` bleiben die alte Wolke.
+
+Angeschaut: Verify PASS. Standbild auf der Pappe: alte Wolke bei 1,7 neben der neuen bei 2,27, einmal `default`, einmal `mitte`. Die neue ist deutlich groesser, ohne blauen Rand. An den blassesten Stellen schaut die Pappe durch, weil die Wolke dort im Video fast so blau ist wie der Himmel. Nicht angeschaut: im laufenden Spiel.
+
+**Fragen.** 1. Warum steht bei `NeuAnfang` keine Zeile `animation`? 2. Was muesste man aendern, damit die neue Wolke halb so gross ist wie die alte? 3. Warum braucht die blasse Wolke kleinere Werte beim Freistellen?
+
 ### Nachtrag: Beim Absturz verschwinden auch die Flugkraft-Leiste und das Seil an der Kanone (28.11.2026)
 
 **`skripte/spiel.gd`.** Ein- und Ausblenden steht jetzt an einer Stelle:

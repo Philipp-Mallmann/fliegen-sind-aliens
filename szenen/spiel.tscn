@@ -87,6 +87,7 @@
 [ext_resource type="Texture2D" uid="uid://bcw6nh30n8k82" path="res://assets/forscher/stehen/stehen-kopf-1.png" id="st_kopf1"]
 [ext_resource type="Texture2D" uid="uid://dvlg44owkko2j" path="res://assets/forscher/stehen/stehen-kopf-2.png" id="st_kopf2"]
 [ext_resource type="PackedScene" path="res://szenen/wolke_bewegt.tscn" id="w4"]
+[ext_resource type="PackedScene" path="res://szenen/wolke_bewegt2.tscn" id="w5"]
 [ext_resource type="Script" uid="uid://cvku0lkffoxw1" path="res://skripte/warten.gd" id="warten_skript"]
 [ext_resource type="Texture2D" uid="uid://by2y44q33bu4t" path="res://assets/forscher/stehen/warten-koerper-1.png" id="wa_koerper1"]
 [ext_resource type="Texture2D" uid="uid://bny3wgiwuwc0r" path="res://assets/forscher/stehen/warten-koerper-2.png" id="wa_koerper2"]
@@ -290,10 +291,9 @@ repeat_times = 4
 position = Vector2(300, 300)
 scale = Vector2(1.7, 1.7)
 
-[node name="MitteKopf" parent="Wolken" unique_id=1684295379 instance=ExtResource("w4")]
+[node name="NeuMitte" parent="Wolken" unique_id=1684295379 instance=ExtResource("w5")]
 position = Vector2(1700, 420)
-rotation = 3.1415927
-scale = Vector2(1.7, 1.7)
+scale = Vector2(2.27, 2.27)
 animation = &"mitte"
 autoplay = "mitte"
 
@@ -303,10 +303,9 @@ scale = Vector2(1.7, 1.7)
 animation = &"mitte"
 autoplay = "mitte"
 
-[node name="AnfangKopf" parent="Wolken" unique_id=2131816653 instance=ExtResource("w4")]
+[node name="NeuAnfang" parent="Wolken" unique_id=2131816653 instance=ExtResource("w5")]
 position = Vector2(2250, 1040)
-rotation = 3.1415927
-scale = Vector2(1.7, 1.7)
+scale = Vector2(2.27, 2.27)
 
 [node name="Boden" type="Parallax2D" parent="." unique_id=1568352170]
 scroll_offset = Vector2(0, 1212)
