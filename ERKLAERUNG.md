@@ -8292,3 +8292,37 @@ Neue Werte: `kopf_rechts` (im Bild schaut der Kopf nach rechts; nur bei der Heus
 `fliege_schnell.gd` und `fliege_heuschrecke.gd`: ihr eigenes Spiegeln (`bild_richten`, `gespiegelt`) ist raus. `fliege_teleport.gd`: Nach einem Sprung wird `blick_x` neu gesetzt, damit der Sprung selbst sie nicht umdreht.
 
 Angeschaut: Schnellcheck PASS (`fliege.gd`, `fliege_schnell.gd`, `fliege_heuschrecke.gd`, `fliege_teleport.gd`), Verify PASS. Probe ueber 600 Bilder mit wandernder Kanone: Die Bilder, in denen eine Fliege falsch herum schaut, sind die ersten 20 Pixel nach einer Wende (schnelle 24 von 573, Heuschrecke 3 von 169, scheue 0 von 182). Standbild aller sechs Arten nach links und nach rechts: Fluegel, Warnumriss, Ringe und Boss-Aura gehen mit.
+
+### Nachtrag: Beim Absturz verschwinden auch die Flugkraft-Leiste und das Seil an der Kanone (28.11.2026)
+
+**`skripte/spiel.gd`.** Ein- und Ausblenden steht jetzt an einer Stelle:
+
+```gdscript
+func kanone_zeigen(sichtbar: bool) -> void:
+	$Kanone/Arm.visible = sichtbar and kanone_da
+	$Kanone/RechteHand/Leiste.visible = sichtbar
+	for nadel in get_tree().get_nodes_in_group("nadeln"):
+		if sichtbar or (nadel.anker != null and $Kanone/Arm.is_ancestor_of(nadel.anker)):
+			nadel.draht_zeigen(sichtbar)
+```
+Zeile 1: Die Kanone ist nur zu sehen, wenn `sichtbar` **und** `kanone_da` stimmen. Zeile 2: die Flugkraft-Leiste. Dann geht es durch alle Nadeln (Gruppe `nadeln`). Beim Ausblenden trifft es nur die, deren Draht an der Kanone haengt: Ihr `anker` (die Muendung) liegt im Knoten `Arm`, das prueft `is_ancestor_of` ("ist Arm ein Vorfahr des Ankers?"). Beim Einblenden bekommen alle ihren Draht zurueck. Das schadet nicht, die anderen waren ja sichtbar.
+
+Aufgerufen wird `kanone_zeigen(false)` am Anfang von `zwischenfall` und `fallen`, `kanone_zeigen(true)` in `zwischenfall_ende` und `aufstehen_abbrechen`. Dort standen vorher die einzelnen Zeilen `$Kanone/Arm.visible = ...`.
+
+**`skripte/nadel.gd`.**
+
+```gdscript
+var draht_sichtbar: bool = true
+
+func draht_zeigen(sichtbar: bool) -> void:
+	draht_sichtbar = sichtbar
+	$Faden.visible = sichtbar
+	$Rest.visible = sichtbar
+	for stueck in vorn_stuecke:
+		stueck.visible = sichtbar
+```
+Der Draht besteht aus drei Teilen: dem Faden, dem Seilende (`Rest`) und den kurzen Stuecken vor den Fliegen. Alle drei werden aus- oder eingeblendet. Gerechnet wird der Draht weiter, darum sitzt er beim Einblenden gleich richtig. `draht_sichtbar` merkt sich den Zustand: Ein kurzes Stueck, das erst waehrend des Absturzes neu entsteht, bekommt ihn mit (`neues.visible = draht_sichtbar`).
+
+**So wurde es angeschaut.** Schnellcheck PASS (`spiel.gd`, `nadel.gd`), Verify PASS. Probe: Nadel an der Kanone, Uebergabe gestartet, 0,15 Sekunden spaeter Absturz um 3. Waehrend der Hinfahrt: Kanone, Leiste und Faden sichtbar. 0,05 Sekunden nach Absturzbeginn: alle drei unsichtbar, der Faden haengt noch an der Muendung. 1,5 Sekunden spaeter: alle wieder sichtbar, der Faden haengt jetzt am Griff der Hand. Nicht angeschaut: wie es in Bewegung wirkt.
+
+**Fragen.** 1. Warum blendet `kanone_zeigen(false)` nicht einfach alle Draehte aus? 2. Wozu ist `draht_sichtbar` da, wenn `$Faden.visible` es doch schon zeigt? 3. Was passiert, wenn man vor dem ersten Fang abstuerzt?

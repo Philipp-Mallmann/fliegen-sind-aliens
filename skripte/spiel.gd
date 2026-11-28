@@ -208,7 +208,7 @@ func zwischenfall(dauer: float) -> void:
 	koerper.play("fallen")
 	# Waehrenddessen haengt niemand an der Hand, sonst saehe man den Forscher zweimal.
 	$Kanone/Haenger.visible = false
-	$Kanone/Arm.visible = false
+	kanone_zeigen(false)
 	koerperfahrt = create_tween()
 	koerperfahrt.tween_property(koerper, "position:y", koerper_start - koerper_einflug, dauer * koerper_anteil)
 	koerperfahrt.tween_interval(dauer * (1.0 - 2.0 * koerper_anteil))
@@ -217,12 +217,23 @@ func zwischenfall(dauer: float) -> void:
 
 
 # Der fallende Forscher ist wieder unten aus dem Bild: Er verschwindet und steht wieder am Boden bereit, Hand und Kanone sind wieder da.
-# Die Kanone gibt es erst, wenn sie nach dem ersten Fang von unten gekommen ist (kanone_da).
 func zwischenfall_ende() -> void:
 	$Kanone/Aufstehen.visible = false
 	$Kanone/Aufstehen.position.y = koerper_unten
 	$Kanone/Haenger.visible = true
-	$Kanone/Arm.visible = kanone_da
+	kanone_zeigen(true)
+
+
+# Blendet beim Absturz alles aus, was zur Kanone und zur Hand gehoert, und danach wieder ein:
+# die Kanone, die Flugkraft-Leiste und den Draht jeder Nadel, der gerade an der Kanone haengt.
+# Die Kanone gibt es erst, wenn sie nach dem ersten Fang von unten gekommen ist (kanone_da).
+func kanone_zeigen(sichtbar: bool) -> void:
+	$Kanone/Arm.visible = sichtbar and kanone_da
+	$Kanone/RechteHand/Leiste.visible = sichtbar
+	for nadel in get_tree().get_nodes_in_group("nadeln"):
+		# Einblenden: alle. Ausblenden: nur die, deren Draht an der Kanone festhaengt (Anker im Knoten Arm).
+		if sichtbar or (nadel.anker != null and $Kanone/Arm.is_ancestor_of(nadel.anker)):
+			nadel.draht_zeigen(sichtbar)
 
 
 # Haelt eine laufende Fahrt des Forschers an und stellt ihn wieder unten hin.
@@ -235,7 +246,7 @@ func koerper_zuruecksetzen() -> void:
 # Der Absturz bis auf den Boden: Statt Kanone und Figur faellt der Forscher, bis er aufschlaegt.
 func fallen() -> void:
 	koerper_zuruecksetzen()
-	$Kanone/Arm.visible = false
+	kanone_zeigen(false)
 	$Kanone/Figur.visible = false
 	$Kanone/Haenger.visible = false
 	$Kanone/Aufstehen.visible = true
@@ -257,8 +268,7 @@ func aufstehen_abbrechen() -> void:
 	$Kanone/Aufstehen.stop()
 	$Kanone/Aufstehen.visible = false
 	$Kanone/Figur.visible = true
-	# Die Kanone gibt es erst, wenn sie nach dem ersten Fang von unten gekommen ist.
-	$Kanone/Arm.visible = kanone_da
+	kanone_zeigen(true)
 	$Bedienung/Absturz.visible = false
 	# Nach dem ersten Treffer haengt der Forscher wieder an der Hand (beim ersten Fang macht das hand_in_die_ecke).
 	if not $Kanone/Figur.aktiv:

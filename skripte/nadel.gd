@@ -51,6 +51,8 @@ var aufgespiesste: Array[Node2D] = []
 var halbe_groessen: Array[Vector2] = []
 # Die kurzen Drahtstuecke vor den aelteren Fliegen, eines je Fliege.
 var vorn_stuecke: Array[Line2D] = []
+# false heisst: Der Draht ist gerade ausgeblendet (beim Absturz, wenn er an der Kanone haengt, siehe draht_zeigen).
+var draht_sichtbar: bool = true
 # Der Punkt, an dem der Faden der Nadel festhaengt: erst die Muendung der Kanone, im Faecher die rechte Hand.
 var anker: Node2D = null
 # Die Hand, zu der der Schwung der Kanone den Draht hinueberdrueckt, und wie weit er schon dort ist:
@@ -206,6 +208,16 @@ func faden_loesen() -> void:
 	$Rest.clear_points()
 	for stueck in vorn_stuecke:
 		stueck.clear_points()
+
+
+# Blendet den ganzen Draht aus oder wieder ein: den Faden, das Seilende und die kurzen Stuecke vor den Fliegen.
+# Gerechnet wird er weiter, er wird nur nicht gezeichnet. Die Nadel und ihre Fliegen bleiben zu sehen.
+func draht_zeigen(sichtbar: bool) -> void:
+	draht_sichtbar = sichtbar
+	$Faden.visible = sichtbar
+	$Rest.visible = sichtbar
+	for stueck in vorn_stuecke:
+		stueck.visible = sichtbar
 
 
 # Der Bogen des Drahts in diesem Bild: der normale Durchhang, dazu der zusaetzliche Bogen.
@@ -373,6 +385,7 @@ func rand_abstand(halb: Vector2, richtung: Vector2) -> float:
 func vorn_spannen(nummer: int, oben: Vector2, unten: Vector2, bogen: Vector2, anfang: float, stueck_anteil: float) -> void:
 	while vorn_stuecke.size() <= nummer:
 		var neues: Line2D = draht_vorn_szene.instantiate()
+		neues.visible = draht_sichtbar
 		add_child(neues)
 		vorn_stuecke.append(neues)
 	var stueck: Line2D = vorn_stuecke[nummer]
