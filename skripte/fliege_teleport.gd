@@ -46,6 +46,9 @@ var eigene_tonhoehe: float = 1.0
 func losfliegen() -> void:
 	uebrig = spruenge
 	eigene_tonhoehe = $Summen.pitch_scale
+	# Die Ringe sofort einfaerben. Sonst sind sie weiss, bis sie das erste Mal frei fliegt:
+	# Eine Fliege, die gerade ins Bild hereinflieht, ruft fliegen() noch nicht auf.
+	leuchten_zeigen(ladung_jetzt())
 
 
 func fliegen(delta: float) -> void:

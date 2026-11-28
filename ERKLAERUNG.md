@@ -8157,3 +8157,21 @@ Vor `schwung_ab` ist `schwung` negativ: Der Bogen des Seils zeigt von der Hand w
 **So wurde es angeschaut.** Schnellcheck PASS fuer `uebergabe.gd`, Verify PASS. Derselbe Fang dreimal aufgenommen, mit (0,25 / 0,6), (0 / 0,6) und (0,45 / 0,75). In den Standbildern biegt sich das Seil bei 1 und 3 am Anfang nach links von der Hand weg, bei 2 bleibt es gerade, und bei allen kommt die Kurve zur Hand erst, wenn die Kanone fast dort ist. Welche Fassung sich richtig anfuehlt, entscheidest du.
 
 **Fragen.** 1. Was bedeutet ein negativer `schwung`? 2. Warum `rest * rest` und nicht einfach `rest`? 3. Was macht `tween_method` anders als `tween_property`?
+
+### Nachtrag: Aura um den Boss mit atmenden Loechern, Teleport-Ringe sofort farbig (28.11.2026)
+
+**Aura.** Neuer Knoten `Aura` in `szenen/fliege_boss.tscn`, ganz hinten. Sein Bild (`umriss/aura-boss-1.png` und `-2.png`, je Fluegelbild, mit Spur `Aura:texture` in `flattern`) ist eine weisse Flaeche um den Umriss, die nach aussen gleichmaessig durchsichtig wird: am Rand des Kaefers 92 Prozent deckend, 156 Pixel weiter 0. Gerechnet ausserhalb des Spielordners: fuer jeden Bildpunkt der Abstand zum Umriss (`distance_transform_edt` aus scipy), Deckkraft = 1 - Abstand / 156.
+
+Die Loecher macht `shader/aura.gdshader` (neu), als `ShaderMaterial` an `Aura`. Das Bild wird gedanklich in Felder geteilt, 60 Bildpunkte gross. In jedem Feld sitzt ein Loch an einer zufaelligen Stelle (`wuerfeln(nachbar)`), darum sieht es nicht nach Raster aus. Fuer jeden Bildpunkt wird das eigene Feld und die acht Nachbarfelder angesehen (die zwei `for`-Schleifen), weil ein Loch ueber den Rand seines Felds ragen kann.
+
+```glsl
+float atem = 0.5 + 0.5 * sin(TIME * tempo * (0.6 + zufall.x) + zufall.y * 6.28);
+float radius = loch_groesse * (0.3 + 0.7 * zufall.y) * atem;
+```
+`TIME` ist die Zeit seit dem Start. `sin` geht zwischen -1 und 1 hin und her; `0.5 + 0.5 * sin(...)` macht daraus 0 bis 1. Bei 0 ist das Loch ganz weg, bei 1 so gross wie es fuer dieses Loch geht. Jedes Loch hat sein eigenes Tempo (`0.6 + zufall.x`) und seinen eigenen Startpunkt (`zufall.y * 6.28`, 6,28 ist eine ganze Runde), darum atmen sie nicht im Gleichtakt. `smoothstep` macht den Lochrand weich. Ist der Bildpunkt in einem Loch, wird er durchsichtig (`farbe.a * offen`).
+
+Einstellbar im Inspector am Material von `Aura`: `feld` (Abstand der Loecher), `loch_groesse`, `tempo`.
+
+**Weisser Rand an der Teleport-Fliege** (dein Foto): Die Ringe bekamen ihre Farbe nur in `fliegen()`, also wenn die Fliege frei fliegt. Eine Fliege, die gerade ins Bild hereinflieht, kommt dort nicht hin (`fliege.gd` macht vorher `return`). Ihre Ringe blieben weiss und voll deckend; wurde sie so gefangen, blieb es so. Jetzt ruft `losfliegen()` gleich am Anfang `leuchten_zeigen(ladung_jetzt())` auf.
+
+Angeschaut: Schnellcheck PASS (`fliege_teleport.gd`), Verify PASS. Probe: Boss auf dunklem Grund, zwei Zeitpunkte 1,5 s auseinander: die Loecher sind verschieden gross, manche weg; hereinfliehende Teleport-Fliege hat sofort Ring 1 in Gruen (0.44, 0.69, 0.27, Deckkraft 0,55).

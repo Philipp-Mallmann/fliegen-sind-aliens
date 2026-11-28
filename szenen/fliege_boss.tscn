@@ -12,6 +12,12 @@
 [ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/gefahr-boss-2.png" id="g_2"]
 [ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/gefahr-rand-boss-1.png" id="gr_1"]
 [ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/gefahr-rand-boss-2.png" id="gr_2"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/aura-boss-1.png" id="au_1"]
+[ext_resource type="Texture2D" path="res://assets/fliegen/spiel/umriss/aura-boss-2.png" id="au_2"]
+[ext_resource type="Shader" path="res://shader/aura.gdshader" id="s_aura"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_aura"]
+shader = ExtResource("s_aura")
 
 [sub_resource type="Animation" id="Animation_flattern"]
 resource_name = "flattern"
@@ -77,6 +83,18 @@ tracks/4/keys = {
 "update": 1,
 "values": [ExtResource("gr_1"), ExtResource("gr_2")]
 }
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Aura:texture")
+tracks/5/interp = 0
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 0.03),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [ExtResource("au_1"), ExtResource("au_2")]
+}
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_fluegel"]
 _data = {
@@ -111,6 +129,12 @@ offset_right = 150.0
 offset_bottom = 150.0
 mouse_filter = 2
 color = Color(0.1, 0.1, 0.1, 1)
+
+[node name="Aura" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_aura")
+position = Vector2(0, -5)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("au_1")
 
 [node name="Gefahr" type="Sprite2D" parent="."]
 visible = false
