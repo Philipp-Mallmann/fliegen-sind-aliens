@@ -8175,3 +8175,41 @@ Einstellbar im Inspector am Material von `Aura`: `feld` (Abstand der Loecher), `
 **Weisser Rand an der Teleport-Fliege** (dein Foto): Die Ringe bekamen ihre Farbe nur in `fliegen()`, also wenn die Fliege frei fliegt. Eine Fliege, die gerade ins Bild hereinflieht, kommt dort nicht hin (`fliege.gd` macht vorher `return`). Ihre Ringe blieben weiss und voll deckend; wurde sie so gefangen, blieb es so. Jetzt ruft `losfliegen()` gleich am Anfang `leuchten_zeigen(ladung_jetzt())` auf.
 
 Angeschaut: Schnellcheck PASS (`fliege_teleport.gd`), Verify PASS. Probe: Boss auf dunklem Grund, zwei Zeitpunkte 1,5 s auseinander: die Loecher sind verschieden gross, manche weg; hereinfliehende Teleport-Fliege hat sofort Ring 1 in Gruen (0.44, 0.69, 0.27, Deckkraft 0,55).
+
+### Nachtrag: Die Kanone faehrt zum Mauszeiger (`skripte/kanone.gd`, 28.11.2026)
+
+Dein Wunsch: Im normalen Spiel soll man die Kanone auch lenken koennen, indem der Zeiger links oder rechts von der Mitte liegt. Sie faehrt dann in die Richtung des Zeigers. Tasten und Joystick bleiben wie sie sind.
+
+```gdscript
+@export var maus_totzone: float = 40.0
+@export var maus_voll: float = 300.0
+```
+Zwei neue Werte fuer den Inspector. `maus_totzone`: Liegt der Zeiger weniger als 40 Pixel neben der Mitte der Kanone, bleibt sie stehen. Ohne das wuerde sie unter dem Zeiger hin und her zittern. `maus_voll`: Ab 300 Pixeln Abstand faehrt sie mit vollem Tempo. Dazwischen langsamer, so kann man fein lenken.
+
+```gdscript
+var maus_lenkt: bool = false
+```
+Der Schalter: Lenkt gerade die Maus? Am Anfang nein. Sonst wuerde die Kanone bei jedem, der nur mit Tasten spielt, zum Zeiger laufen, der irgendwo im Fenster herumliegt.
+
+```gdscript
+func _input(ereignis: InputEvent) -> void:
+	if ereignis is InputEventMouseMotion:
+		maus_lenkt = true
+```
+Godot ruft `_input` bei jeder Eingabe auf und gibt sie als `ereignis` mit. `is InputEventMouseMotion` fragt: War das eine Mausbewegung? Wenn ja, lenkt ab jetzt die Maus. Ein Finger am Handy zaehlt nicht als Maus (in `project.godot` ist `emulate_mouse_from_touch` aus), dort aendert sich also nichts.
+
+```gdscript
+	if richtung != 0.0:
+		maus_lenkt = false
+	elif maus_lenkt:
+		var abstand: float = get_global_mouse_position().x - global_position.x
+		if absf(abstand) > maus_totzone:
+			richtung = abstand / maus_voll
+```
+Neu in `fahren`, gleich nach der Zeile mit Tasten und Joystick. Lenken die Tasten oder der Joystick (`richtung` ist nicht 0), gewinnen sie, und die Maus ist abgemeldet, bis man sie wieder bewegt. Sonst, wenn die Maus lenkt: `abstand` ist, wie viele Pixel der Zeiger rechts von der Kanone liegt (negativ heisst links). `get_global_mouse_position()` gibt die Stelle des Zeigers in der Spielwelt, `global_position` die der Kanone. `absf` macht aus einer negativen Zahl eine positive, so gilt die Totzone fuer beide Seiten. `abstand / maus_voll` ergibt bei 300 Pixeln genau 1 (volles Tempo), bei 150 Pixeln 0,5. Die Zeile danach (`clampf`, gab es schon) schneidet alles ueber 1 ab. Der Rest von `fahren` ist unveraendert: Anfahren, Bremsen und das Feuer an den Triebwerken gelten auch fuer die Maus.
+
+Weil die Kamera an der Kanone haengt, steht die Kanone immer in der Bildmitte. "Zeiger rechts von der Kanone" ist also dasselbe wie "Zeiger rechts von der Bildmitte".
+
+**So wurde es angeschaut.** Schnellcheck PASS fuer `kanone.gd`, Verify PASS. Probe im Fenster, je 1,5 Sekunden: Zeiger rechts: 453 Pixel nach rechts, volles Tempo 360. Zeiger links: 453 nach links. Zeiger knapp ueber der Totzone: 79 Pixel, Tempo 54. Taste rechts bei Zeiger links: 453 nach rechts, die Taste gewinnt. Taste los, Maus nicht bewegt: 0 Pixel. Ohne Mausbewegung am Anfang: 0. Gemessen in der Totale (Zoom 0,43), nicht im herangezoomten Spiel. Wie es sich anfuehlt und ob 40 und 300 passen, entscheidest du am Spiel.
+
+**Fragen.** 1. Wozu braucht es `maus_lenkt`, wenn man doch einfach immer den Zeiger nehmen koennte? 2. Was passiert ohne Totzone? 3. Warum wird durch `maus_voll` geteilt?

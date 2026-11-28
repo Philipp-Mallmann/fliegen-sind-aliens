@@ -12,6 +12,10 @@ extends Node2D
 @export var nachladezeit: float = 0.5
 # Der Joystick am Handy. Sein Ausschlag nach links oder rechts lenkt wie die Pfeiltasten.
 @export var joystick: Node2D
+# Lenken mit dem Mauszeiger: Liegt der Zeiger naeher als so viele Pixel neben der Mitte der Kanone, bleibt sie stehen.
+@export var maus_totzone: float = 40.0
+# Ab so vielen Pixeln neben der Kanone faehrt sie mit vollem Tempo zum Zeiger. Dazwischen entsprechend langsamer.
+@export var maus_voll: float = 300.0
 
 # Das Tempo, mit dem die Kanone gerade faehrt. Negativ heisst nach links.
 var aktuelles_tempo: float = 0.0
@@ -23,6 +27,14 @@ var gesperrt: bool = false
 var steigt: bool = false
 # Die Nadeln, die gerade noch Draht aus der Kanone ziehen: Sie fliegen und stecken noch nicht.
 var ziehende: Array[Node2D] = []
+# true heisst: Der Mauszeiger lenkt. Gilt ab einer Mausbewegung und endet, sobald Tasten oder Joystick lenken.
+var maus_lenkt: bool = false
+
+
+# Godot ruft _input bei jeder Eingabe. Hier zaehlt nur: Die Maus wurde bewegt.
+func _input(ereignis: InputEvent) -> void:
+	if ereignis is InputEventMouseMotion:
+		maus_lenkt = true
 
 
 func _process(delta: float) -> void:
@@ -34,6 +46,12 @@ func _process(delta: float) -> void:
 
 func fahren(delta: float) -> void:
 	var richtung: float = Input.get_axis("links", "rechts") + joystick.richtung.x
+	if richtung != 0.0:
+		maus_lenkt = false
+	elif maus_lenkt:
+		var abstand: float = get_global_mouse_position().x - global_position.x
+		if absf(abstand) > maus_totzone:
+			richtung = abstand / maus_voll
 	richtung = clampf(richtung, -1.0, 1.0)
 	feuer_zeigen(richtung)
 	var hoechstes: float = tempo
