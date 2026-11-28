@@ -20,17 +20,20 @@ signal spielstart(nadel: Node2D)
 @export var kippwinkel: float = 20.0
 # Wie schnell sie kippt, in Grad pro Sekunde.
 @export var kipptempo: float = 80.0
-# Wie lange die Figur nach dem ersten Treffer braucht, um den Arm gerade nach oben zu nehmen, in Sekunden.
-# Danach beginnt sofort das Spiel mit Steigen und Zoom.
+# Wie lange die Figur nach dem ersten Treffer braucht, um ein Stueck abzuheben, in Sekunden.
 @export var einstieg_dauer: float = 0.3
 # Wie hoch die Figur dabei schon abhebt, in Pixeln. 132 ist eine Kopfhoehe.
 @export var abheben: float = 132.0
 # Der Forscher, der am Draht haengt (haengen.gd). Er ersetzt beim ersten Treffer den stehenden Koerper.
 @export var haenger: Node2D
-# Wie lange der Kanonenarm braucht, um den Draht in die Hand zu schwenken, in Sekunden.
+# Wie lange der Kanonenarm braucht, um mit dem Draht zur Hand zu schwenken, in Sekunden.
 @export var schwenk_dauer: float = 0.45
-# Wie weit der Arm dabei ueber die Richtung zur Hand hinaus nach rechts geht, in Grad.
-@export var schwenk_extra: float = 10.0
+# Wie lange der Draht braucht, um von der Kanonenspitze in die Hand zu gleiten, in Sekunden.
+@export var gleit_dauer: float = 0.2
+# Wie lange der Forscher danach noch ganz zu sehen ist, ueber der Wiese haengend, bevor die Kamera heranfaehrt, in Sekunden.
+@export var halte_dauer: float = 0.7
+# Wie weit der Kanonenarm beim Heranfahren nach links unten wegschwenkt, in Grad.
+@export var wegschwenk_winkel: float = 160.0
 
 # true heisst: Man steuert die Figur. false ab dem ersten Treffer.
 var aktiv: bool = true
@@ -48,6 +51,12 @@ var folgt: bool = false
 var relativ: Transform2D = Transform2D.IDENTITY
 # Wo die Figur am Anfang steht. Dorthin kommt sie zurueck, wenn sie nicht mehr mitpendelt.
 var start_lage: Transform2D = Transform2D.IDENTITY
+# true heisst: Der Draht haengt noch an der Kanone oder gleitet gerade in die Hand. Dann wird sein Ende in jedem Bild neu gesetzt.
+var haelt_draht: bool = false
+# Wo das Drahtende gerade ist: 0 heisst an der Kanonenspitze, 1 heisst in der Hand, dazwischen unterwegs.
+var halt: float = 0.0
+# Der Ablauf nach dem ersten Treffer. null heisst: Es gab noch keinen.
+var ablauf: Tween = null
 
 
 # Setzt den Arm an den Koerper. Zwei Marker sagen, wo: Schulterpunkt liegt auf dem Koerper an der Schulter,
@@ -64,9 +73,21 @@ func _input(ereignis: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	# Der Ablauf wird hier von Hand weitergestellt und nicht von Godot selbst. Godot wuerde ihn erst nach allen
+	# _process-Funktionen weiterstellen: Dann waere der Arm schon weiter als der Draht, und man saehe eine Luecke.
+	if ablauf != null and ablauf.is_valid():
+		ablauf.custom_step(delta)
 	# Haengt der Forscher, sitzt die Figur (mit dem Kanonenarm) immer gleich zu ihm und pendelt so mit.
 	if folgt:
 		global_transform = haenger.get_node("Inhalt").global_transform * relativ
+	# Das Drahtende sitzt genau an der Kanonenspitze oder auf dem Weg von dort in die Hand.
+	# Dort, wo der Draht gehalten wird, ist auch der Punkt, um den der Forscher pendelt.
+	if haelt_draht:
+		var spitze: Vector2 = $Schulter/Armbild/Bild/Spitze.global_position
+		var hand: Vector2 = haenger.get_node("Inhalt").global_position
+		var ort: Vector2 = spitze.lerp(hand, halt)
+		kanone.get_node("Fadenpunkt").global_position = ort
+		haenger.drehpunkt_setzen(ort)
 	if not aktiv or wand_offen:
 		return
 	kippen(delta)
@@ -114,53 +135,68 @@ func erster_treffer(nadel: Node2D) -> void:
 	erste_nadel = nadel
 	kanone.steigt = true
 	erzeuger.schwarm_aufloesen()
-	var ablauf: Tween = create_tween()
-	ablauf.tween_property(kanone, "position:y", -abheben, einstieg_dauer)
-	ablauf.parallel().tween_property(self, "rotation_degrees", 0.0, einstieg_dauer)
-	ablauf.parallel().tween_property($Schulter, "rotation", 0.0, einstieg_dauer)
-	ablauf.parallel().tween_property(nadel, "rotation", 0.0, einstieg_dauer)
-	ablauf.tween_callback(anhaengen)
+	# Der Koerper steht ab jetzt gerade. Der Arm behaelt dabei seine Richtung.
+	$Schulter.rotation += rotation
+	rotation = 0.0
+	anhaengen()
 
 
-# Der stehende Koerper wird zum haengenden Forscher. Erst pendelt er um die Kanonenspitze, an der der Draht haengt.
-# Dann schwenkt der Arm nach rechts, der Draht gleitet zwischen Daumen und Finger, und ab da pendelt er um die Hand.
+# Der stehende Koerper wird zum haengenden Forscher, er hebt ein Stueck ab und pendelt.
+# Der Draht bleibt an der Kanonenspitze, waehrend der Arm zur Hand schwenkt. Dann gleitet er in die Hand.
+# Danach haengt der Forscher noch kurz ueber der Wiese, erst dann beginnt das Spiel.
 func anhaengen() -> void:
 	$Koerper.visible = false
 	$Gesicht.visible = false
 	haenger.visible = true
 	relativ = haenger.get_node("Inhalt").global_transform.affine_inverse() * global_transform
 	folgt = true
-	var spitze: Node2D = $Schulter/Armbild/Bild/Spitze
-	var griff: Vector2 = haenger.get_node("Inhalt").global_position
-	haenger.drehpunkt_setzen(spitze.global_position)
+	halt = 0.0
+	haelt_draht = true
+	erste_nadel.anker = kanone.get_node("Fadenpunkt")
 	haenger.anstossen()
-	# Der Draht haengt an einem Punkt, der von der Spitze in die Hand wandert.
-	var faden: Node2D = kanone.get_node("Fadenpunkt")
-	faden.global_position = spitze.global_position
-	erste_nadel.anker = faden
-	var zur_hand: Vector2 = griff - $Schulter.global_position
-	var ziel_winkel: float = zur_hand.angle() + PI / 2.0 + deg_to_rad(schwenk_extra)
-	var schwenk: Tween = create_tween()
-	schwenk.tween_property($Schulter, "rotation", ziel_winkel, schwenk_dauer)
-	schwenk.parallel().tween_property(faden, "global_position", griff, schwenk_dauer)
-	schwenk.tween_callback(in_der_hand)
+	# Die Richtung von der Schulter zur Hand, gemessen in der Figur. Die Figur pendelt mit, darum bleibt sie gleich.
+	var zur_hand: Vector2 = to_local(haenger.get_node("Inhalt").global_position) - $Schulter.position
+	var ziel_winkel: float = $Schulter.rotation + wrapf(zur_hand.angle() + PI / 2.0 - $Schulter.rotation, -PI, PI)
+	ablauf = create_tween()
+	ablauf.pause()
+	ablauf.tween_property($Schulter, "rotation", ziel_winkel, schwenk_dauer)
+	ablauf.parallel().tween_property(kanone, "position:y", -abheben, einstieg_dauer)
+	ablauf.parallel().tween_property(erste_nadel, "rotation", 0.0, einstieg_dauer)
+	ablauf.tween_property(self, "halt", 1.0, gleit_dauer)
+	ablauf.tween_callback(in_der_hand)
+	ablauf.tween_interval(halte_dauer)
+	ablauf.tween_callback(sequenz_fertig)
 
 
 # Der Draht steckt in der Hand: Ab jetzt ist die Hand der Drehpunkt, und der Draht haengt am Forscher.
 func in_der_hand() -> void:
+	haelt_draht = false
 	haenger.drehpunkt_setzen(haenger.get_node("Inhalt").global_position)
 	erste_nadel.anker = haenger
-	sequenz_fertig()
 
 
 func sequenz_fertig() -> void:
 	spielstart.emit(erste_nadel)
 
 
-# Wird von spiel.gd gerufen, wenn das Spiel beginnt: Ihr Arm mit der Kanone verschwindet, sie pendelt nicht mehr mit.
-# An ihrer Stelle sieht man ab jetzt die Kanone des Spiels und den haengenden Forscher.
+# Wird von spiel.gd gerufen, wenn die Kamera heranfaehrt: Der Arm mit der Kanone schwenkt im Bogen nach links unten
+# und verlaesst so das Bild. Die Figur pendelt dabei weiter mit dem Forscher mit.
+func wegschwenken(dauer: float) -> void:
+	aktiv = false
+	$Koerper.visible = false
+	$Gesicht.visible = false
+	if not folgt:
+		relativ = haenger.get_node("Inhalt").global_transform.affine_inverse() * global_transform
+		folgt = true
+	var schwenk: Tween = create_tween()
+	schwenk.tween_property($Schulter, "rotation", $Schulter.rotation - deg_to_rad(wegschwenk_winkel), dauer)
+
+
+# Wird von spiel.gd gerufen, wenn die Kamera angekommen ist: Der Arm mit der Kanone verschwindet, die Figur pendelt nicht mehr mit.
+# Ab jetzt sieht man die Kanone des Spiels und die Hand des haengenden Forschers.
 func ausschalten() -> void:
 	aktiv = false
 	folgt = false
+	haelt_draht = false
 	transform = start_lage
 	$Schulter.visible = false

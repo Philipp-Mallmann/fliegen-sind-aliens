@@ -26,9 +26,12 @@ extends Node2D
 @export var koerper_einflug: float = 1600.0
 # Welcher Anteil des Absturzes fuer das Hereinkommen gebraucht wird. Genauso lang dauert am Ende das Hinausgehen.
 @export var koerper_anteil: float = 0.3
-# Wie gross der haengende Forscher im Flug ist. In der Totale ist er 0.935 gross, oben in der Ecke etwas kleiner,
-# damit der Aermel nicht ganz unten in der Ecke endet.
-@export var hand_groesse: float = 0.7
+# Wie gross der haengende Forscher im Flug ist. In der Totale ist er 0.935 gross. Im Flug ist auf seinen Arm herangezoomt:
+# Bei 1.9 sieht man nur Hand, Unterarm und ein Stueck Aermel, der Kopf liegt knapp unter dem unteren Bildrand.
+@export var hand_groesse: float = 1.9
+# Wie lange die Kanone braucht, um von unten ins Bild zu kommen, in Sekunden, und wie tief sie davor steht, in Pixeln.
+@export var kanone_dauer: float = 0.4
+@export var kanone_tiefe: float = 450.0
 
 # Die Flugkraft aller Fliegen, die oben im Faecher haengen.
 var flugkraft: int = 0
@@ -46,6 +49,10 @@ var fliege_abstand: float = 0.0
 var koerper_unten: float = 0.0
 # Die Fahrt des fallenden Forschers ins Bild und wieder hinaus. null heisst: Es gab noch keine.
 var koerperfahrt: Tween = null
+# true heisst: Die Kanone des Spiels ist von unten ins Bild gekommen. Vorher ist sie unsichtbar.
+var kanone_da: bool = false
+# Die Fahrt der Hand in die Ecke oben rechts. null heisst: Es gab noch keine.
+var einzug: Tween = null
 
 
 func _ready() -> void:
@@ -70,6 +77,10 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	# Die Fahrt der Hand wird hier von Hand weitergestellt (wie der Ablauf in start_totale.gd): Dieses Skript
+	# ist als erstes dran, also stehen Hand und Nadel schon richtig, wenn die Nadel danach ihren Draht spannt.
+	if einzug != null and einzug.is_valid():
+		einzug.custom_step(delta)
 	if wackel_zeit > 0.0:
 		wackel_zeit -= delta
 		$Kanone/Kamera.position = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * wackel_staerke
@@ -85,35 +96,49 @@ func wackeln(staerke: float, dauer: float) -> void:
 	wackel_zeit = dauer
 
 
-# Das Ende der Totale: Die Figur gibt ab, ab jetzt faehrt und schiesst die Kanone, und die Hindernisse kommen.
-func losgehen() -> void:
-	$Kanone/Figur.ausschalten()
-	$Kanone/Arm.visible = true
+# Das Ende der Totale: Die Kamera faehrt nach oben und zoomt auf den Arm des haengenden Forschers.
+# Sein Kanonenarm schwenkt dabei weg. Erst wenn die Hand oben rechts sitzt, kommt die Kanone des Spiels von unten.
+# nadel ist die Nadel mit der ersten Fliege. null heisst: Es gibt keine (Testsprung).
+func losgehen(nadel: Node2D = null) -> void:
 	$Kanone/RechteHand.visible = true
-	$Kanone.set_process(true)
-	$Hindernisse.set_process(true)
 	$Musik.laut()
-	hand_in_die_ecke()
-
-
-# Waehrend die Kamera nach oben faehrt und heranzoomt, gleitet die Hand mit dem Forscher in die Ecke oben rechts
-# (an den Griff, wo die Faeden haengen) und wird dabei etwas kleiner. Der Koerper haengt darunter und verlaesst das Bild.
-func hand_in_die_ecke() -> void:
+	$Kanone/Figur.wegschwenken(steigdauer)
 	var haenger: Node2D = $Kanone/Haenger
 	haenger.visible = true
 	if not haenger.pendelt:
 		haenger.anstossen()
-	var hand: Tween = create_tween()
-	hand.set_parallel(true)
-	hand.tween_property(haenger, "position", $Kanone/Griff.position, steigdauer)
-	hand.tween_property(haenger.get_node("Inhalt"), "scale", Vector2.ONE * hand_groesse, steigdauer)
+	# Die Hand gleitet an den Griff oben rechts (dort haengen die Faeden), und der Forscher wird so gross,
+	# dass nur noch sein Arm im Bild ist. Das dauert so lange wie die Kamerafahrt.
+	einzug = create_tween()
+	einzug.pause()
+	einzug.tween_property(haenger, "position", $Kanone/Griff.position, steigdauer)
+	einzug.parallel().tween_property(haenger.get_node("Inhalt"), "scale", Vector2.ONE * hand_groesse, steigdauer)
+	if nadel != null:
+		$Kanone/Uebergabe.erste(nadel, einzug, steigdauer)
+	einzug.tween_callback(kanone_kommt)
+
+
+# Die Hand sitzt: Der Kanonenarm der Figur ist weg, die Kanone des Spiels kommt von unten in die Mitte.
+func kanone_kommt() -> void:
+	$Kanone/Figur.ausschalten()
+	kanone_da = true
+	$Kanone/Arm.position.y = kanone_tiefe
+	$Kanone/Arm.visible = true
+	var hoch: Tween = create_tween()
+	hoch.tween_property($Kanone/Arm, "position:y", 0.0, kanone_dauer)
+	hoch.tween_callback(spielen)
+
+
+# Die Kanone steht: Ab jetzt faehrt und schiesst sie, und die Hindernisse kommen.
+func spielen() -> void:
+	$Kanone.set_process(true)
+	$Hindernisse.set_process(true)
 
 
 # Wird von der Figur gerufen, wenn die Einstiegs-Sequenz nach dem ersten Treffer vorbei ist. Mit dabei: die Nadel mit der Fliege.
 # Ihr Draht steckt schon in der Hand des Forschers (start_totale.gd, in_der_hand).
 func erster_fang(nadel: Node2D) -> void:
-	losgehen()
-	$Kanone/Uebergabe.starten(nadel)
+	losgehen(nadel)
 
 
 func fliege_zaehlen(dazu: int) -> void:
@@ -219,7 +244,8 @@ func aufstehen_abbrechen() -> void:
 	$Kanone/Aufstehen.stop()
 	$Kanone/Aufstehen.visible = false
 	$Kanone/Figur.visible = true
-	$Kanone/Arm.visible = true
+	# Die Kanone gibt es erst, wenn sie nach dem ersten Fang von unten gekommen ist.
+	$Kanone/Arm.visible = kanone_da
 	$Bedienung/Absturz.visible = false
 	# Nach dem ersten Treffer haengt der Forscher wieder an der Hand (beim ersten Fang macht das hand_in_die_ecke).
 	if not $Kanone/Figur.aktiv:

@@ -34,6 +34,26 @@ func starten(nadel: Node2D) -> void:
 		uebergeben()
 
 
+# Der erste Fang aus der Totale: Der Draht steckt schon in der Hand des Forschers, die Kanone faehrt nicht hinueber.
+# Die Nadel gleitet nur an ihren Platz im Faecher. Das wird an die Fahrt der Hand (fahrt, aus spiel.gd) angehaengt,
+# damit Nadel, Hand und Draht im selben Bild zusammenpassen.
+func erste(nadel: Node2D, fahrt: Tween, fahrzeit: float) -> void:
+	nadel.reparent(faecher)
+	gefangen.emit(nadel.flugkraft())
+	get_tree().call_group("punktanzeige", "gefangen", nadel)
+	faecher.aufnehmen(nadel)
+	fahrt.parallel().tween_property(nadel, "position", faecher.platz(nadel), fahrzeit)
+	fahrt.parallel().tween_property(nadel, "scale", Vector2.ONE * faecher.groesse(), fahrzeit)
+	fahrt.tween_callback(erste_haengt.bind(nadel))
+
+
+# Die erste Nadel ist an ihrem Platz: Sie haengt jetzt wie alle anderen am Griff.
+func erste_haengt(nadel: Node2D) -> void:
+	if is_instance_valid(nadel):
+		nadel.haengt = true
+		nadel.anker = griff
+
+
 func uebergeben() -> void:
 	laeuft = true
 	while warteschlange.size() > 0:

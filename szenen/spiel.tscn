@@ -556,9 +556,9 @@ centered = false
 
 [node name="RechteHand" type="ColorRect" parent="Kanone" unique_id=2088670462]
 z_index = 2
-offset_left = 560.0
+offset_left = 460.0
 offset_top = -700.0
-offset_right = 680.0
+offset_right = 580.0
 offset_bottom = -620.0
 color = Color(0.6, 0.6, 0.6, 0)
 
@@ -575,19 +575,19 @@ show_percentage = false
 
 [node name="Stichstelle" type="ReferenceRect" parent="Kanone/RechteHand" unique_id=674756912]
 layout_mode = 0
-offset_left = -100.0
-offset_top = 150.0
-offset_right = -40.0
-offset_bottom = 350.0
+offset_left = 140.0
+offset_top = 170.0
+offset_right = 200.0
+offset_bottom = 370.0
 mouse_filter = 2
 border_color = Color(1, 0.2, 0.2, 1)
 border_width = 3.0
 
 [node name="Griff" type="Marker2D" parent="Kanone" unique_id=1784918379]
-position = Vector2(620, -700)
+position = Vector2(520, -700)
 
 [node name="Fadenpunkt" type="Marker2D" parent="Kanone" unique_id=441611]
-position = Vector2(620, -700)
+position = Vector2(520, -700)
 
 [node name="Faecher" type="Node2D" parent="Kanone" unique_id=1952737731]
 position = Vector2(0, -940)

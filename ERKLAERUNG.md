@@ -7736,3 +7736,64 @@ Schnellcheck PASS fuer alle drei Skripte, Verify PASS. Probe mit einer Nadel, di
 1. Warum springt der Forscher nicht, wenn `drehpunkt_setzen` den Drehpunkt verlegt?
 2. Was bewirkt `- ruck * mitnahme`, wenn die Kanone nach rechts losfaehrt?
 3. Warum liegt der Draht hinter den Fingern, aber vor dem Daumen?
+
+### Nachtrag: Abheben nach deiner Rueckmeldung (28.11.2026)
+
+Deine Punkte: keine Luecke im Draht, der Draht bleibt an der Kanone, bis sie bei der Hand ist. Der ganze Koerper bleibt laenger zu sehen, haengend ueber der Wiese mit einem Abstand unter den Fuessen. Dann zoomt es auf den Arm: Am Ende sieht man nur Hand, Unterarm und Aermel, keinen Kopf. Der Kanonenarm schwenkt im Bogen nach links unten aus dem Bild. Erst wenn die Hand sitzt, kommt die Kanone des Spiels von unten in die Mitte.
+
+**Warum es Luecken gab.** Godot ruft in jedem Bild erst alle `_process`-Funktionen und stellt erst danach die Tweens weiter. Die Nadel spannte ihren Draht also zum Arm von vorher, und danach bewegte der Tween den Arm noch ein Stueck. Dazu lief das Drahtende auf einer eigenen geraden Bahn statt an der Kanonenspitze.
+
+**`skripte/start_totale.gd`.**
+
+```gdscript
+@export var gleit_dauer: float = 0.2
+@export var halte_dauer: float = 0.7
+@export var wegschwenk_winkel: float = 160.0
+```
+Neu: wie lange der Draht von der Spitze in die Hand gleitet, wie lange der Forscher danach noch ganz zu sehen ist, und wie weit der Kanonenarm am Ende wegschwenkt. `schwenk_extra` ist weg.
+
+```gdscript
+var haelt_draht: bool = false
+var halt: float = 0.0
+var ablauf: Tween = null
+```
+`haelt_draht`: Der Draht haengt noch an der Kanone oder ist auf dem Weg in die Hand. `halt`: 0 heisst an der Spitze, 1 in der Hand. `ablauf` ist der Tween der Sequenz, jetzt als Variable des Skripts, damit `_process` ihn weiterstellen kann.
+
+```gdscript
+	if ablauf != null and ablauf.is_valid():
+		ablauf.custom_step(delta)
+```
+Neu, ganz oben in `_process`. Der Ablauf ist angehalten (`ablauf.pause()` beim Anlegen) und wird hier von Hand um die Zeit eines Bildes weitergestellt. So ist der Arm schon gedreht, bevor das Drahtende gesetzt wird.
+
+```gdscript
+	if haelt_draht:
+		var spitze: Vector2 = $Schulter/Armbild/Bild/Spitze.global_position
+		var hand: Vector2 = haenger.get_node("Inhalt").global_position
+		var ort: Vector2 = spitze.lerp(hand, halt)
+		kanone.get_node("Fadenpunkt").global_position = ort
+		haenger.drehpunkt_setzen(ort)
+```
+In jedem Bild: Das Drahtende sitzt zwischen Spitze und Hand, je nach `halt`. `lerp` mit 0 gibt genau die Spitze, mit 1 genau die Hand. Derselbe Ort ist der Drehpunkt des Pendelns: Der Forscher pendelt immer um die Stelle, an der der Draht gehalten wird, und der Punkt wandert mit dem Arm mit.
+
+`erster_treffer`: Der Koerper steht sofort gerade (`$Schulter.rotation += rotation`, dann `rotation = 0.0`: Der Arm behaelt seine Richtung), dann gleich `anhaengen()`.
+
+`anhaengen()`: Die Richtung zur Hand wird in der Figur gemessen (`to_local`), weil die Figur mitpendelt und die Richtung darin fest bleibt. `wrapf(..., -PI, PI)` nimmt den kuerzeren Drehweg. Der Ablauf: Arm zur Hand (0,45 s), gleichzeitig 132 Pixel abheben und die Nadel gerade stellen. Dann `halt` von 0 auf 1 (0,2 s): Der Draht gleitet in die Hand. Dann `in_der_hand`, dann 0,7 s warten, dann `sequenz_fertig`.
+
+`wegschwenken(dauer)`: neu. Der Kanonenarm dreht 160 Grad nach links (minus heisst gegen den Uhrzeigersinn), waehrend die Kamera heranfaehrt. `ausschalten()` kommt erst danach.
+
+**`skripte/uebergabe.gd`.** Neu `erste(nadel, fahrt, fahrzeit)`: Beim ersten Fang faehrt die Kanone nicht zur Hand, der Draht steckt ja schon darin. Die Nadel gleitet nur an ihren Platz im Faecher. Ihre zwei Bewegungen werden mit `fahrt.parallel()` an die Fahrt der Hand gehaengt. `erste_haengt(nadel)`: Am Ende haengt sie wie alle anderen am Griff. `.bind(nadel)` gibt der Funktion die Nadel mit.
+
+**`skripte/spiel.gd`.**
+
+- `hand_groesse = 1.9` (vorher 0.7): Der Forscher wird beim Heranfahren gross. Die Hand ist 720 Pixel ueber dem unteren Bildrand, der Kopf beginnt in deinem Bild 394 Pixel unter dem Griff: 394 x 1,9 = 749, also knapp unter dem Rand.
+- `kanone_dauer`, `kanone_tiefe`, `kanone_da`, `einzug`: neu.
+- `_process`: stellt `einzug` (die Fahrt der Hand) von Hand weiter, aus demselben Grund wie oben. `spiel.gd` ist das oberste Skript und darum als erstes dran.
+- `losgehen(nadel)`: zeigt die Kanone nicht mehr sofort. Der Kanonenarm schwenkt weg, die Hand gleitet an den Griff und wird gross, die erste Nadel gleitet in den Faecher, dann `kanone_kommt`.
+- `kanone_kommt()`: Die Kanone des Spiels startet 450 Pixel tiefer (unter dem Bildrand) und faehrt in 0,4 s hoch. Dann `spielen()`: Erst jetzt faehrt und schiesst sie, und die Hindernisse kommen.
+- `aufstehen_abbrechen`: zeigt die Kanone nur, wenn `kanone_da` stimmt.
+
+**`szenen/spiel.tscn`.** `Griff`, `Fadenpunkt` und `RechteHand` liegen 100 Pixel weiter links (Griff bei (520, -700)), sonst ragte die grosse Hand rechts aus dem Bild. Die `Stichstelle` liegt jetzt auf dem nackten Unterarm.
+
+**So wurde es angeschaut.** Schnellcheck PASS fuer `start_totale.gd`, `spiel.gd`, `uebergabe.gd`, Verify PASS. Probe mit einer Nadel, die in einer Fliege steckt, Arm schraeg nach links. Gemessen nach jedem gezeichneten Bild: Abstand zwischen Drahtende und der Stelle, an der es sitzen soll, hoechstens 0,00 Pixel in 3787 Bildern. Bilder: Bis 1,3 s haengt der ganze Forscher ueber der Wiese, die Fuesse in der Luft. Bis 2,35 s Zoom auf den Arm, der Kanonenarm verschwindet links. Am Ende nur Hand, Unterarm und Aermel rechts, die Kanone kommt von unten und laeuft ab 2,75 s. Nicht angeschaut: das Gefuehl beim Spielen.
+
+**Fragen.** 1. Warum wird der Ablauf mit `custom_step` von Hand weitergestellt? 2. Was liefert `spitze.lerp(hand, halt)` bei `halt` 0,5? 3. Warum sieht man bei Groesse 1,9 den Kopf nicht mehr?
