@@ -8126,3 +8126,34 @@ Ein Stein lebt dadurch etwa 1,3 Sekunden laenger (1900 Pixel bei 1500 Pixeln pro
 1. Warum wird durch den Zoom geteilt?
 2. Warum zaehlt die Oberkante des Steins und nicht die Unterkante?
 3. Woher kommt die Zahl 1900?
+
+### Nachtrag: Das Seil antwortet auf die Fahrt der Kanone (`skripte/uebergabe.gd`, 28.11.2026)
+
+Dein Hinweis: Das Seil bog sich schon zur Hand, bevor die Kanone richtig losgefahren war. Es soll am Anfang eher in die andere Richtung schwingen (zurueckbleiben) und erst kurz vor der Ankunft die Kurve zur Hand machen. Welche Staerke es wird, waehlst du aus drei Beispielen. Eingebaut ist vorerst Beispiel 1.
+
+```gdscript
+@export var gegen_schwung: float = 0.25
+@export var schwung_ab: float = 0.6
+```
+`gegen_schwung`: wie stark sich das Seil am Anfang von der Hand weg biegt (0 heisst gar nicht). `schwung_ab`: ab welchem Anteil der Hinfahrt es zur Hand hinueberschwingt (0,6 heisst: nach 60 Prozent).
+
+```gdscript
+		hin.parallel().tween_method(schwung_setzen.bind(nadel), 0.0, 1.0, dauer)
+```
+Statt `schwung` direkt von 0 auf 1 laufen zu lassen, ruft der Tween in jedem Bild `schwung_setzen` auf, mit einer Zahl von 0 (Anfang der Hinfahrt) bis 1 (Ende). `.bind(nadel)` gibt die Nadel als zweiten Wert mit.
+
+```gdscript
+func schwung_setzen(anteil: float, nadel: Node2D) -> void:
+	if not is_instance_valid(nadel):
+		return
+	if anteil < schwung_ab:
+		nadel.schwung = -gegen_schwung * sin(PI * anteil / schwung_ab)
+	else:
+		var rest: float = (anteil - schwung_ab) / (1.0 - schwung_ab)
+		nadel.schwung = rest * rest
+```
+Vor `schwung_ab` ist `schwung` negativ: Der Bogen des Seils zeigt von der Hand weg, das Seil bleibt hinter der fahrenden Kanone zurueck. `sin` laeuft dabei von 0 ueber 1 zurueck auf 0, das Zurueckbleiben waechst also und geht wieder weg. Danach laeuft `rest` von 0 auf 1, und `rest * rest` macht daraus eine Kurve, die langsam anfaengt und schnell endet: der Schwung zur Hand. Bei 1 laeuft das Seil genau durch die Hand.
+
+**So wurde es angeschaut.** Schnellcheck PASS fuer `uebergabe.gd`, Verify PASS. Derselbe Fang dreimal aufgenommen, mit (0,25 / 0,6), (0 / 0,6) und (0,45 / 0,75). In den Standbildern biegt sich das Seil bei 1 und 3 am Anfang nach links von der Hand weg, bei 2 bleibt es gerade, und bei allen kommt die Kurve zur Hand erst, wenn die Kanone fast dort ist. Welche Fassung sich richtig anfuehlt, entscheidest du.
+
+**Fragen.** 1. Was bedeutet ein negativer `schwung`? 2. Warum `rest * rest` und nicht einfach `rest`? 3. Was macht `tween_method` anders als `tween_property`?

@@ -21,6 +21,10 @@ signal gefangen(flugkraft: int)
 # Mit diesem Schwung wirft sie das Seil in die Hand.
 @export var wurf_hoehe: float = 110.0
 @export var wurf_winkel: float = 28.0
+# Wie das Seil auf die Fahrt der Kanone antwortet. Am Anfang bleibt es zurueck und biegt sich von der Hand weg:
+# gegen_schwung sagt, wie stark (0 heisst gar nicht). Erst ab diesem Anteil der Hinfahrt (schwung_ab) schwingt es zur Hand hinueber.
+@export var gegen_schwung: float = 0.25
+@export var schwung_ab: float = 0.6
 
 # true heisst: Gerade laeuft eine Uebergabe. Die Kanone faehrt und schiesst dann nicht.
 var laeuft: bool = false
@@ -99,10 +103,10 @@ func uebergeben() -> void:
 		hin.parallel().tween_property(nadel, "position:y", ziel.y, fahrzeit / 2.0).set_delay(verzoegerung)
 		hin.parallel().tween_property(nadel, "position:x", ziel.x, fahrzeit / 2.0).set_delay(verzoegerung + fahrzeit / 2.0)
 		hin.parallel().tween_property(nadel, "scale", Vector2.ONE * faecher.groesse(), fahrzeit).set_delay(verzoegerung)
-		# Der Schwung dieses Wurfs drueckt das Seil in einem Bogen hoch und hinueber: Wenn die Kanone ankommt, liegt es in der Hand.
-		# Es schwingt genauso an wie der Wurf selbst (EASE_IN).
+		# Das Seil antwortet auf die Fahrt: erst bleibt es zurueck, am Ende schwingt es in die Hand (schwung_setzen).
+		# tween_method ruft die Funktion in jedem Bild mit einer Zahl von 0 (Anfang der Hinfahrt) bis 1 (Ende) auf.
 		nadel.schwung_punkt = griff
-		hin.parallel().tween_property(nadel, "schwung", 1.0, dauer).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		hin.parallel().tween_method(schwung_setzen.bind(nadel), 0.0, 1.0, dauer)
 		await hin.finished
 		# Ein Hindernis kann die Nadel in der Zwischenzeit abgeschossen haben, dann gibt es sie nicht mehr.
 		if not is_instance_valid(nadel):
@@ -119,6 +123,20 @@ func uebergeben() -> void:
 		draht.tween_callback(vom_lauf_loesen.bind(nadel))
 		await zurueck.finished
 	laeuft = false
+
+
+# Stellt ein, wie weit das Seil zur Hand geschwungen ist. anteil: wie viel der Hinfahrt schon vorbei ist (0 bis 1).
+# Am Anfang faehrt die Kanone los, und das Seil bleibt zurueck: Es biegt sich von der Hand weg (schwung unter 0),
+# am staerksten in der Mitte dieser Zeit, dann wieder weniger (sin). Ab schwung_ab kommt der Wurf: Das Seil schwingt
+# zur Hand hinueber, erst langsam, dann schnell (rest * rest), bis es bei 1 genau durch die Hand laeuft.
+func schwung_setzen(anteil: float, nadel: Node2D) -> void:
+	if not is_instance_valid(nadel):
+		return
+	if anteil < schwung_ab:
+		nadel.schwung = -gegen_schwung * sin(PI * anteil / schwung_ab)
+	else:
+		var rest: float = (anteil - schwung_ab) / (1.0 - schwung_ab)
+		nadel.schwung = rest * rest
 
 
 # Der Draht sitzt fest in der Hand: Er loest sich vom Lauf, und sein Ende faellt als Seil unter die Hand (nadel.gd, rest_abwerfen).
