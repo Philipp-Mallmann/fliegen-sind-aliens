@@ -16,7 +16,7 @@ signal gefangen(flugkraft: int)
 # Der Punkt an der rechten Hand, an dem die Faeden der Fliegen im Faecher festhaengen.
 @export var griff: Node2D
 # Wie lange der Draht auf der Rueckfahrt noch am Lauf haengt, als Anteil der Rueckfahrt. Danach loest er sich.
-@export var halte_anteil: float = 0.4
+@export var halte_anteil: float = 0.25
 
 # true heisst: Gerade laeuft eine Uebergabe. Die Kanone faehrt und schiesst dann nicht.
 var laeuft: bool = false
@@ -92,9 +92,9 @@ func uebergeben() -> void:
 		hin.parallel().tween_property(nadel, "position:y", ziel.y, fahrzeit / 2.0).set_delay(verzoegerung)
 		hin.parallel().tween_property(nadel, "position:x", ziel.x, fahrzeit / 2.0).set_delay(verzoegerung + fahrzeit / 2.0)
 		hin.parallel().tween_property(nadel, "scale", Vector2.ONE * faecher.groesse(), fahrzeit).set_delay(verzoegerung)
-		# Der Schwung der Kanone drueckt den Draht in einem Bogen hoch und hinueber: Wenn sie ankommt, liegt er in der Hand.
+		# In der zweiten Haelfte der Hinfahrt nimmt die Kanone das Seil mit hoch zur Hand: Wenn sie ankommt, liegt es darin.
 		nadel.schwung_punkt = griff
-		hin.parallel().tween_property(nadel, "schwung", 1.0, dauer)
+		hin.parallel().tween_property(nadel, "schwung", 1.0, dauer / 2.0).set_delay(dauer / 2.0)
 		await hin.finished
 		# Ein Hindernis kann die Nadel in der Zwischenzeit abgeschossen haben, dann gibt es sie nicht mehr.
 		if not is_instance_valid(nadel):

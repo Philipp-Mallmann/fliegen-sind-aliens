@@ -67,6 +67,12 @@
 [ext_resource type="Texture2D" uid="uid://bi85mk6foe2vc" path="res://assets/forscher/aufstehen/fallen-5.png" id="f5_fallen"]
 [ext_resource type="Texture2D" uid="uid://usdfafd662mr" path="res://assets/kanone/feuer/feuer-6.png" id="f6"]
 [ext_resource type="Texture2D" uid="uid://bm53xrm5mflnu" path="res://assets/forscher/aufstehen/fallen-6.png" id="f6_fallen"]
+[ext_resource type="Script" uid="uid://cbctq735dmpm4" path="res://skripte/haengen.gd" id="haengen_skript"]
+[ext_resource type="Texture2D" uid="uid://c2m5oeu53ljas" path="res://assets/forscher/haengen/haengen-arm-links.png" id="hg_arm-links"]
+[ext_resource type="Texture2D" uid="uid://b7itjq7iiiao4" path="res://assets/forscher/haengen/haengen-daumen.png" id="hg_daumen"]
+[ext_resource type="Texture2D" uid="uid://cjxi35vrrrtec" path="res://assets/forscher/haengen/haengen-hose.png" id="hg_hose"]
+[ext_resource type="Texture2D" uid="uid://brwnvcnwhxykl" path="res://assets/forscher/haengen/haengen-kopf.png" id="hg_kopf"]
+[ext_resource type="Texture2D" uid="uid://c1lsyiem3hqg3" path="res://assets/forscher/haengen/haengen-oberkoerper.png" id="hg_oberkoerper"]
 [ext_resource type="Texture2D" uid="uid://dvpbbqtn603vf" path="res://assets/hintergrund/riffel/riffel-1-blau.png" id="p01"]
 [ext_resource type="Texture2D" uid="uid://bdl0imbn3qaak" path="res://assets/hintergrund/riffel/riffel-2-gelb.png" id="p02"]
 [ext_resource type="Texture2D" uid="uid://d2xht8namsnb4" path="res://assets/hintergrund/riffel/riffel-3-creme.png" id="p03"]
@@ -76,23 +82,17 @@
 [ext_resource type="Texture2D" uid="uid://cjotxxjwgfwxf" path="res://assets/hintergrund/riffel/riffel-7-nachtblau.png" id="p07"]
 [ext_resource type="Texture2D" uid="uid://b51qj80smql6e" path="res://assets/hintergrund/riffel/riffel-8-fast-schwarz.png" id="p08"]
 [ext_resource type="Script" uid="uid://daqucobhg7atx" path="res://skripte/punktanzeige.gd" id="punkt_skript"]
-[ext_resource type="Texture2D" uid="uid://vich0dp2gwq1" path="res://assets/forscher/stehen/stehen-koerper-1.png" id="st_koerper1"]
-[ext_resource type="Texture2D" uid="uid://b5gee2pb4unov" path="res://assets/forscher/stehen/stehen-koerper-2.png" id="st_koerper2"]
-[ext_resource type="Texture2D" uid="uid://q60aw86xs1u" path="res://assets/forscher/stehen/stehen-kopf-1.png" id="st_kopf1"]
-[ext_resource type="Texture2D" uid="uid://b30ytlpue5ym6" path="res://assets/forscher/stehen/stehen-kopf-2.png" id="st_kopf2"]
+[ext_resource type="Texture2D" uid="uid://dwvanf7r6nf75" path="res://assets/forscher/stehen/stehen-koerper-1.png" id="st_koerper1"]
+[ext_resource type="Texture2D" uid="uid://rg1qvxbtpwpi" path="res://assets/forscher/stehen/stehen-koerper-2.png" id="st_koerper2"]
+[ext_resource type="Texture2D" uid="uid://bcw6nh30n8k82" path="res://assets/forscher/stehen/stehen-kopf-1.png" id="st_kopf1"]
+[ext_resource type="Texture2D" uid="uid://dvlg44owkko2j" path="res://assets/forscher/stehen/stehen-kopf-2.png" id="st_kopf2"]
 [ext_resource type="PackedScene" path="res://szenen/wolke_bewegt.tscn" id="w4"]
+[ext_resource type="Script" uid="uid://cvku0lkffoxw1" path="res://skripte/warten.gd" id="warten_skript"]
+[ext_resource type="Texture2D" uid="uid://by2y44q33bu4t" path="res://assets/forscher/stehen/warten-koerper-1.png" id="wa_koerper1"]
+[ext_resource type="Texture2D" uid="uid://bny3wgiwuwc0r" path="res://assets/forscher/stehen/warten-koerper-2.png" id="wa_koerper2"]
+[ext_resource type="Texture2D" uid="uid://1vlwr37wby86" path="res://assets/forscher/stehen/warten-kopf-1.png" id="wa_kopf1"]
+[ext_resource type="Texture2D" uid="uid://dd76awy0adhhy" path="res://assets/forscher/stehen/warten-kopf-2.png" id="wa_kopf2"]
 [ext_resource type="PackedScene" path="res://szenen/zahl.tscn" id="zahl_szene"]
-[ext_resource type="Texture2D" path="res://assets/forscher/stehen/warten-koerper-1.png" id="wa_koerper1"]
-[ext_resource type="Texture2D" path="res://assets/forscher/stehen/warten-koerper-2.png" id="wa_koerper2"]
-[ext_resource type="Texture2D" path="res://assets/forscher/stehen/warten-kopf-1.png" id="wa_kopf1"]
-[ext_resource type="Texture2D" path="res://assets/forscher/stehen/warten-kopf-2.png" id="wa_kopf2"]
-[ext_resource type="Script" path="res://skripte/warten.gd" id="warten_skript"]
-[ext_resource type="Script" path="res://skripte/haengen.gd" id="haengen_skript"]
-[ext_resource type="Texture2D" path="res://assets/forscher/haengen/haengen-kopf.png" id="hg_kopf"]
-[ext_resource type="Texture2D" path="res://assets/forscher/haengen/haengen-hose.png" id="hg_hose"]
-[ext_resource type="Texture2D" path="res://assets/forscher/haengen/haengen-daumen.png" id="hg_daumen"]
-[ext_resource type="Texture2D" path="res://assets/forscher/haengen/haengen-arm-links.png" id="hg_arm-links"]
-[ext_resource type="Texture2D" path="res://assets/forscher/haengen/haengen-oberkoerper.png" id="hg_oberkoerper"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_feuer"]
 animations = [{
@@ -167,7 +167,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("a2")
 }],
-"loop": 1,
+"loop": 0,
 "name": &"aufstehen",
 "speed": 6.0
 }, {
@@ -204,7 +204,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("st_kopf2")
 }],
-"loop": true,
+"loop": 1,
 "name": &"stehen",
 "speed": 3.0
 }, {
@@ -215,7 +215,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("wa_kopf2")
 }],
-"loop": true,
+"loop": 1,
 "name": &"warten",
 "speed": 3.0
 }]
@@ -229,7 +229,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("st_koerper2")
 }],
-"loop": true,
+"loop": 1,
 "name": &"stehen",
 "speed": 3.0
 }, {
@@ -240,7 +240,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("wa_koerper2")
 }],
-"loop": true,
+"loop": 1,
 "name": &"warten",
 "speed": 3.0
 }]
@@ -520,35 +520,35 @@ sprite_frames = SubResource("SpriteFrames_aufstehen")
 animation = &"aufstehen"
 frame_progress = 0.94876117
 
-[node name="Haenger" type="Node2D" parent="Kanone"]
+[node name="Haenger" type="Node2D" parent="Kanone" unique_id=899854658]
 position = Vector2(142.6, 33.7)
 script = ExtResource("haengen_skript")
 
-[node name="Inhalt" type="Node2D" parent="Kanone/Haenger"]
+[node name="Inhalt" type="Node2D" parent="Kanone/Haenger" unique_id=483452417]
 scale = Vector2(0.935, 0.935)
 
-[node name="Kopf" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
+[node name="Kopf" type="Sprite2D" parent="Kanone/Haenger/Inhalt" unique_id=773398953]
 position = Vector2(-219, -23)
 texture = ExtResource("hg_kopf")
 centered = false
 
-[node name="Hose" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
+[node name="Hose" type="Sprite2D" parent="Kanone/Haenger/Inhalt" unique_id=2133157815]
 position = Vector2(-219, -23)
 texture = ExtResource("hg_hose")
 centered = false
 
-[node name="Daumen" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
+[node name="Daumen" type="Sprite2D" parent="Kanone/Haenger/Inhalt" unique_id=464150306]
 position = Vector2(-219, -23)
 texture = ExtResource("hg_daumen")
 centered = false
 
-[node name="ArmLinks" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
+[node name="ArmLinks" type="Sprite2D" parent="Kanone/Haenger/Inhalt" unique_id=2129564676]
 z_index = 1
 position = Vector2(-219, -23)
 texture = ExtResource("hg_arm-links")
 centered = false
 
-[node name="Oberkoerper" type="Sprite2D" parent="Kanone/Haenger/Inhalt"]
+[node name="Oberkoerper" type="Sprite2D" parent="Kanone/Haenger/Inhalt" unique_id=251808152]
 z_index = 1
 position = Vector2(-219, -23)
 texture = ExtResource("hg_oberkoerper")
@@ -611,13 +611,13 @@ volume_db = -12.0
 bus = &"Effekte"
 
 [node name="Figur" type="Node2D" parent="Kanone" unique_id=319349142 node_paths=PackedStringArray("kanone", "erzeuger", "joystick", "haenger")]
-haenger = NodePath("../Haenger")
 position = Vector2(130, 1212)
 script = ExtResource("25_totale")
 nadel_szene = ExtResource("2_nadel")
 kanone = NodePath("..")
 erzeuger = NodePath("../../Erzeuger")
 joystick = NodePath("../../Bedienung/Joystick")
+haenger = NodePath("../Haenger")
 
 [node name="Beine" type="ColorRect" parent="Kanone/Figur" unique_id=322886175]
 visible = false
@@ -658,7 +658,7 @@ animation = &"stehen"
 autoplay = "stehen"
 centered = false
 
-[node name="Warten" type="Node" parent="Kanone/Figur" node_paths=PackedStringArray("koerper", "gesicht", "schulter")]
+[node name="Warten" type="Node" parent="Kanone/Figur" unique_id=16114230 node_paths=PackedStringArray("koerper", "gesicht", "schulter")]
 script = ExtResource("warten_skript")
 koerper = NodePath("../Koerper")
 gesicht = NodePath("../Gesicht")

@@ -8002,3 +8002,46 @@ In `_process` wird `bogen_extra` in jedem Bild kleiner (`lerp` zu null) und das 
 **So wurde es angeschaut.** Schnellcheck PASS fuer `nadel.gd`, `start_totale.gd`, `uebergabe.gd`, Verify PASS. Probe mit festen 60 Bildern pro Sekunde. Luecken am Drahtende, am Bogen in der Hand und am Seilende: Abheben 0,00 Pixel, Fang im Flug 0,25 Pixel. Die Spitze des Seilendes haengt nach dem Loslassen etwa 470 Pixel unter der Hand und pendelt zwischen etwa 80 Pixel links und rechts aus. Zwei Fehler habe ich dabei gefunden und behoben: Erst fiel das Seil gar nicht (die zwei Listen waren dieselbe), und beim Abheben sass das Drahtende ein Bild lang noch an der Kanone (174 Pixel). Nicht angeschaut: wie Bogen und Seil in Bewegung wirken.
 
 **Fragen.** 1. Warum laeuft der Draht bei `schwung` 1 genau durch die Hand? 2. Wozu braucht das Seil die Punkte vom Schritt davor? 3. Warum wird das Seil in festen Zeitschritten gerechnet?
+
+### Nachtrag: Weniger Schwung, die Rundung haengt unten (28.11.2026)
+
+Dein Hinweis: Das Seil schwang uebermaessig, ohne dass die Kanone sich so bewegt haette. Der Bogen nach oben soll weg. Die Rundung soll unten haengen.
+
+Was falsch war: Ich hatte das ganze Seil als eine Kurve durch die Hand gerechnet. Diese Kurve woelbte sich nach oben und zur Seite, egal wie die Kanone fuhr. Und das geloeste Ende pendelte mehrere Sekunden nach.
+
+**`skripte/nadel.gd`.** `bogen_extra`, `bogen_jetzt` und `bogen_tempo` sind wieder weg. `schwung_punkt` und `schwung` bleiben, bedeuten aber etwas Einfacheres: wie weit die Stelle, an der das Seil gehalten wird, schon von der Kanone zur Hand gewandert ist.
+
+```gdscript
+@export var durchhang_rest: float = 0.12
+```
+Wie weit das Stueck zwischen Hand und Kanone durchhaengt, als Anteil seiner Laenge.
+
+```gdscript
+func rest_bogen(von: Vector2, bis: Vector2) -> Vector2:
+	var richtung: Vector2 = von.direction_to(bis)
+	var quer: Vector2 = Vector2.DOWN - richtung * Vector2.DOWN.dot(richtung)
+	return quer * von.distance_to(bis) * durchhang_rest
+```
+Gerechnet wie `durchbiegung`: Von der Schwerkraft (nach unten) bleibt nur der Teil uebrig, der quer zum Seil zieht. Haengt das Stueck senkrecht, ist das null und es bleibt gerade. Laeuft es schraeg, haengt es nach unten durch. Das ist die Rundung unten.
+
+```gdscript
+	if schwung_punkt != null:
+		var halt: Vector2 = unten.lerp(schwung_punkt.global_position, schwung)
+		var schlaufe: Vector2 = rest_bogen(halt, unten)
+		var stuecke: PackedVector2Array = []
+		for nummer in 9:
+			stuecke.append($Rest.to_local(faden_punkt(halt, unten, schlaufe, nummer / 8.0)))
+		$Rest.points = stuecke
+		unten = halt
+```
+In `faden_spannen`. `halt` ist die Stelle, an der das Seil gehalten wird: bei `schwung` 0 die Kanone, bei 1 die Hand. Das Seil zur Fliege endet dort (`unten = halt`) und haengt ganz normal durch. Von `halt` zur Kanone geht die Linie `Rest` in 8 Stuecken, mit der Schlaufe nach unten. Am Anfang ist dieses Stueck null lang, es waechst, waehrend die Kanone das Seil zur Hand hochnimmt.
+
+`rest_abwerfen(hand)`: Das Seilende entsteht jetzt aus genau diesem Stueck zwischen Hand und Kanone (vorher: aus der unteren Haelfte der grossen Kurve). Das Seil zur Fliege aendert sich beim Loslassen gar nicht mehr.
+
+`rest_daempfung = 0.95` statt 0,985: Das Ende verliert je Rechenschritt 5 Prozent seines Schwungs und haengt nach etwa einer Sekunde still.
+
+**`skripte/uebergabe.gd`.** `schwung` laeuft erst in der zweiten Haelfte der Hinfahrt von 0 auf 1 (`dauer / 2.0`, mit `set_delay(dauer / 2.0)`): Die Kanone nimmt das Seil erst mit hoch, wenn sie fast bei der Hand ist. `halte_anteil = 0.25` statt 0,4: Das Seil loest sich frueher, wenn die Kanone noch fast unter der Hand steht. Dann haengt das Ende beim Loslassen schon fast gerade und hat wenig Grund zu schwingen.
+
+**So wurde es angeschaut.** Schnellcheck PASS fuer `nadel.gd` und `uebergabe.gd`, Verify PASS. Probe mit 60 Bildern pro Sekunde: Das Seil geht gerade von der Fliege zur Kanone, wird beim Ankommen in die Hand gelegt und haengt als Schlaufe nach unten zur Kanone. Luecken hoechstens 0,00 Pixel (Abheben) und 0,25 (Fang). Die Spitze des geloesten Endes startet 127 Pixel neben der Hand und haengt nach einer Sekunde gerade darunter, sie schwingt nur noch 11 Pixel ueber die Mitte hinaus (vorher 80 und mehrere Sekunden lang). Nicht angeschaut: wie es in Bewegung wirkt.
+
+**Fragen.** 1. Warum haengt ein senkrechtes Seilstueck nicht durch? 2. Was aendert `rest_daempfung` 0,95 gegenueber 0,985? 3. Warum loest sich das Seil jetzt frueher vom Lauf?
